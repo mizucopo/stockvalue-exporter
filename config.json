@@ -1,0 +1,8 @@
+{
+  "TICKER_SYMBOLS": [
+    "NVDA",
+    "8035.T"
+  ],
+  "CACHE_FILE": "/tmp/cache.pkl",
+  "CACHE_SECONDS": 300
+}
