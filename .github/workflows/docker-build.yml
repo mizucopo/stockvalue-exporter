@@ -33,4 +33,4 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: |
-          mizucopo/stockvalue-exporter:latest:${{ steps.ref.outputs.tag == 'main' && 'latest' || steps.ref.outputs.tag }}
+          mizucopo/stockvalue-exporter:${{ steps.ref.outputs.tag == 'main' && 'latest' || steps.ref.outputs.tag }}
