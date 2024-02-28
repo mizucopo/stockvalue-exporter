@@ -34,7 +34,7 @@ def load_config(app: Flask, config_filepath: str = None):
             app.config.update({
                 'TICKER_SYMBOLS': config.get('TICKER_SYMBOLS', []),
                 'SERVER_PORT': config.get('SERVER_PORT', 9100),
-                'CACHE_FILE': config.get('CACHE_FILE', '/tmp/cache.pkl'),
+                'CACHE_DIR': config.get('CACHE_DIR', '/tmp/'),
                 'CACHE_SECONDS': config.get('CACHE_SECONDS', 300)
             })
     except FileNotFoundError:
