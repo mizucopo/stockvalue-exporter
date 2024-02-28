@@ -47,7 +47,7 @@ def load_config(app: Flask, config_filepath: str = None):
 
 def get_stock_data(ticker_symbol: str,
                    period: str = "10d",
-                   cache_file: str = None,
+                   cache_dir: str = None,
                    cache_seconds: int = 0):
     """
     Retrieve historical stock data for a given ticker symbol.
@@ -56,8 +56,8 @@ def get_stock_data(ticker_symbol: str,
     ticker_symbol (str): The ticker symbol of the stock.
     period (str, optional): The time period for which to retrieve the data.
                             Defaults to "10d".
-    cache_file (str, optional): The file path to cache the data.
-                                Defaults to None.
+    cache_dir (str, optional): The file path to cache the data.
+                               Defaults to None.
     cache_seconds (int, optional): The number of seconds to consider
                                    the cache valid.
                                    Defaults to 0.
@@ -65,7 +65,11 @@ def get_stock_data(ticker_symbol: str,
     Returns:
     pandas.DataFrame: The historical stock data.
     """
-    if cache_file and os.path.exists(cache_file):
+    if cache_dir:
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_file = os.path.join(cache_dir, f'ticker_symbol_{ticker_symbol}.pkl')
+
+    if cache_dir and os.path.exists(cache_file):
         file_modified_time = os.path.getmtime(cache_file)
         elapsed_time = time.time() - file_modified_time
         if elapsed_time < cache_seconds:
@@ -74,7 +78,7 @@ def get_stock_data(ticker_symbol: str,
     stock = yf.Ticker(ticker_symbol)
     data = stock.history(period=period)
 
-    if cache_file:
+    if cache_dir:
         data.to_pickle(cache_file)
 
     return data
@@ -191,12 +195,12 @@ def metrics():
 
     response_text = ''
     ticker_symbols = app.config['TICKER_SYMBOLS']
-    cache_file = app.config['CACHE_FILE']
+    cache_dir = app.config['CACHE_DIR']
     cache_seconds = app.config['CACHE_SECONDS']
     for ticker_symbol in ticker_symbols:
         data = get_stock_data(
             ticker_symbol,
-            cache_file=cache_file,
+            cache_dir=cache_dir,
             cache_seconds=cache_seconds
         )
         current_price = get_current_price(data)
