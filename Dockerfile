@@ -1,10 +1,5 @@
 FROM python:3.12-alpine3.19
 
-RUN apk add --no-cache \
-    tzdata=2023d-r0 \
-  && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
-  && echo "Asia/Tokyo" > /etc/timezone
-
 WORKDIR /app
 
 COPY requirements.txt .
