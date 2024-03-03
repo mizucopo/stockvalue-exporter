@@ -1,10 +1,12 @@
 import datetime
+from decimal import Decimal, ROUND_HALF_UP
 import json
 import os
 import time
 
 from flask import Flask, Response
 import click
+import numpy
 import pandas as pd
 import yfinance as yf
 
@@ -84,7 +86,21 @@ def get_stock_data(ticker_symbol: str,
     return data
 
 
-def get_current_price(data: pd.DataFrame) -> int:
+def round_decimal_to_two_places(value: numpy.float64):
+    """
+    Rounds a decimal value to two decimal places.
+
+    Args:
+        value (numpy.float64): The decimal value to be rounded.
+
+    Returns:
+        Decimal: The rounded decimal value.
+    """
+    raw = Decimal(value)
+    return raw.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
+def get_current_price(data: pd.DataFrame) -> Decimal:
     """
     Get the current price from the given DataFrame.
 
@@ -92,9 +108,9 @@ def get_current_price(data: pd.DataFrame) -> int:
     data (pd.DataFrame): The DataFrame containing the stock data.
 
     Returns:
-    int: The current price.
+    Decimal: The current price.
     """
-    price = int(data.loc[data.dropna().index[-1]]['Close'])
+    price = round_decimal_to_two_places(data.loc[data.dropna().index[-1]]['Close'])
     return price
 
 
@@ -107,7 +123,7 @@ def get_last_trading_day_data(data: pd.DataFrame) -> tuple:
 
     Returns:
     tuple: A tuple containing the last trading day (datetime.date)
-           and its closing price (int).
+           and its closing price (Decimal).
     """
     today = datetime.date.today()
     data.index = pd.to_datetime(data.index)
@@ -120,11 +136,11 @@ def get_last_trading_day_data(data: pd.DataFrame) -> tuple:
         if last_trading_day == today:
             if len(clean_data) > 1:
                 last_trading_day = clean_data.index[-2].date()
-                last_trading_day_close = int(clean_data.iloc[-2]['Close'])
+                last_trading_day_close = round_decimal_to_two_places(clean_data.iloc[-2]['Close'])
             else:
                 return None
         else:
-            last_trading_day_close = int(clean_data.iloc[-1]['Close'])
+            last_trading_day_close = round_decimal_to_two_places(clean_data.iloc[-1]['Close'])
     else:
         return None
 
@@ -133,17 +149,17 @@ def get_last_trading_day_data(data: pd.DataFrame) -> tuple:
 
 def generate_response_text(ticker_symbol: str,
                            last_trading_date: datetime.date,
-                           last_trading_day_close_price: int,
-                           current_price: int):
+                           last_trading_day_close_price: Decimal,
+                           current_price: Decimal):
     """
     Generate the response text for the stock data.
 
     Parameters:
     - ticker_symbol (str): The stock's ticker symbol.
     - last_trading_date (datetime.date): The last trading day.
-    - last_trading_day_close_price (int): The closing price
-                                          on the last trading day.
-    - current_price (int): current stock price.
+    - last_trading_day_close_price (Decimal): The closing price
+                                              on the last trading day.
+    - current_price (Decimal): current stock price.
 
     Returns:
     str: The generated response text.
