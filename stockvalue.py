@@ -1,10 +1,11 @@
-import datetime
+from decimal import Decimal, ROUND_HALF_UP
 import json
 import os
 import time
 
 from flask import Flask, Response
 import click
+import numpy
 import pandas as pd
 import yfinance as yf
 
@@ -48,19 +49,21 @@ def load_config(app: Flask, config_filepath: str = None):
 def get_stock_data(ticker_symbol: str,
                    period: str = "10d",
                    cache_dir: str = None,
-                   cache_seconds: int = 0):
+                   cache_seconds: int = 0) -> pd.DataFrame:
     """
     Retrieve historical stock data for a given ticker symbol.
 
     Parameters:
-    ticker_symbol (str): The ticker symbol of the stock.
-    period (str, optional): The time period for which to retrieve the data.
-                            Defaults to "10d".
-    cache_dir (str, optional): The file path to cache the data.
-                               Defaults to None.
-    cache_seconds (int, optional): The number of seconds to consider
-                                   the cache valid.
-                                   Defaults to 0.
+    - ticker_symbol (str): The ticker symbol of the stock.
+    - period (str, optional):
+        The time period for which to retrieve the data.
+        Defaults to "10d".
+    - cache_dir (str, optional):
+        The file path to cache the data.
+        Defaults to None.
+    - cache_seconds (int, optional):
+        The number of seconds to consider the cache valid.
+        Defaults to 0.
 
     Returns:
     pandas.DataFrame: The historical stock data.
@@ -84,84 +87,93 @@ def get_stock_data(ticker_symbol: str,
     return data
 
 
-def get_current_price(data: pd.DataFrame) -> int:
+def round_decimal_to_two_places(value: numpy.float64) -> Decimal:
+    """
+    Rounds a decimal value to two decimal places.
+
+    Args:
+    - value (numpy.float64): The decimal value to be rounded.
+
+    Returns:
+    Decimal: The rounded decimal value.
+    """
+    raw = Decimal(value)
+    return raw.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
+def get_current_price(data: pd.DataFrame) -> Decimal:
     """
     Get the current price from the given DataFrame.
 
     Parameters:
-    data (pd.DataFrame): The DataFrame containing the stock data.
+    - data (pd.DataFrame): The DataFrame containing the stock data.
 
     Returns:
-    int: The current price.
+    Decimal: The current price.
     """
-    price = int(data.loc[data.dropna().index[-1]]['Close'])
+    price = round_decimal_to_two_places(data.loc[data.dropna().index[-1]]['Close'])
     return price
 
 
-def get_last_trading_day_data(data: pd.DataFrame) -> tuple:
+def get_last_trading_day_data(data: pd.DataFrame) -> Decimal:
     """
-    Get the last trading day (excluding today) and its closing price.
+    Get the closing value of the last trading day from the given DataFrame.
 
-    Parameters:
-    - data (pd.DataFrame): Stock data.
+    Args:
+    - data (pd.DataFrame): The DataFrame containing the stock data.
 
     Returns:
-    tuple: A tuple containing the last trading day (datetime.date)
-           and its closing price (int).
+    Decimal: The closing value of the last trading day, rounded to two decimal places.
+    None: If the DataFrame is empty or contains only one trading day.
     """
-    today = datetime.date.today()
     data.index = pd.to_datetime(data.index)
     sorted_data = data.sort_index()
-
     clean_data = sorted_data.dropna()
 
-    if not clean_data.empty:
-        last_trading_day = clean_data.index[-1].date()
-        if last_trading_day == today:
-            if len(clean_data) > 1:
-                last_trading_day = clean_data.index[-2].date()
-                last_trading_day_close = int(clean_data.iloc[-2]['Close'])
-            else:
-                return None
-        else:
-            last_trading_day_close = int(clean_data.iloc[-1]['Close'])
+    if not clean_data.empty and len(clean_data) > 1:
+        last_trading_day_close = round_decimal_to_two_places(clean_data.iloc[-2]['Close'])
     else:
         return None
 
-    return last_trading_day, last_trading_day_close
+    return last_trading_day_close
 
 
 def generate_response_text(ticker_symbol: str,
-                           last_trading_date: datetime.date,
-                           last_trading_day_close_price: int,
-                           current_price: int):
+                           current_price: Decimal,
+                           last_trading_day_close_price: Decimal = None) -> str:
     """
-    Generate the response text for the stock data.
+    Generate the response text for the stock value.
 
-    Parameters:
-    - ticker_symbol (str): The stock's ticker symbol.
-    - last_trading_date (datetime.date): The last trading day.
-    - last_trading_day_close_price (int): The closing price
-                                          on the last trading day.
-    - current_price (int): current stock price.
+    Args:
+    - ticker_symbol (str):
+        The ticker symbol of the stock.
+    - current_price (Decimal):
+        The current price of the stock.
+    - last_trading_day_close_price (Decimal, optional):
+        The closing price of the stock on the last trading day.
+        Defaults to None.
 
     Returns:
-    str: The generated response text.
+    str: The response text containing the stock value information.
     """
-    formatted_last_trading_date = last_trading_date.strftime('%Y-%m-%d')
-    diff_price = current_price - last_trading_day_close_price
-    diff_ratio = (diff_price / last_trading_day_close_price) * 100
-
     response_text = (
-        '# HELP stock_value_last_trading_price Last Trading Close Price\n'
-        '# TYPE stock_value_last_trading_price gauge\n'
-        f'stock_value_last_trading_price{{ticker_symbol="{ticker_symbol}",'
-        f'last_trading_date="{formatted_last_trading_date}"}} '
-        f'{last_trading_day_close_price}\n'
         '# HELP stock_value_current_price Current Stock Price\n'
         '# TYPE stock_value_current_price gauge\n'
         f'stock_value_current_price{{ticker_symbol="{ticker_symbol}"}} '
         f'{current_price}\n'
+    )
+
+    if last_trading_day_close_price is None:
+        return response_text
+
+    diff_price = current_price - last_trading_day_close_price
+    diff_ratio = (diff_price / last_trading_day_close_price) * 100
+
+    response_text += (
+        '# HELP stock_value_last_trading_price Last Trading Close Price\n'
+        '# TYPE stock_value_last_trading_price gauge\n'
+        f'stock_value_last_trading_price{{ticker_symbol="{ticker_symbol}"}} '
+        f'{last_trading_day_close_price}\n'
         '# HELP stock_value_current_diff_price Price difference from last '
         'trading day\n'
         '# TYPE stock_value_current_diff_price gauge\n'
@@ -180,16 +192,16 @@ app = Flask(__name__)
 
 
 @app.route('/metrics', methods=['GET'])
-def metrics():
+def metrics() -> Response:
     """
-    Handle the HTTP request for metrics.
+    Calculate and return the metrics for the stock values.
 
-    This function fetches the stock data, determines the price for today and
-    the last trading day, and then generates a response text to be returned
-    to the client.
+    This function retrieves stock data for the ticker symbols specified in the configuration,
+    calculates the current price and the last trading day's close price for each ticker symbol,
+    and generates a response text containing the metrics for each ticker symbol.
 
     Returns:
-    Response: The HTTP response containing the metrics in plain text format.
+    Response: A response object containing the metrics as plain text.
     """
     load_config(app)
 
@@ -204,26 +216,24 @@ def metrics():
             cache_seconds=cache_seconds
         )
         current_price = get_current_price(data)
-        last_trading_date, last_trading_day_close_price = \
-            get_last_trading_day_data(data)
+        last_trading_day_close_price = get_last_trading_day_data(data)
         response_text += generate_response_text(
             ticker_symbol,
-            last_trading_date,
-            last_trading_day_close_price,
-            current_price
+            current_price,
+            last_trading_day_close_price
         )
     return Response(response_text, content_type='text/plain; charset=utf-8')
 
 
 @click.command()
 @click.argument('ticker_symbol')
-def ticker_symbol(ticker_symbol: str):
+def ticker_symbol(ticker_symbol: str) -> None:
     """
-    Retrieves the stock data for the given ticker symbol
-    and prints the current price.
+    Retrieves stock data for the given ticker symbol and prints the current price,
+    last trading day close price, difference price, and difference ratio.
 
-    Parameters:
-    ticker_symbol (str): The ticker symbol of the stock.
+    Args:
+    - ticker_symbol (str): The ticker symbol of the stock.
 
     Returns:
     None
@@ -231,7 +241,23 @@ def ticker_symbol(ticker_symbol: str):
     data = get_stock_data(ticker_symbol)
     if not data.empty:
         current_price = get_current_price(data)
-        print(f'Ticker Symbol {ticker_symbol}: {current_price}')
+        print(
+            f'Ticker Symbol {ticker_symbol}\n'
+            f'Current Price: {current_price}'
+        )
+
+        last_trading_day_close_price = get_last_trading_day_data(data)
+        if last_trading_day_close_price:
+            diff_price = current_price - last_trading_day_close_price
+            diff_ratio = (diff_price / last_trading_day_close_price) * 100
+            print(
+                'Last Trading Day Close Price: '
+                f'{last_trading_day_close_price}\n'
+                'Difference Price: '
+                f'{diff_price}\n'
+                'Difference Ratio: '
+                f'{diff_ratio}%'
+            )
 
 
 if __name__ == "__main__":
