@@ -1,46 +1,48 @@
 # stockvalue-exporter
 
-stockvalue-exporter は Prometheus のカスタムエクスポーターで、株価情報を取得するためのツールです。
+[Link to README in Japanese (README.ja.md)](./README.ja.md)
 
-## 主な特徴
+stockvalue-exporter is a custom exporter for Prometheus, designed to fetch stock price information.
 
-- Prometheus と統合して株価情報を監視可能。
-- Docker を使用して簡単にデプロイと実行ができます。
-- yfinance ライブラリを使用して株価情報を取得。
+## Key Features
 
-## 技術スタック
+- Integrates with Prometheus to monitor stock price information.
+- Easily deployable and runnable using Docker.
+- Utilizes the yfinance library to fetch stock price information.
 
-このプロジェクトは主に Python と Docker を使用しています。
-株価情報の取得には yfinance ライブラリが使用されています。
+## Technology Stack
 
-## インストール方法
+This project primarily uses Python and Docker.
+The yfinance library is used to fetch stock price information.
 
-Docker イメージを pull するだけで簡単に始められます。
+## Installation
+
+You can easily get started by pulling the Docker image.
 
 ```
 docker pull mizucopo/stockvalue-exporter:latest
 ```
 
-## 使い方
+## How to Use
 
-以下のコマンドで stockvalue-exporter の Docker コンテナを起動します。
+Launch the stockvalue-exporter Docker container using the following command.
 
 ```
 docker run -v config.json:/app/config.json -p 9100:9100 mizucopo/stockvalue-exporter:latest
 ```
 
-## 貢献方法
+## How to Contribute
 
-このプロジェクトへの貢献に興味がある方は、プルリクエストを送るか、または issue を開いて議論を始めてください。
+If you are interested in contributing to this project, please send a pull request or open an issue to start a discussion.
 
-## ライセンス
+## License
 
-このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSEファイル](/LICENSE)をご参照ください。
+This project is published under the MIT License. For more details, please refer to the [LICENSE file](/LICENSE).
 
-## ドキュメンテーション
+## Documentation
 
-このREADMEファイルがプロジェクトのドキュメンテーションを兼ねています。
+This README file serves as the project's documentation.
 
-## 連絡先
+## Contact
 
-質問やサポートが必要な場合は、X ([@mizu_copo](https://twitter.com/mizu_copo)) でお気軽にお問い合わせください。
+If you have any questions or need support, please feel free to contact X ([@mizu_copo](https://twitter.com/mizu_copo)).
