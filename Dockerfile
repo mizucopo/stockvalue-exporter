@@ -11,4 +11,4 @@ COPY stockvalue.py .
 RUN chmod 0600 config.json
 ENV CONFIG_FILEPATH /app/config.json
 
-CMD gunicorn -w 4 -b 0.0.0.0:9100 --chdir /app stockvalue:app
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9100", "--chdir", "/app", "stockvalue:app"]
