@@ -19,7 +19,7 @@ stockvalue-exporter は Prometheus のカスタムエクスポーターで、株
 
 Docker イメージを pull するだけで簡単に始められます。
 
-```
+```sh
 docker pull mizucopo/stockvalue-exporter:latest
 ```
 
@@ -27,7 +27,7 @@ docker pull mizucopo/stockvalue-exporter:latest
 
 以下のコマンドで stockvalue-exporter の Docker コンテナを起動します。
 
-```
+```sh
 docker run -v config.json:/app/config.json -p 9100:9100 mizucopo/stockvalue-exporter:latest
 ```
 
