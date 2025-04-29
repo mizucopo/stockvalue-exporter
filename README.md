@@ -19,7 +19,7 @@ The yfinance library is used to fetch stock price information.
 
 You can easily get started by pulling the Docker image.
 
-```
+```sh
 docker pull mizucopo/stockvalue-exporter:latest
 ```
 
@@ -27,7 +27,7 @@ docker pull mizucopo/stockvalue-exporter:latest
 
 Launch the stockvalue-exporter Docker container using the following command.
 
-```
+```sh
 docker run -v config.json:/app/config.json -p 9100:9100 mizucopo/stockvalue-exporter:latest
 ```
 
