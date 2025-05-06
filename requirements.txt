@@ -3,4 +3,4 @@ flask==3.0.2
 gunicorn==21.2.0
 numpy==1.26.4
 pandas==2.2.1
-yfinance==0.2.57
+yfinance==0.2.58
