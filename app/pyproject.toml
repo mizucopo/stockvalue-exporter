@@ -4,4 +4,14 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "click>=8.2.1",
+    "flask>=3.1.1",
+    "gunicorn>=23.0.0",
+    "pandas>=2.3.0",
+    "prometheus-flask-exporter>=0.23.2",
+    "yfinance>=0.2.62",
+]
+
+[tool.uv]
+link-mode = "copy"
