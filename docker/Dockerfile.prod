@@ -16,7 +16,12 @@ COPY --from=builder /etc/timezone /etc/timezone
 ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
+COPY app/.python-version \
+     app/pyproject.toml \
+     app/uv.lock \
+     /app/
 
-RUN pip install uv==0.7.12
+RUN pip install uv==0.7.12 \
+  && uv sync --no-dev
 
 # docker run --rm -it -v $(pwd)/app:/app mizucopo/stockvalue-exporter:latest /bin/sh
