@@ -9,21 +9,8 @@ logger = logging.getLogger(__name__)
 class MetricsView(BaseView):
     def update_prometheus_metrics(self, stock_data_dict):
         """PrometheusメトリクスをStock dataで更新"""
-        # メトリクスをインポート（循環インポート回避）
-        from main import (
-            stock_price,
-            stock_volume,
-            stock_market_cap,
-            stock_pe_ratio,
-            stock_dividend_yield,
-            stock_52week_high,
-            stock_52week_low,
-            stock_previous_close,
-            stock_price_change,
-            stock_price_change_percent,
-            stock_last_updated,
-            stock_fetch_errors,
-        )
+        # MetricsFactoryをインポート（循環インポート回避）
+        from main import metrics_factory
 
         for symbol, data in stock_data_dict.items():
             try:
@@ -34,35 +21,35 @@ class MetricsView(BaseView):
                 }
 
                 # 価格関連メトリクス
-                stock_price.labels(
+                metrics_factory.get_metric('stock_price').labels(
                     symbol=data["symbol"],
                     name=data["name"],
                     currency=data["currency"],
                     exchange=data["exchange"],
                 ).set(data["current_price"])
 
-                stock_volume.labels(**labels).set(data["volume"])
-                stock_market_cap.labels(**labels).set(data["market_cap"])
-                stock_pe_ratio.labels(**labels).set(data["pe_ratio"])
-                stock_dividend_yield.labels(**labels).set(
+                metrics_factory.get_metric('stock_volume').labels(**labels).set(data["volume"])
+                metrics_factory.get_metric('stock_market_cap').labels(**labels).set(data["market_cap"])
+                metrics_factory.get_metric('stock_pe_ratio').labels(**labels).set(data["pe_ratio"])
+                metrics_factory.get_metric('stock_dividend_yield').labels(**labels).set(
                     data["dividend_yield"] * 100 if data["dividend_yield"] else 0
                 )
-                stock_52week_high.labels(**labels).set(data["fifty_two_week_high"])
-                stock_52week_low.labels(**labels).set(data["fifty_two_week_low"])
+                metrics_factory.get_metric('stock_52week_high').labels(**labels).set(data["fifty_two_week_high"])
+                metrics_factory.get_metric('stock_52week_low').labels(**labels).set(data["fifty_two_week_low"])
 
                 # 前日比関連メトリクス
-                stock_previous_close.labels(**labels).set(data["previous_close"])
-                stock_price_change.labels(**labels).set(data["price_change"])
-                stock_price_change_percent.labels(**labels).set(
+                metrics_factory.get_metric('stock_previous_close').labels(**labels).set(data["previous_close"])
+                metrics_factory.get_metric('stock_price_change').labels(**labels).set(data["price_change"])
+                metrics_factory.get_metric('stock_price_change_percent').labels(**labels).set(
                     data["price_change_percent"]
                 )
 
                 # 最終更新時刻
-                stock_last_updated.labels(symbol=data["symbol"]).set(data["timestamp"])
+                metrics_factory.get_metric('stock_last_updated').labels(symbol=data["symbol"]).set(data["timestamp"])
 
             except Exception as e:
                 logger.error(f"Error updating metrics for {symbol}: {e}")
-                stock_fetch_errors.labels(
+                metrics_factory.get_metric('stock_fetch_errors').labels(
                     symbol=symbol, error_type="metric_update_error"
                 ).inc()
 
