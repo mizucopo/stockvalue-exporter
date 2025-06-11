@@ -23,3 +23,5 @@ COPY app/.python-version \
 
 RUN pip install uv==0.7.12 \
     && uv pip install --system -e .
+
+EXPOSE 9100
