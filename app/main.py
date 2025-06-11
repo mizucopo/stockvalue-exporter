@@ -62,5 +62,14 @@ def health_json():
         "message": f"{APP_NAME} v{APP_VERSION} is running!"
     })
 
+@app.route('/version')
+def version():
+    """バージョン情報"""
+    return jsonify({
+        "name": APP_NAME,
+        "version": APP_VERSION,
+        "description": APP_DESCRIPTION
+    })
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=False)
