@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram
+from prometheus_client import Counter, Gauge, Histogram, CollectorRegistry, REGISTRY
 
 
 class MetricsFactory:
@@ -96,13 +96,15 @@ class MetricsFactory:
         ],
     }
 
-    def __init__(self, config: dict[str, Any] | None = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None, registry: CollectorRegistry | None = None) -> None:
         """メトリクスファクトリーを初期化する.
 
         Args:
             config: メトリクス設定辞書。Noneの場合はデフォルト設定を使用
+            registry: Prometheusレジストリ。Noneの場合はデフォルトレジストリを使用
         """
         self.config = config if config is not None else self.DEFAULT_METRICS_CONFIG
+        self.registry = registry if registry is not None else REGISTRY
         self.metrics = {}
         self._create_metrics()
 
@@ -114,6 +116,7 @@ class MetricsFactory:
                 gauge_config["name"],
                 gauge_config["description"],
                 gauge_config["labels"],
+                registry=self.registry,
             )
             self.metrics[gauge_config["key"]] = metric
 
@@ -123,6 +126,7 @@ class MetricsFactory:
                 counter_config["name"],
                 counter_config["description"],
                 counter_config["labels"],
+                registry=self.registry,
             )
             self.metrics[counter_config["key"]] = metric
 
@@ -132,6 +136,7 @@ class MetricsFactory:
                 histogram_config["name"],
                 histogram_config["description"],
                 histogram_config["labels"],
+                registry=self.registry,
             )
             self.metrics[histogram_config["key"]] = metric
 
@@ -155,10 +160,13 @@ class MetricsFactory:
         return self.metrics
 
     @classmethod
-    def create_default(cls) -> "MetricsFactory":
+    def create_default(cls, registry: CollectorRegistry | None = None) -> "MetricsFactory":
         """デフォルト設定でMetricsFactoryインスタンスを作成する.
+
+        Args:
+            registry: Prometheusレジストリ。Noneの場合はデフォルトレジストリを使用
 
         Returns:
             デフォルト設定のMetricsFactoryインスタンス
         """
-        return cls()
+        return cls(registry=registry)
