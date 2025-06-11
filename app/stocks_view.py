@@ -1,10 +1,23 @@
-from flask import request, jsonify
+"""株価データビューモジュール."""
+
 from datetime import datetime
+
+from flask import Response, jsonify, request
+
 from base_view import BaseView
 
 
 class StocksView(BaseView):
-    def get(self):
+    """株価データ取得用ビュークラス."""
+
+    def get(self) -> Response:
+        """指定された銘柄の株価データを取得して返す.
+
+        URLパラメータからsymbolsを取得し、株価データをフェッチして返す.
+
+        Returns:
+            株価データを含むJSONレスポンス
+        """
         # 配列パラメータ対応
         symbols_list = request.args.getlist("symbols")
 

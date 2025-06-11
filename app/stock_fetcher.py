@@ -1,19 +1,43 @@
-import time
+"""株価データフェッチャーモジュール."""
+
 import logging
+import time
+from typing import Any
+
 import yfinance as yf
+from prometheus_client import Counter, Histogram
 
 logger = logging.getLogger(__name__)
 
 
 class StockDataFetcher:
-    def __init__(self, stock_fetch_duration=None, stock_fetch_errors=None):
+    """株価データを取得するクラス."""
+
+    def __init__(
+        self,
+        stock_fetch_duration: Histogram | None = None,
+        stock_fetch_errors: Counter | None = None,
+    ) -> None:
+        """株価データフェッチャーを初期化する.
+
+        Args:
+            stock_fetch_duration: フェッチ時間を計測するHistogramメトリクス
+            stock_fetch_errors: エラー数を計測するCounterメトリクス
+        """
         self.cache = {}
         self.cache_ttl = 300  # 5分間キャッシュ
         self.stock_fetch_duration = stock_fetch_duration
         self.stock_fetch_errors = stock_fetch_errors
 
-    def get_stock_data(self, symbols):
-        """指定された銘柄の株価データを取得"""
+    def get_stock_data(self, symbols: list[str]) -> dict[str, Any]:
+        """指定された銘柄の株価データを取得する.
+
+        Args:
+            symbols: 取得する銘柄シンボルのリスト
+
+        Returns:
+            銘柄別の株価データ辞書
+        """
         results = {}
 
         for symbol in symbols:
@@ -108,8 +132,15 @@ class StockDataFetcher:
 
         return results
 
-    def _is_cached(self, symbol):
-        """キャッシュが有効かチェック"""
+    def _is_cached(self, symbol: str) -> bool:
+        """キャッシュが有効かチェックする.
+
+        Args:
+            symbol: チェックする銘柄シンボル
+
+        Returns:
+            キャッシュが有効ならTrue、そうでなければFalse
+        """
         if symbol not in self.cache:
             return False
 

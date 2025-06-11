@@ -1,11 +1,15 @@
+"""メインアプリケーションモジュール."""
+
 import logging
+
 from flask import Flask
+
 from app import App
 from health_view import HealthView
-from version_view import VersionView
+from metrics_factory import MetricsFactory
 from metrics_view import MetricsView
 from stocks_view import StocksView
-from metrics_factory import MetricsFactory
+from version_view import VersionView
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +29,8 @@ APP_DESCRIPTION = app.description
 
 # StockDataFetcherのappへの初期化
 app.initialize_fetcher(
-    metrics_factory.get_metric('stock_fetch_duration'),
-    metrics_factory.get_metric('stock_fetch_errors')
+    metrics_factory.get_metric("stock_fetch_duration"),
+    metrics_factory.get_metric("stock_fetch_errors"),
 )
 
 # URLルールの登録
