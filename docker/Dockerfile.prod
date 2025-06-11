@@ -3,8 +3,8 @@ FROM python:3.13.4-alpine AS builder
 
 RUN apk add --no-cache \
     tzdata \
-  && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
-  && echo "Asia/Tokyo" > /etc/timezone
+    && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && echo "Asia/Tokyo" > /etc/timezone
 
 
 # 実行ステージ
@@ -22,6 +22,4 @@ COPY app/.python-version \
      /app/
 
 RUN pip install uv==0.7.12 \
-  && uv sync --no-dev
-
-# docker run --rm -it -v $(pwd)/app:/app mizucopo/stockvalue-exporter:latest /bin/sh
+    && uv pip install --system -e .
