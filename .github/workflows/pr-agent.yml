@@ -14,7 +14,6 @@ jobs:
       issues: write
       pull-requests: write
       contents: write
-      pull-requests: write
     steps:
     - name: PR Agent action step
       id: pragent
