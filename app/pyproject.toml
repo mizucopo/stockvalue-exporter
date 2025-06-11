@@ -12,11 +12,55 @@ dependencies = [
     "yfinance>=0.2.62",
 ]
 
-[tool.uv]
-link-mode = "copy"
-
 [dependency-groups]
 dev = [
     "black>=25.1.0",
     "ruff>=0.11.13",
 ]
+
+[tool.uv]
+link-mode = "copy"
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py313"
+fix = true
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",    # 基本
+    "C90",            # complexity
+    "N",              # naming
+    "I",              # isort
+    "D",              # docstring
+    "ANN",            # annotations
+    "UP",             # pyupgrade
+    "B",              # bugbear
+]
+ignore = [
+    "D203", "D212",   # docstring style conflicts
+    "E501",           # line length (Black handles)
+    "ANN101", "ANN102", # self/cls annotations
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
