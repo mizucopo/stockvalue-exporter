@@ -207,9 +207,6 @@ $RECYCLE.BIN/
 .Trash-*
 .nfs*
 
-# Docker
-.dockerignore
-
 # Logs
 logs/
 *.log
