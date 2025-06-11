@@ -1,7 +1,5 @@
 # stockvalue-exporter
 
-[Link to README in English (README.md)](./README.md)
-
 stockvalue-exporter は Prometheus のカスタムエクスポーターで、株価情報を取得するためのツールです。
 
 ## 主な特徴
