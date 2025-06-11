@@ -1,3 +1,7 @@
 FROM mizucopo/stockvalue-exporter:latest
 
+COPY app/.python-version \
+     app/uv.lock \
+     /app/
+
 RUN uv sync --dev

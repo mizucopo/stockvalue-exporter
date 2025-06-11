@@ -28,6 +28,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY app/ /app/
 
+RUN rm /app/.python-version \
+    && rm /app/uv.lock
+
 EXPOSE 9100
 
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9100", "--chdir", "/app", "main:web"]
