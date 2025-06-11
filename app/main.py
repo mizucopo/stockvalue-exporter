@@ -364,6 +364,6 @@ def get_stocks():
 if __name__ == "__main__":
     print(f"Starting {APP_NAME} v{APP_VERSION}")
     print(f"Description: {APP_DESCRIPTION}")
-    print("Metrics available at: http://localhost:8080/metrics")
-    print("Example: http://localhost:8080/metrics?symbols=AAPL,GOOGL,MSFT")
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    print("Metrics available at: http://localhost:9100/metrics")
+    print("Example: http://localhost:9100/metrics?symbols=AAPL,GOOGL,MSFT")
+    app.run(host='0.0.0.0', port=9100, debug=False)
