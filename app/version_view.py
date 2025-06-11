@@ -6,8 +6,8 @@ class VersionView(BaseView):
     def get(self):
         return jsonify(
             {
-                "name": self.main_app.name,
-                "version": self.main_app.version,
-                "description": self.main_app.description,
+                "name": self.app.name,
+                "version": self.app.version,
+                "description": self.app.description,
             }
         )

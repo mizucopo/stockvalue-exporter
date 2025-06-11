@@ -16,7 +16,7 @@ class StocksView(BaseView):
             # 配列パラメータの場合
             symbols = [s.strip().upper() for s in symbols_list if s.strip()]
 
-        stock_data = self.main_app.fetcher.get_stock_data(symbols)
+        stock_data = self.app.fetcher.get_stock_data(symbols)
 
         return jsonify(
             {

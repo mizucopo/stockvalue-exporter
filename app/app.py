@@ -8,8 +8,8 @@ from stock_fetcher import StockDataFetcher
 logger = logging.getLogger(__name__)
 
 
-class Main(MethodView):
-    """メインアプリケーションクラス"""
+class App(MethodView):
+    """アプリケーションクラス"""
 
     def __init__(self):
         self.app_info = self.get_app_info()
@@ -70,8 +70,6 @@ class Main(MethodView):
                 "description": "Unknown",
             }
 
-
     def get(self):
         """ヘルスチェック（ルート "/" 用）"""
         return f"{self.name} v{self.version} is running!"
-

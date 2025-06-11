@@ -83,7 +83,7 @@ class MetricsView(BaseView):
             logger.info(f"Fetching metrics for symbols: {symbols}")
 
             # 株価データ取得
-            stock_data = self.main_app.fetcher.get_stock_data(symbols)
+            stock_data = self.app.fetcher.get_stock_data(symbols)
 
             # メトリクス更新
             self.update_prometheus_metrics(stock_data)

@@ -5,7 +5,7 @@ class BaseView(MethodView):
     """すべてのViewクラスの基底クラス"""
 
     def __init__(self):
-        # main_appは後でインポート時に設定される
-        from main import main_app
+        # appは後でインポート時に設定される
+        from main import app
 
-        self.main_app = main_app
+        self.app = app

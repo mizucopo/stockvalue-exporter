@@ -6,10 +6,10 @@ class HealthView(BaseView):
     def get(self):
         return jsonify(
             {
-                "name": self.main_app.name,
-                "version": self.main_app.version,
-                "description": self.main_app.description,
+                "name": self.app.name,
+                "version": self.app.version,
+                "description": self.app.description,
                 "status": "running",
-                "message": f"{self.main_app.name} v{self.main_app.version} is running!",
+                "message": f"{self.app.name} v{self.app.version} is running!",
             }
         )
