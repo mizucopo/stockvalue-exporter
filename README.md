@@ -1,48 +1,48 @@
 # stockvalue-exporter
 
-[Link to README in Japanese (README.ja.md)](./README.ja.md)
+[Link to README in English (README.md)](./README.md)
 
-stockvalue-exporter is a custom exporter for Prometheus, designed to fetch stock price information.
+stockvalue-exporter は Prometheus のカスタムエクスポーターで、株価情報を取得するためのツールです。
 
-## Key Features
+## 主な特徴
 
-- Integrates with Prometheus to monitor stock price information.
-- Easily deployable and runnable using Docker.
-- Utilizes the yfinance library to fetch stock price information.
+- Prometheus と統合して株価情報を監視可能。
+- Docker を使用して簡単にデプロイと実行ができます。
+- yfinance ライブラリを使用して株価情報を取得。
 
-## Technology Stack
+## 技術スタック
 
-This project primarily uses Python and Docker.
-The yfinance library is used to fetch stock price information.
+このプロジェクトは主に Python と Docker を使用しています。
+株価情報の取得には yfinance ライブラリが使用されています。
 
-## Installation
+## インストール方法
 
-You can easily get started by pulling the Docker image.
+Docker イメージを pull するだけで簡単に始められます。
 
 ```sh
 docker pull mizucopo/stockvalue-exporter:latest
 ```
 
-## How to Use
+## 使い方
 
-Launch the stockvalue-exporter Docker container using the following command.
+以下のコマンドで stockvalue-exporter の Docker コンテナを起動します。
 
 ```sh
 docker run -v config.json:/app/config.json -p 9100:9100 mizucopo/stockvalue-exporter:latest
 ```
 
-## How to Contribute
+## 貢献方法
 
-If you are interested in contributing to this project, please send a pull request or open an issue to start a discussion.
+このプロジェクトへの貢献に興味がある方は、プルリクエストを送るか、または issue を開いて議論を始めてください。
 
-## License
+## ライセンス
 
-This project is published under the MIT License. For more details, please refer to the [LICENSE file](/LICENSE).
+このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSEファイル](/LICENSE)をご参照ください。
 
-## Documentation
+## ドキュメンテーション
 
-This README file serves as the project's documentation.
+このREADMEファイルがプロジェクトのドキュメンテーションを兼ねています。
 
-## Contact
+## 連絡先
 
-If you have any questions or need support, please feel free to contact X ([@mizu_copo](https://twitter.com/mizu_copo)).
+質問やサポートが必要な場合は、X ([@mizu_copo](https://twitter.com/mizu_copo)) でお気軽にお問い合わせください。
