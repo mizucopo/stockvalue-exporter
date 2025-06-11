@@ -19,7 +19,7 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher(mock_duration, mock_errors)
         
         assert fetcher.cache == {}
-        assert fetcher.cache_ttl == 300
+        assert fetcher.cache_ttl == 600
         assert fetcher.stock_fetch_duration == mock_duration
         assert fetcher.stock_fetch_errors == mock_errors
 
@@ -28,7 +28,7 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher()
         
         assert fetcher.cache == {}
-        assert fetcher.cache_ttl == 300
+        assert fetcher.cache_ttl == 600
         assert fetcher.stock_fetch_duration is None
         assert fetcher.stock_fetch_errors is None
 
@@ -44,7 +44,7 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher()
         
         # 期限切れのキャッシュを設定
-        old_timestamp = time.time() - 400  # 400秒前（TTL=300秒より古い）
+        old_timestamp = time.time() - 700  # 700秒前（TTL=600秒より古い）
         fetcher.cache["AAPL"] = {"timestamp": old_timestamp, "data": {}}
         
         result = fetcher._is_cached("AAPL")
@@ -55,7 +55,7 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher()
         
         # 有効なキャッシュを設定
-        recent_timestamp = time.time() - 100  # 100秒前（TTL=300秒以内）
+        recent_timestamp = time.time() - 100  # 100秒前（TTL=600秒以内）
         fetcher.cache["AAPL"] = {"timestamp": recent_timestamp, "data": {}}
         
         result = fetcher._is_cached("AAPL")

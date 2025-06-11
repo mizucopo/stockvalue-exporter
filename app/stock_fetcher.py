@@ -25,7 +25,7 @@ class StockDataFetcher:
             stock_fetch_errors: エラー数を計測するCounterメトリクス
         """
         self.cache = {}
-        self.cache_ttl = 300  # 5分間キャッシュ
+        self.cache_ttl = 600  # 10分間キャッシュ
         self.stock_fetch_duration = stock_fetch_duration
         self.stock_fetch_errors = stock_fetch_errors
 
