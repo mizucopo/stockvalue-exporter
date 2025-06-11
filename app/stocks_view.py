@@ -23,7 +23,7 @@ class StocksView(BaseView):
 
         if not symbols_list:
             # 単一パラメータの場合（カンマ区切り）
-            symbols_param = request.args.get("symbols", "AAPL,GOOGL")
+            symbols_param = request.args.get("symbols", "AAPL,GOOGL,MSFT,TSLA")
             symbols = [s.strip().upper() for s in symbols_param.split(",") if s.strip()]
         else:
             # 配列パラメータの場合
