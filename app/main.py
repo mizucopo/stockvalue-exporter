@@ -14,59 +14,67 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
-def get_version():
-    """pyproject.tomlからバージョンを取得"""
-    try:
-        # 現在のファイルと同じディレクトリのpyproject.tomlを読み込み
-        pyproject_path = Path(__file__).parent / "pyproject.toml"
+class Main:
+    """メインアプリケーションクラス"""
 
-        if not pyproject_path.exists():
+    def __init__(self):
+        self.app_info = self.get_app_info()
+        self.name = self.app_info["name"]
+        self.version = self.app_info["version"]
+        self.description = self.app_info["description"]
+
+    def get_version(self):
+        """pyproject.tomlからバージョンを取得"""
+        try:
+            # 現在のファイルと同じディレクトリのpyproject.tomlを読み込み
+            pyproject_path = Path(__file__).parent / "pyproject.toml"
+
+            if not pyproject_path.exists():
+                return 1
+
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+                return data.get("project", {}).get("version", "unknown")
+        except Exception as e:
+            print(f"Error reading version from pyproject.toml: {e}")
             return 1
 
-        with open(pyproject_path, "rb") as f:
-            data = tomllib.load(f)
-            return data.get("project", {}).get("version", "unknown")
-    except Exception as e:
-        print(f"Error reading version from pyproject.toml: {e}")
-        return 1
+    def get_app_info(self):
+        """アプリケーション情報を取得"""
+        try:
+            pyproject_path = Path(__file__).parent / "pyproject.toml"
 
+            if not pyproject_path.exists():
+                return {
+                    "name": "stockvalue-exporter",
+                    "version": "unknown",
+                    "description": "Unknown",
+                }
 
-def get_app_info():
-    """アプリケーション情報を取得"""
-    try:
-        pyproject_path = Path(__file__).parent / "pyproject.toml"
-
-        if not pyproject_path.exists():
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+                project = data.get("project", {})
+                return {
+                    "name": project.get("name", "stockvalue-exporter"),
+                    "version": project.get("version", "unknown"),
+                    "description": project.get(
+                        "description", "Stock value exporter for Prometheus"
+                    ),
+                }
+        except Exception as e:
+            print(f"Error reading app info from pyproject.toml: {e}")
             return {
                 "name": "stockvalue-exporter",
                 "version": "unknown",
                 "description": "Unknown",
             }
 
-        with open(pyproject_path, "rb") as f:
-            data = tomllib.load(f)
-            project = data.get("project", {})
-            return {
-                "name": project.get("name", "stockvalue-exporter"),
-                "version": project.get("version", "unknown"),
-                "description": project.get(
-                    "description", "Stock value exporter for Prometheus"
-                ),
-            }
-    except Exception as e:
-        print(f"Error reading app info from pyproject.toml: {e}")
-        return {
-            "name": "stockvalue-exporter",
-            "version": "unknown",
-            "description": "Unknown",
-        }
-
 
 # アプリケーション起動時に情報を取得
-APP_INFO = get_app_info()
-APP_NAME = APP_INFO["name"]
-APP_VERSION = APP_INFO["version"]
-APP_DESCRIPTION = APP_INFO["description"]
+main_app = Main()
+APP_NAME = main_app.name
+APP_VERSION = main_app.version
+APP_DESCRIPTION = main_app.description
 
 # Prometheusメトリクス定義
 stock_price = Gauge(
