@@ -14,3 +14,9 @@ dependencies = [
 
 [tool.uv]
 link-mode = "copy"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ruff>=0.11.13",
+]
