@@ -97,8 +97,8 @@ MethodView (Flask)
 
 ### 開発ワークフロー
 
-1. **本番イメージビルド**: `docker-compose build prod`
-2. **開発イメージビルド**: `docker-compose build dev`
+1. **本番イメージビルド**: `docker compose build prod`
+2. **開発イメージビルド**: `docker compose build dev`
 3. **コード開発**: エディタで編集
 4. **品質チェック**: Docker経由でruff、black、mypy実行
 5. **テスト実行**: Docker経由でpytest実行
@@ -152,20 +152,20 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporte
 # 開発サーバー起動（ポート9100）
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app -p 9100:9100 mizucopo/stockvalue-exporter:develop uv run python main.py
 
-# または docker-compose での起動
-docker-compose up dev
+# または docker compose での起動
+docker compose up dev
 ```
 
 ### Docker コマンド
 
 ```bash
 # 本番イメージをビルド・実行
-docker-compose build prod
-docker-compose up prod
+docker compose build prod
+docker compose up prod
 
 # 開発イメージをビルド・実行
-docker-compose build dev
-docker-compose up dev
+docker compose build dev
+docker compose up dev
 ```
 
 ## 依存関係
