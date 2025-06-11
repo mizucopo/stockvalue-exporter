@@ -22,6 +22,11 @@ class Main:
         self.name = self.app_info["name"]
         self.version = self.app_info["version"]
         self.description = self.app_info["description"]
+        # StockDataFetcherインスタンスを初期化時に作成
+        self.fetcher = StockDataFetcher(
+            stock_fetch_duration=stock_fetch_duration,
+            stock_fetch_errors=stock_fetch_errors,
+        )
 
     def get_version(self):
         """pyproject.tomlからバージョンを取得"""
@@ -68,6 +73,140 @@ class Main:
                 "version": "unknown",
                 "description": "Unknown",
             }
+
+    def update_prometheus_metrics(self, stock_data_dict):
+        """PrometheusメトリクスをStock dataで更新"""
+        for symbol, data in stock_data_dict.items():
+            try:
+                labels = {
+                    "symbol": data["symbol"],
+                    "name": data["name"],
+                    "exchange": data["exchange"],
+                }
+
+                # 価格関連メトリクス
+                stock_price.labels(
+                    symbol=data["symbol"],
+                    name=data["name"],
+                    currency=data["currency"],
+                    exchange=data["exchange"],
+                ).set(data["current_price"])
+
+                stock_volume.labels(**labels).set(data["volume"])
+                stock_market_cap.labels(**labels).set(data["market_cap"])
+                stock_pe_ratio.labels(**labels).set(data["pe_ratio"])
+                stock_dividend_yield.labels(**labels).set(
+                    data["dividend_yield"] * 100 if data["dividend_yield"] else 0
+                )
+                stock_52week_high.labels(**labels).set(data["fifty_two_week_high"])
+                stock_52week_low.labels(**labels).set(data["fifty_two_week_low"])
+
+                # 前日比関連メトリクス
+                stock_previous_close.labels(**labels).set(data["previous_close"])
+                stock_price_change.labels(**labels).set(data["price_change"])
+                stock_price_change_percent.labels(**labels).set(
+                    data["price_change_percent"]
+                )
+
+                # 最終更新時刻
+                stock_last_updated.labels(symbol=data["symbol"]).set(data["timestamp"])
+
+            except Exception as e:
+                logger.error(f"Error updating metrics for {symbol}: {e}")
+                stock_fetch_errors.labels(
+                    symbol=symbol, error_type="metric_update_error"
+                ).inc()
+
+    def health(self):
+        """ヘルスチェック"""
+        return f"{self.name} v{self.version} is running!"
+
+    def health_json(self):
+        """ヘルスチェック（JSON形式）"""
+        return jsonify(
+            {
+                "name": self.name,
+                "version": self.version,
+                "description": self.description,
+                "status": "running",
+                "message": f"{self.name} v{self.version} is running!",
+            }
+        )
+
+    def version_info(self):
+        """バージョン情報"""
+        return jsonify(
+            {
+                "name": self.name,
+                "version": self.version,
+                "description": self.description,
+            }
+        )
+
+    def metrics(self):
+        """Prometheusメトリクスエンドポイント"""
+        try:
+            # URLパラメータから銘柄リストを取得（配列対応）
+            symbols_list = request.args.getlist("symbols")
+
+            if not symbols_list:
+                # 単一パラメータの場合（カンマ区切り）
+                symbols_param = request.args.get("symbols", "")
+                if symbols_param:
+                    symbols = [
+                        s.strip().upper() for s in symbols_param.split(",") if s.strip()
+                    ]
+                else:
+                    # デフォルト銘柄
+                    symbols = ["AAPL", "GOOGL", "MSFT", "TSLA"]
+            else:
+                # 配列パラメータの場合
+                symbols = [s.strip().upper() for s in symbols_list if s.strip()]
+
+            if not symbols:
+                logger.warning("No symbols provided for metrics collection")
+                return (
+                    generate_latest(),
+                    200,
+                    {"Content-Type": "text/plain; charset=utf-8"},
+                )
+
+            logger.info(f"Fetching metrics for symbols: {symbols}")
+
+            # 株価データ取得
+            stock_data = self.fetcher.get_stock_data(symbols)
+
+            # メトリクス更新
+            self.update_prometheus_metrics(stock_data)
+
+            return generate_latest(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+        except Exception as e:
+            logger.error(f"Error in metrics endpoint: {e}")
+            return generate_latest(), 500, {"Content-Type": "text/plain; charset=utf-8"}
+
+    def get_stocks(self):
+        """株価データAPI（デバッグ用）"""
+        # 配列パラメータ対応
+        symbols_list = request.args.getlist("symbols")
+
+        if not symbols_list:
+            # 単一パラメータの場合（カンマ区切り）
+            symbols_param = request.args.get("symbols", "AAPL,GOOGL")
+            symbols = [s.strip().upper() for s in symbols_param.split(",") if s.strip()]
+        else:
+            # 配列パラメータの場合
+            symbols = [s.strip().upper() for s in symbols_list if s.strip()]
+
+        stock_data = self.fetcher.get_stock_data(symbols)
+
+        return jsonify(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "symbols": symbols,
+                "data": stock_data,
+            }
+        )
 
 
 # アプリケーション起動時に情報を取得
@@ -139,148 +278,33 @@ stock_last_updated = Gauge(
 )
 
 # StockDataFetcherは stock_fetcher.py に移動しました
-
-# グローバルインスタンス（メトリクスを渡す）
-fetcher = StockDataFetcher(
-    stock_fetch_duration=stock_fetch_duration, stock_fetch_errors=stock_fetch_errors
-)
+# update_prometheus_metricsはMainクラスに移動しました
 
 
-def update_prometheus_metrics(stock_data_dict):
-    """PrometheusメトリクスをStock dataで更新"""
-    for symbol, data in stock_data_dict.items():
-        try:
-            labels = {
-                "symbol": data["symbol"],
-                "name": data["name"],
-                "exchange": data["exchange"],
-            }
-
-            # 価格関連メトリクス
-            stock_price.labels(
-                symbol=data["symbol"],
-                name=data["name"],
-                currency=data["currency"],
-                exchange=data["exchange"],
-            ).set(data["current_price"])
-
-            stock_volume.labels(**labels).set(data["volume"])
-            stock_market_cap.labels(**labels).set(data["market_cap"])
-            stock_pe_ratio.labels(**labels).set(data["pe_ratio"])
-            stock_dividend_yield.labels(**labels).set(
-                data["dividend_yield"] * 100 if data["dividend_yield"] else 0
-            )
-            stock_52week_high.labels(**labels).set(data["fifty_two_week_high"])
-            stock_52week_low.labels(**labels).set(data["fifty_two_week_low"])
-
-            # 前日比関連メトリクス
-            stock_previous_close.labels(**labels).set(data["previous_close"])
-            stock_price_change.labels(**labels).set(data["price_change"])
-            stock_price_change_percent.labels(**labels).set(
-                data["price_change_percent"]
-            )
-
-            # 最終更新時刻
-            stock_last_updated.labels(symbol=data["symbol"]).set(data["timestamp"])
-
-        except Exception as e:
-            logger.error(f"Error updating metrics for {symbol}: {e}")
-            stock_fetch_errors.labels(
-                symbol=symbol, error_type="metric_update_error"
-            ).inc()
-
-
+# Flaskルートの設定
 @app.route("/")
 def health():
-    """ヘルスチェック"""
-    return f"{APP_NAME} v{APP_VERSION} is running!"
+    return main_app.health()
 
 
 @app.route("/health")
 def health_json():
-    """ヘルスチェック（JSON形式）"""
-    return jsonify(
-        {
-            "name": APP_NAME,
-            "version": APP_VERSION,
-            "description": APP_DESCRIPTION,
-            "status": "running",
-            "message": f"{APP_NAME} v{APP_VERSION} is running!",
-        }
-    )
+    return main_app.health_json()
 
 
 @app.route("/version")
 def version():
-    """バージョン情報"""
-    return jsonify(
-        {"name": APP_NAME, "version": APP_VERSION, "description": APP_DESCRIPTION}
-    )
+    return main_app.version_info()
 
 
 @app.route("/metrics")
 def metrics():
-    """Prometheusメトリクスエンドポイント"""
-    try:
-        # URLパラメータから銘柄リストを取得（配列対応）
-        symbols_list = request.args.getlist("symbols")
-
-        if not symbols_list:
-            # 単一パラメータの場合（カンマ区切り）
-            symbols_param = request.args.get("symbols", "")
-            if symbols_param:
-                symbols = [
-                    s.strip().upper() for s in symbols_param.split(",") if s.strip()
-                ]
-            else:
-                # デフォルト銘柄
-                symbols = ["AAPL", "GOOGL", "MSFT", "TSLA"]
-        else:
-            # 配列パラメータの場合
-            symbols = [s.strip().upper() for s in symbols_list if s.strip()]
-
-        if not symbols:
-            logger.warning("No symbols provided for metrics collection")
-            return generate_latest(), 200, {"Content-Type": "text/plain; charset=utf-8"}
-
-        logger.info(f"Fetching metrics for symbols: {symbols}")
-
-        # 株価データ取得
-        stock_data = fetcher.get_stock_data(symbols)
-
-        # メトリクス更新
-        update_prometheus_metrics(stock_data)
-
-        return generate_latest(), 200, {"Content-Type": "text/plain; charset=utf-8"}
-
-    except Exception as e:
-        logger.error(f"Error in metrics endpoint: {e}")
-        return generate_latest(), 500, {"Content-Type": "text/plain; charset=utf-8"}
+    return main_app.metrics()
 
 
 @app.route("/api/stocks")
 def get_stocks():
-    """株価データAPI（デバッグ用）"""
-    # 配列パラメータ対応
-    symbols_list = request.args.getlist("symbols")
-
-    if not symbols_list:
-        # 単一パラメータの場合（カンマ区切り）
-        symbols_param = request.args.get("symbols", "AAPL,GOOGL")
-        symbols = [s.strip().upper() for s in symbols_param.split(",") if s.strip()]
-    else:
-        # 配列パラメータの場合
-        symbols = [s.strip().upper() for s in symbols_list if s.strip()]
-
-    stock_data = fetcher.get_stock_data(symbols)
-
-    return jsonify(
-        {
-            "timestamp": datetime.now().isoformat(),
-            "symbols": symbols,
-            "data": stock_data,
-        }
-    )
+    return main_app.get_stocks()
 
 
 if __name__ == "__main__":
