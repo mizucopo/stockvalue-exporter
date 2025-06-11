@@ -1,4 +1,3 @@
 FROM mizucopo/stockvalue-exporter:latest
 
-# 開発用ライブラリをインストール
 RUN uv sync --dev
