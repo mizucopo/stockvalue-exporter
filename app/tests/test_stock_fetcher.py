@@ -341,3 +341,57 @@ class TestStockDataFetcher:
             assert forex_data["pe_ratio"] == 0
             assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
+
+    def test_is_index_true(self):
+        """指数の判定（True）をテストする."""
+        fetcher = StockDataFetcher()
+        
+        assert fetcher._is_index("^GSPC") is True
+        assert fetcher._is_index("^NDX") is True
+        assert fetcher._is_index("^N225") is True
+        assert fetcher._is_index("998405.T") is True
+
+    def test_is_index_false(self):
+        """指数の判定（False）をテストする."""
+        fetcher = StockDataFetcher()
+        
+        assert fetcher._is_index("AAPL") is False
+        assert fetcher._is_index("GOOGL") is False
+        assert fetcher._is_index("USDJPY=X") is False
+        assert fetcher._is_index("BRK-B") is False
+        assert fetcher._is_index("5255.T") is False  # 通常の日本株
+
+    @patch("stock_fetcher.yf")
+    def test_get_stock_data_index(self, mock_yf):
+        """指数のデータ取得をテストする."""
+        fetcher = StockDataFetcher()
+
+        # yfinanceのモックを設定（指数用）
+        mock_ticker = Mock()
+        mock_info = {
+            "symbol": "^GSPC",
+            "shortName": "S&P 500",
+            "regularMarketPrice": 6022.24,
+            "regularMarketPreviousClose": 6038.81,
+            "fiftyTwoWeekHigh": 6147.43,
+            "fiftyTwoWeekLow": 4835.04,
+            "volume": 2978585000,
+        }
+        mock_ticker.info = mock_info
+        mock_yf.Ticker.return_value = mock_ticker
+
+        with patch("time.time", return_value=1638360000):
+            result = fetcher.get_stock_data(["^GSPC"])
+
+            assert "^GSPC" in result
+            index_data = result["^GSPC"]
+            assert index_data["symbol"] == "^GSPC"
+            assert index_data["name"] == "S&P 500"
+            assert index_data["current_price"] == 6022.24
+            assert index_data["currency"] == "USD"
+            assert index_data["exchange"] == "INDEX"
+            assert index_data["volume"] == 2978585000
+            # 指数特有の値（株式では使用される値）
+            assert index_data["market_cap"] == 0
+            assert index_data["pe_ratio"] == 0
+            assert index_data["dividend_yield"] == 0

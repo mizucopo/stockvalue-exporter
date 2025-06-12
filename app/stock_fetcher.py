@@ -41,6 +41,24 @@ class StockDataFetcher:
         """
         return symbol.endswith("=X")
 
+    def _is_index(self, symbol: str) -> bool:
+        """シンボルが株価指数かどうかを判定する.
+        
+        Args:
+            symbol: 判定するシンボル
+            
+        Returns:
+            指数ならTrue、そうでなければFalse
+        """
+        # ^で始まる指数（S&P500, NASDAQ100, 日経平均など）
+        if symbol.startswith("^"):
+            return True
+        # 特定の日本の指数シンボル（TOPIX等）
+        known_japanese_indices = ["998405.T"]
+        if symbol in known_japanese_indices:
+            return True
+        return False
+
     def get_stock_data(self, symbols: list[str]) -> dict[str, Any]:
         """指定された銘柄の株価データまたは為替レートデータを取得する.
 
@@ -83,22 +101,39 @@ class StockDataFetcher:
                     (price_change / previous_close * 100) if previous_close else 0
                 )
 
-                # 為替ペアか株式かによってデータ構造を調整
+                # シンボルタイプによってデータ構造を調整
                 is_forex = self._is_forex_pair(symbol)
+                is_index = self._is_index(symbol)
+                
+                # 通貨の設定
+                if symbol == "USDJPY=X":
+                    currency = "JPY"
+                elif symbol in ["^N225", "998405.T"]:  # 日本の指数
+                    currency = "JPY"
+                else:
+                    currency = info.get("currency", "USD")
+                
+                # 取引所の設定
+                if is_forex:
+                    exchange = "FX"
+                elif is_index:
+                    exchange = "INDEX"
+                else:
+                    exchange = info.get("exchange", "Unknown")
 
                 stock_data = {
                     "symbol": symbol,
                     "name": info.get("longName", info.get("shortName", symbol)),
-                    "currency": "JPY" if symbol == "USDJPY=X" else info.get("currency", "USD"),
-                    "exchange": info.get("exchange", "FX" if is_forex else "Unknown"),
+                    "currency": currency,
+                    "exchange": exchange,
                     "current_price": current_price,
                     "previous_close": previous_close,
                     "price_change": price_change,
                     "price_change_percent": price_change_percent,
-                    "volume": info.get("volume", info.get("regularMarketVolume", 0)) if not is_forex else 0,
-                    "market_cap": 0 if is_forex else info.get("marketCap", 0),
-                    "pe_ratio": 0 if is_forex else info.get("trailingPE", 0),
-                    "dividend_yield": 0 if is_forex else info.get("dividendYield", 0),
+                    "volume": 0 if is_forex else info.get("volume", info.get("regularMarketVolume", 0)),
+                    "market_cap": 0 if (is_forex or is_index) else info.get("marketCap", 0),
+                    "pe_ratio": 0 if (is_forex or is_index) else info.get("trailingPE", 0),
+                    "dividend_yield": 0 if (is_forex or is_index) else info.get("dividendYield", 0),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh", 0),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow", 0),
                     "timestamp": time.time(),
@@ -127,21 +162,39 @@ class StockDataFetcher:
                         symbol=symbol, error_type=type(e).__name__
                     ).inc()
 
-                # エラー時のデフォルト値（為替ペアか株式かによって調整）
+                # エラー時のデフォルト値（シンボルタイプによって調整）
                 is_forex_error = self._is_forex_pair(symbol)
+                is_index_error = self._is_index(symbol)
+                
+                # エラー時の通貨設定
+                if symbol == "USDJPY=X":
+                    error_currency = "JPY"
+                elif symbol in ["^N225", "998405.T"]:
+                    error_currency = "JPY"
+                else:
+                    error_currency = "USD"
+                
+                # エラー時の取引所設定
+                if is_forex_error:
+                    error_exchange = "FX"
+                elif is_index_error:
+                    error_exchange = "INDEX"
+                else:
+                    error_exchange = "Unknown"
+                
                 results[symbol] = {
                     "symbol": symbol,
                     "name": symbol,
-                    "currency": "JPY" if symbol == "USDJPY=X" else "USD",
-                    "exchange": "FX" if is_forex_error else "Unknown",
+                    "currency": error_currency,
+                    "exchange": error_exchange,
                     "current_price": 0,
                     "previous_close": 0,
                     "price_change": 0,
                     "price_change_percent": 0,
                     "volume": 0 if is_forex_error else 0,
-                    "market_cap": 0 if is_forex_error else 0,
-                    "pe_ratio": 0 if is_forex_error else 0,
-                    "dividend_yield": 0 if is_forex_error else 0,
+                    "market_cap": 0 if (is_forex_error or is_index_error) else 0,
+                    "pe_ratio": 0 if (is_forex_error or is_index_error) else 0,
+                    "dividend_yield": 0 if (is_forex_error or is_index_error) else 0,
                     "fifty_two_week_high": 0,
                     "fifty_two_week_low": 0,
                     "timestamp": time.time(),

@@ -120,6 +120,55 @@ class MetricsFactory:
                 "labels": ["symbol"],
                 "key": "forex_last_updated",
             },
+            # 株価指数用メトリクス
+            {
+                "name": "index_value_current",
+                "description": "Current index value",
+                "labels": ["symbol", "name", "currency", "exchange"],
+                "key": "index_value",
+            },
+            {
+                "name": "index_volume_current",
+                "description": "Current index volume",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_volume",
+            },
+            {
+                "name": "index_previous_close",
+                "description": "Previous day closing value",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_previous_close",
+            },
+            {
+                "name": "index_value_change",
+                "description": "Value change from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_value_change",
+            },
+            {
+                "name": "index_value_change_percent",
+                "description": "Value change percentage from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_value_change_percent",
+            },
+            {
+                "name": "index_52week_high",
+                "description": "52 week high value",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_52week_high",
+            },
+            {
+                "name": "index_52week_low",
+                "description": "52 week low value",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "index_52week_low",
+            },
+            {
+                "name": "index_last_updated_timestamp",
+                "description": "Last updated timestamp for index",
+                "labels": ["symbol"],
+                "key": "index_last_updated",
+            },
         ],
         "counters": [
             {
@@ -133,6 +182,12 @@ class MetricsFactory:
                 "description": "Total forex fetch errors",
                 "labels": ["symbol", "error_type"],
                 "key": "forex_fetch_errors",
+            },
+            {
+                "name": "index_fetch_errors_total",
+                "description": "Total index fetch errors",
+                "labels": ["symbol", "error_type"],
+                "key": "index_fetch_errors",
             }
         ],
         "histograms": [
@@ -147,6 +202,12 @@ class MetricsFactory:
                 "description": "Time spent fetching forex data",
                 "labels": ["symbol"],
                 "key": "forex_fetch_duration",
+            },
+            {
+                "name": "index_fetch_duration_seconds",
+                "description": "Time spent fetching index data",
+                "labels": ["symbol"],
+                "key": "index_fetch_duration",
             }
         ],
     }
