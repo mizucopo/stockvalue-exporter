@@ -342,6 +342,49 @@ class MetricsFactory:
         """
         return self.metrics
 
+    def clear_all_metrics(self) -> None:
+        """全てのメトリクスのデータをクリアする（レジストリからは削除しない）.
+        
+        注意: この操作により、全てのシンボルのメトリクスデータが削除されます。
+        メトリクス自体はレジストリに残ります。
+        """
+        for metric in self.metrics.values():
+            try:
+                metric.clear()
+            except Exception:
+                # クリアに失敗した場合は無視
+                pass
+
+    def unregister_all_metrics(self) -> None:
+        """全てのメトリクスをレジストリから完全に削除する.
+        
+        注意: この操作により、メトリクスがレジストリから完全に削除されます。
+        再利用するには新しいMetricsFactoryインスタンスを作成する必要があります。
+        """
+        for metric in self.metrics.values():
+            try:
+                self.registry.unregister(metric)
+            except KeyError:
+                # メトリクスが既に削除されている場合は無視
+                pass
+            except Exception:
+                # その他のエラーは無視
+                pass
+        
+        # メトリクス辞書をクリア
+        self.metrics.clear()
+
+    def recreate_metrics(self) -> None:
+        """全てのメトリクスを再作成する.
+        
+        既存のメトリクスをレジストリから削除してから、新しいメトリクスを作成します。
+        """
+        # 既存のメトリクスを削除
+        self.unregister_all_metrics()
+        
+        # 新しいメトリクスを作成
+        self._create_metrics()
+
     @classmethod
     def create_default(cls, registry: CollectorRegistry | None = None) -> "MetricsFactory":
         """デフォルト設定でMetricsFactoryインスタンスを作成する.

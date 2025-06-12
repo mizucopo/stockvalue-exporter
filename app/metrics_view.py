@@ -305,10 +305,25 @@ class MetricsView(BaseView):
             Prometheusメトリクスデータ、ステータスコード、ヘッダーのタプル
         """
         try:
+            from flask import request
+            from config import config
+            
             # URLパラメータから銘柄リストを取得
             symbols = self._parse_symbols_parameter()
+            
+            # メトリクスクリアオプションを確認（URLパラメータまたは設定）
+            url_clear = request.args.get('clear', 'false').lower() in ['true', '1', 'yes']
+            only_requested = request.args.get('only_requested', 'false').lower() in ['true', '1', 'yes']
+            auto_clear = config.AUTO_CLEAR_METRICS
+            clear_metrics = url_clear or auto_clear or only_requested
+            
+            logger.info(f"Fetching metrics for symbols: {symbols}, clear_metrics: {clear_metrics} (url: {url_clear}, auto: {auto_clear}, only_requested: {only_requested})")
 
-            logger.info(f"Fetching metrics for symbols: {symbols}")
+            # メトリクスクリアが要求された場合、既存メトリクスをクリア
+            if clear_metrics:
+                from main import metrics_factory
+                metrics_factory.clear_all_metrics()
+                logger.info("Cleared all existing metrics before fetching new data")
 
             # 株価データまたは為替レートデータ取得
             stock_data = self.app.fetcher.get_stock_data(symbols)

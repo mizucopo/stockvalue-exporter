@@ -33,6 +33,10 @@ class Config:
 
         # キャッシュ設定
         self.CACHE_MAX_SIZE = int(os.getenv("CACHE_MAX_SIZE", "100"))
+        
+        # メトリクス管理設定
+        self.AUTO_CLEAR_METRICS = os.getenv("AUTO_CLEAR_METRICS", "false").lower() == "true"
+        self.METRICS_TTL_SECONDS = int(os.getenv("METRICS_TTL_SECONDS", "3600"))  # 1時間
 
     def _parse_symbols_env(self, symbols_str: str) -> list[str]:
         """環境変数からシンボルリストを解析する.

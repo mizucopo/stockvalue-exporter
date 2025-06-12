@@ -250,3 +250,128 @@ class TestMetricsView:
         from base_view import BaseView
 
         assert issubclass(MetricsView, BaseView)
+
+    def test_get_method_with_clear_parameter(self, app, isolated_registry):
+        """clearパラメータ付きでのメトリクス取得をテストする."""
+        with app.test_request_context('/?symbols=AAPL&clear=true'):
+            with patch('config.config') as mock_config:
+                mock_config.AUTO_CLEAR_METRICS = False
+                
+                # MockアプリケーションにfetcherAttributeを追加
+                mock_app = Mock()
+                mock_app.fetcher.get_stock_data.return_value = {
+                    "AAPL": {
+                        "symbol": "AAPL",
+                        "name": "Apple Inc.",
+                        "current_price": 150.0,
+                        "currency": "USD",
+                        "exchange": "NASDAQ",
+                        "volume": 1000000,
+                        "market_cap": 2500000000000,
+                        "pe_ratio": 25.5,
+                        "dividend_yield": 0.005,
+                        "fifty_two_week_high": 180.0,
+                        "fifty_two_week_low": 120.0,
+                        "previous_close": 148.0,
+                        "price_change": 2.0,
+                        "price_change_percent": 1.35,
+                        "timestamp": 1638360000,
+                    }
+                }
+                
+                with patch('main.metrics_factory') as mock_metrics_factory:
+                    mock_metrics_factory.clear_all_metrics = Mock()
+                    
+                    view = MetricsView()
+                    view.app = mock_app
+                    
+                    response, status_code, headers = view.get()
+                    
+                    # メトリクスクリアが呼ばれたことを確認
+                    mock_metrics_factory.clear_all_metrics.assert_called_once()
+                    
+                    assert status_code == 200
+                    assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+    def test_get_method_with_auto_clear_config(self, app, isolated_registry):
+        """AUTO_CLEAR_METRICS設定でのメトリクス取得をテストする."""
+        with app.test_request_context('/?symbols=AAPL'):
+            with patch('config.config') as mock_config:
+                mock_config.AUTO_CLEAR_METRICS = True  # 自動クリア有効
+                
+                # MockアプリケーションにfetcherAttributeを追加
+                mock_app = Mock()
+                mock_app.fetcher.get_stock_data.return_value = {
+                    "AAPL": {
+                        "symbol": "AAPL",
+                        "name": "Apple Inc.",
+                        "current_price": 150.0,
+                        "currency": "USD",
+                        "exchange": "NASDAQ",
+                        "volume": 1000000,
+                        "market_cap": 2500000000000,
+                        "pe_ratio": 25.5,
+                        "dividend_yield": 0.005,
+                        "fifty_two_week_high": 180.0,
+                        "fifty_two_week_low": 120.0,
+                        "previous_close": 148.0,
+                        "price_change": 2.0,
+                        "price_change_percent": 1.35,
+                        "timestamp": 1638360000,
+                    }
+                }
+                
+                with patch('main.metrics_factory') as mock_metrics_factory:
+                        mock_metrics_factory.clear_all_metrics = Mock()
+                        
+                        view = MetricsView()
+                        view.app = mock_app
+                        
+                        response, status_code, headers = view.get()
+                        
+                        # 自動クリアが呼ばれたことを確認
+                        mock_metrics_factory.clear_all_metrics.assert_called_once()
+                        
+                        assert status_code == 200
+                        assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+    def test_get_method_without_clear(self, app, isolated_registry):
+        """クリアパラメータなしでのメトリクス取得をテストする."""
+        with app.test_request_context('/?symbols=AAPL'):
+            with patch('config.config.AUTO_CLEAR_METRICS', False):  # 自動クリア無効
+                
+                # MockアプリケーションにfetcherAttributeを追加
+                mock_app = Mock()
+                mock_app.fetcher.get_stock_data.return_value = {
+                    "AAPL": {
+                        "symbol": "AAPL",
+                        "name": "Apple Inc.",
+                        "current_price": 150.0,
+                        "currency": "USD",
+                        "exchange": "NASDAQ",
+                        "volume": 1000000,
+                        "market_cap": 2500000000000,
+                        "pe_ratio": 25.5,
+                        "dividend_yield": 0.005,
+                        "fifty_two_week_high": 180.0,
+                        "fifty_two_week_low": 120.0,
+                        "previous_close": 148.0,
+                        "price_change": 2.0,
+                        "price_change_percent": 1.35,
+                        "timestamp": 1638360000,
+                    }
+                }
+                
+                with patch('main.metrics_factory') as mock_metrics_factory:
+                        mock_metrics_factory.clear_all_metrics = Mock()
+                        
+                        view = MetricsView()
+                        view.app = mock_app
+                        
+                        response, status_code, headers = view.get()
+                        
+                        # メトリクスクリアが呼ばれていないことを確認
+                        mock_metrics_factory.clear_all_metrics.assert_not_called()
+                        
+                        assert status_code == 200
+                        assert headers["Content-Type"] == "text/plain; charset=utf-8"
