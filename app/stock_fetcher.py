@@ -59,14 +59,31 @@ class StockDataFetcher:
             return True
         return False
 
+    def _is_crypto(self, symbol: str) -> bool:
+        """シンボルが暗号通貨かどうかを判定する.
+        
+        Args:
+            symbol: 判定するシンボル
+            
+        Returns:
+            暗号通貨ならTrue、そうでなければFalse
+        """
+        # 主要な暗号通貨シンボル
+        known_cryptocurrencies = [
+            "BTC-USD", "ETH-USD", "ADA-USD", "XRP-USD", "SOL-USD",
+            "DOGE-USD", "DOT-USD", "MATIC-USD", "LTC-USD", "BCH-USD",
+            "LINK-USD", "XLM-USD", "ALGO-USD", "ATOM-USD", "AVAX-USD"
+        ]
+        return symbol in known_cryptocurrencies
+
     def get_stock_data(self, symbols: list[str]) -> dict[str, Any]:
-        """指定された銘柄の株価データまたは為替レートデータを取得する.
+        """指定された銘柄の株価データ、為替レートデータ、指数データ、または暗号通貨データを取得する.
 
         Args:
-            symbols: 取得する銘柄シンボルまたは為替ペアのリスト
+            symbols: 取得する銘柄シンボル、為替ペア、指数、または暗号通貨のリスト
 
         Returns:
-            銘柄別の株価データまたは為替レートデータ辞書
+            銘柄別の株価データ、為替レートデータ、指数データ、または暗号通貨データ辞書
         """
         results = {}
 
@@ -104,6 +121,7 @@ class StockDataFetcher:
                 # シンボルタイプによってデータ構造を調整
                 is_forex = self._is_forex_pair(symbol)
                 is_index = self._is_index(symbol)
+                is_crypto = self._is_crypto(symbol)
                 
                 # 通貨の設定
                 if symbol == "USDJPY=X":
@@ -118,6 +136,8 @@ class StockDataFetcher:
                     exchange = "FX"
                 elif is_index:
                     exchange = "INDEX"
+                elif is_crypto:
+                    exchange = "CRYPTO"
                 else:
                     exchange = info.get("exchange", "Unknown")
 
@@ -132,8 +152,8 @@ class StockDataFetcher:
                     "price_change_percent": price_change_percent,
                     "volume": 0 if is_forex else info.get("volume", info.get("regularMarketVolume", 0)),
                     "market_cap": 0 if (is_forex or is_index) else info.get("marketCap", 0),
-                    "pe_ratio": 0 if (is_forex or is_index) else info.get("trailingPE", 0),
-                    "dividend_yield": 0 if (is_forex or is_index) else info.get("dividendYield", 0),
+                    "pe_ratio": 0 if (is_forex or is_index or is_crypto) else info.get("trailingPE", 0),
+                    "dividend_yield": 0 if (is_forex or is_index or is_crypto) else info.get("dividendYield", 0),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh", 0),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow", 0),
                     "timestamp": time.time(),
@@ -165,6 +185,7 @@ class StockDataFetcher:
                 # エラー時のデフォルト値（シンボルタイプによって調整）
                 is_forex_error = self._is_forex_pair(symbol)
                 is_index_error = self._is_index(symbol)
+                is_crypto_error = self._is_crypto(symbol)
                 
                 # エラー時の通貨設定
                 if symbol == "USDJPY=X":
@@ -179,6 +200,8 @@ class StockDataFetcher:
                     error_exchange = "FX"
                 elif is_index_error:
                     error_exchange = "INDEX"
+                elif is_crypto_error:
+                    error_exchange = "CRYPTO"
                 else:
                     error_exchange = "Unknown"
                 
@@ -193,8 +216,8 @@ class StockDataFetcher:
                     "price_change_percent": 0,
                     "volume": 0 if is_forex_error else 0,
                     "market_cap": 0 if (is_forex_error or is_index_error) else 0,
-                    "pe_ratio": 0 if (is_forex_error or is_index_error) else 0,
-                    "dividend_yield": 0 if (is_forex_error or is_index_error) else 0,
+                    "pe_ratio": 0 if (is_forex_error or is_index_error or is_crypto_error) else 0,
+                    "dividend_yield": 0 if (is_forex_error or is_index_error or is_crypto_error) else 0,
                     "fifty_two_week_high": 0,
                     "fifty_two_week_low": 0,
                     "timestamp": time.time(),

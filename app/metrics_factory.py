@@ -169,6 +169,61 @@ class MetricsFactory:
                 "labels": ["symbol"],
                 "key": "index_last_updated",
             },
+            # 暗号通貨用メトリクス
+            {
+                "name": "crypto_price_current",
+                "description": "Current cryptocurrency price",
+                "labels": ["symbol", "name", "currency", "exchange"],
+                "key": "crypto_price",
+            },
+            {
+                "name": "crypto_volume_current",
+                "description": "Current cryptocurrency volume",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_volume",
+            },
+            {
+                "name": "crypto_market_cap",
+                "description": "Cryptocurrency market capitalization",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_market_cap",
+            },
+            {
+                "name": "crypto_previous_close",
+                "description": "Previous day closing price",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_previous_close",
+            },
+            {
+                "name": "crypto_price_change",
+                "description": "Price change from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_price_change",
+            },
+            {
+                "name": "crypto_price_change_percent",
+                "description": "Price change percentage from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_price_change_percent",
+            },
+            {
+                "name": "crypto_52week_high",
+                "description": "52 week high price",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_52week_high",
+            },
+            {
+                "name": "crypto_52week_low",
+                "description": "52 week low price",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "crypto_52week_low",
+            },
+            {
+                "name": "crypto_last_updated_timestamp",
+                "description": "Last updated timestamp for cryptocurrency",
+                "labels": ["symbol"],
+                "key": "crypto_last_updated",
+            },
         ],
         "counters": [
             {
@@ -188,6 +243,12 @@ class MetricsFactory:
                 "description": "Total index fetch errors",
                 "labels": ["symbol", "error_type"],
                 "key": "index_fetch_errors",
+            },
+            {
+                "name": "crypto_fetch_errors_total",
+                "description": "Total cryptocurrency fetch errors",
+                "labels": ["symbol", "error_type"],
+                "key": "crypto_fetch_errors",
             }
         ],
         "histograms": [
@@ -208,6 +269,12 @@ class MetricsFactory:
                 "description": "Time spent fetching index data",
                 "labels": ["symbol"],
                 "key": "index_fetch_duration",
+            },
+            {
+                "name": "crypto_fetch_duration_seconds",
+                "description": "Time spent fetching cryptocurrency data",
+                "labels": ["symbol"],
+                "key": "crypto_fetch_duration",
             }
         ],
     }

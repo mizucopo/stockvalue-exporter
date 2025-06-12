@@ -395,3 +395,58 @@ class TestStockDataFetcher:
             assert index_data["market_cap"] == 0
             assert index_data["pe_ratio"] == 0
             assert index_data["dividend_yield"] == 0
+
+    def test_is_crypto_true(self):
+        """暗号通貨の判定（True）をテストする."""
+        fetcher = StockDataFetcher()
+        
+        assert fetcher._is_crypto("BTC-USD") is True
+        assert fetcher._is_crypto("ETH-USD") is True
+        assert fetcher._is_crypto("ADA-USD") is True
+
+    def test_is_crypto_false(self):
+        """暗号通貨の判定（False）をテストする."""
+        fetcher = StockDataFetcher()
+        
+        assert fetcher._is_crypto("AAPL") is False
+        assert fetcher._is_crypto("GOOGL") is False
+        assert fetcher._is_crypto("USDJPY=X") is False
+        assert fetcher._is_crypto("^GSPC") is False
+        assert fetcher._is_crypto("BRK-B") is False  # 通常の株式
+
+    @patch("stock_fetcher.yf")
+    def test_get_stock_data_crypto(self, mock_yf):
+        """暗号通貨のデータ取得をテストする."""
+        fetcher = StockDataFetcher()
+
+        # yfinanceのモックを設定（暗号通貨用）
+        mock_ticker = Mock()
+        mock_info = {
+            "symbol": "BTC-USD",
+            "shortName": "Bitcoin USD",
+            "regularMarketPrice": 107918.305,
+            "regularMarketPreviousClose": 108687.66,
+            "fiftyTwoWeekHigh": 111970.17,
+            "fiftyTwoWeekLow": 49121.24,
+            "volume": 53235281920,
+            "marketCap": 2145176125440,
+            "exchange": "CCC",
+        }
+        mock_ticker.info = mock_info
+        mock_yf.Ticker.return_value = mock_ticker
+
+        with patch("time.time", return_value=1638360000):
+            result = fetcher.get_stock_data(["BTC-USD"])
+
+            assert "BTC-USD" in result
+            crypto_data = result["BTC-USD"]
+            assert crypto_data["symbol"] == "BTC-USD"
+            assert crypto_data["name"] == "Bitcoin USD"
+            assert crypto_data["current_price"] == 107918.305
+            assert crypto_data["currency"] == "USD"
+            assert crypto_data["exchange"] == "CRYPTO"
+            assert crypto_data["volume"] == 53235281920
+            assert crypto_data["market_cap"] == 2145176125440
+            # 暗号通貨特有の値（PERと配当利回りはなし）
+            assert crypto_data["pe_ratio"] == 0
+            assert crypto_data["dividend_yield"] == 0

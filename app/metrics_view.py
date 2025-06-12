@@ -42,6 +42,23 @@ class MetricsView(BaseView):
             return True
         return False
 
+    def _is_crypto(self, symbol: str) -> bool:
+        """シンボルが暗号通貨かどうかを判定する.
+        
+        Args:
+            symbol: 判定するシンボル
+            
+        Returns:
+            暗号通貨ならTrue、そうでなければFalse
+        """
+        # 主要な暗号通貨シンボル
+        known_cryptocurrencies = [
+            "BTC-USD", "ETH-USD", "ADA-USD", "XRP-USD", "SOL-USD",
+            "DOGE-USD", "DOT-USD", "MATIC-USD", "LTC-USD", "BCH-USD",
+            "LINK-USD", "XLM-USD", "ALGO-USD", "ATOM-USD", "AVAX-USD"
+        ]
+        return symbol in known_cryptocurrencies
+
     def _create_metric_labels(self, data: dict[str, Any]) -> dict[str, str]:
         """メトリクス用の基本ラベルを作成する.
         
@@ -77,17 +94,20 @@ class MetricsView(BaseView):
         """価格関連メトリクスを更新する.
         
         Args:
-            data: 株価データまたは為替レートデータ
+            data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
         price_labels = self._create_price_labels(data)
         is_forex = self._is_forex_pair(data["symbol"])
         is_index = self._is_index(data["symbol"])
+        is_crypto = self._is_crypto(data["symbol"])
 
         if is_forex:
             metric_key = "forex_rate"
         elif is_index:
             metric_key = "index_value"
+        elif is_crypto:
+            metric_key = "crypto_price"
         else:
             metric_key = "stock_price"
             
@@ -99,11 +119,12 @@ class MetricsView(BaseView):
         """出来高・市場関連メトリクスを更新する.
         
         Args:
-            data: 株価データまたは指数データ
+            data: 株価データ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
         is_forex = self._is_forex_pair(data["symbol"])
         is_index = self._is_index(data["symbol"])
+        is_crypto = self._is_crypto(data["symbol"])
         
         # 為替ペアの場合は何も更新しない
         if is_forex:
@@ -116,6 +137,15 @@ class MetricsView(BaseView):
             # 指数の場合
             metrics_factory.get_metric("index_volume").labels(**labels).set(
                 data["volume"]
+            )
+        elif is_crypto:
+            # 暗号通貨の場合
+            metrics_factory.get_metric("crypto_volume").labels(**labels).set(
+                data["volume"]
+            )
+            # 暗号通貨の時価総額
+            metrics_factory.get_metric("crypto_market_cap").labels(**labels).set(
+                data["market_cap"]
             )
         else:
             # 株式の場合
@@ -140,12 +170,13 @@ class MetricsView(BaseView):
         """52週レンジ関連メトリクスを更新する.
         
         Args:
-            data: 株価データまたは為替レートデータ
+            data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
         is_forex = self._is_forex_pair(data["symbol"])
         is_index = self._is_index(data["symbol"])
+        is_crypto = self._is_crypto(data["symbol"])
 
         if is_forex:
             high_key = "forex_52week_high"
@@ -153,6 +184,9 @@ class MetricsView(BaseView):
         elif is_index:
             high_key = "index_52week_high"
             low_key = "index_52week_low"
+        elif is_crypto:
+            high_key = "crypto_52week_high"
+            low_key = "crypto_52week_low"
         else:
             high_key = "stock_52week_high"
             low_key = "stock_52week_low"
@@ -168,12 +202,13 @@ class MetricsView(BaseView):
         """価格変動関連メトリクスを更新する.
         
         Args:
-            data: 株価データまたは為替レートデータ
+            data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
         is_forex = self._is_forex_pair(data["symbol"])
         is_index = self._is_index(data["symbol"])
+        is_crypto = self._is_crypto(data["symbol"])
 
         if is_forex:
             close_key = "forex_previous_close"
@@ -183,6 +218,10 @@ class MetricsView(BaseView):
             close_key = "index_previous_close"
             change_key = "index_value_change"
             change_percent_key = "index_value_change_percent"
+        elif is_crypto:
+            close_key = "crypto_previous_close"
+            change_key = "crypto_price_change"
+            change_percent_key = "crypto_price_change_percent"
         else:
             close_key = "stock_previous_close"
             change_key = "stock_price_change"
@@ -202,16 +241,19 @@ class MetricsView(BaseView):
         """タイムスタンプ関連メトリクスを更新する.
         
         Args:
-            data: 株価データまたは為替レートデータ
+            data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
         is_forex = self._is_forex_pair(data["symbol"])
         is_index = self._is_index(data["symbol"])
+        is_crypto = self._is_crypto(data["symbol"])
         
         if is_forex:
             timestamp_key = "forex_last_updated"
         elif is_index:
             timestamp_key = "index_last_updated"
+        elif is_crypto:
+            timestamp_key = "crypto_last_updated"
         else:
             timestamp_key = "stock_last_updated"
 
@@ -220,10 +262,10 @@ class MetricsView(BaseView):
         ).set(data["timestamp"])
 
     def update_prometheus_metrics(self, stock_data_dict: dict[str, Any]) -> None:
-        """PrometheusメトリクスをStock data、Forex data、またはIndex dataで更新する.
+        """PrometheusメトリクスをStock data、Forex data、Index data、またはCrypto dataで更新する.
 
         Args:
-            stock_data_dict: 銘柄別の株価データ、為替レートデータ、または指数データ辞書
+            stock_data_dict: 銘柄別の株価データ、為替レートデータ、指数データ、または暗号通貨データ辞書
         """
         # MetricsFactoryをインポート（循環インポート回避）
         from main import metrics_factory
@@ -241,11 +283,14 @@ class MetricsView(BaseView):
                 logger.error(f"Error updating metrics for {symbol}: {e}")
                 is_forex = self._is_forex_pair(symbol)
                 is_index = self._is_index(symbol)
+                is_crypto = self._is_crypto(symbol)
                 
                 if is_forex:
                     error_key = "forex_fetch_errors"
                 elif is_index:
                     error_key = "index_fetch_errors"
+                elif is_crypto:
+                    error_key = "crypto_fetch_errors"
                 else:
                     error_key = "stock_fetch_errors"
                     
