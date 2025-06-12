@@ -55,9 +55,9 @@ class Config:
             有効な形式の場合True
         """
         import re
-        # 英数字、ピリオド、ハイフンのみを許可
-        # 例: AAPL, 5255.T, BRK-B, BTC-USD
-        pattern = r'^[A-Z0-9.-]+$'
+        # 英数字、ピリオド、ハイフン、イコールを許可
+        # 例: AAPL, 5255.T, BRK-B, BTC-USD, USDJPY=X
+        pattern = r'^[A-Z0-9.=-]+$'
         return bool(re.match(pattern, symbol))
 
     @property

@@ -30,14 +30,25 @@ class StockDataFetcher:
         self.stock_fetch_duration = stock_fetch_duration
         self.stock_fetch_errors = stock_fetch_errors
 
+    def _is_forex_pair(self, symbol: str) -> bool:
+        """シンボルが為替ペアかどうかを判定する.
+        
+        Args:
+            symbol: 判定するシンボル
+            
+        Returns:
+            為替ペアならTrue、そうでなければFalse
+        """
+        return symbol.endswith("=X")
+
     def get_stock_data(self, symbols: list[str]) -> dict[str, Any]:
-        """指定された銘柄の株価データを取得する.
+        """指定された銘柄の株価データまたは為替レートデータを取得する.
 
         Args:
-            symbols: 取得する銘柄シンボルのリスト
+            symbols: 取得する銘柄シンボルまたは為替ペアのリスト
 
         Returns:
-            銘柄別の株価データ辞書
+            銘柄別の株価データまたは為替レートデータ辞書
         """
         results = {}
 
@@ -58,7 +69,7 @@ class StockDataFetcher:
                 if not info:
                     raise ValueError(f"No data found for symbol: {symbol}")
 
-                # 株価データの構造化
+                # 現在価格と前日終値の取得
                 current_price = info.get(
                     "currentPrice", info.get("regularMarketPrice", 0)
                 )
@@ -72,19 +83,22 @@ class StockDataFetcher:
                     (price_change / previous_close * 100) if previous_close else 0
                 )
 
+                # 為替ペアか株式かによってデータ構造を調整
+                is_forex = self._is_forex_pair(symbol)
+
                 stock_data = {
                     "symbol": symbol,
                     "name": info.get("longName", info.get("shortName", symbol)),
-                    "currency": info.get("currency", "USD"),
-                    "exchange": info.get("exchange", "Unknown"),
+                    "currency": "JPY" if symbol == "USDJPY=X" else info.get("currency", "USD"),
+                    "exchange": info.get("exchange", "FX" if is_forex else "Unknown"),
                     "current_price": current_price,
                     "previous_close": previous_close,
                     "price_change": price_change,
                     "price_change_percent": price_change_percent,
-                    "volume": info.get("volume", info.get("regularMarketVolume", 0)),
-                    "market_cap": info.get("marketCap", 0),
-                    "pe_ratio": info.get("trailingPE", 0),
-                    "dividend_yield": info.get("dividendYield", 0),
+                    "volume": info.get("volume", info.get("regularMarketVolume", 0)) if not is_forex else 0,
+                    "market_cap": 0 if is_forex else info.get("marketCap", 0),
+                    "pe_ratio": 0 if is_forex else info.get("trailingPE", 0),
+                    "dividend_yield": 0 if is_forex else info.get("dividendYield", 0),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh", 0),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow", 0),
                     "timestamp": time.time(),
@@ -113,20 +127,21 @@ class StockDataFetcher:
                         symbol=symbol, error_type=type(e).__name__
                     ).inc()
 
-                # エラー時のデフォルト値
+                # エラー時のデフォルト値（為替ペアか株式かによって調整）
+                is_forex_error = self._is_forex_pair(symbol)
                 results[symbol] = {
                     "symbol": symbol,
                     "name": symbol,
-                    "currency": "USD",
-                    "exchange": "Unknown",
+                    "currency": "JPY" if symbol == "USDJPY=X" else "USD",
+                    "exchange": "FX" if is_forex_error else "Unknown",
                     "current_price": 0,
                     "previous_close": 0,
                     "price_change": 0,
                     "price_change_percent": 0,
-                    "volume": 0,
-                    "market_cap": 0,
-                    "pe_ratio": 0,
-                    "dividend_yield": 0,
+                    "volume": 0 if is_forex_error else 0,
+                    "market_cap": 0 if is_forex_error else 0,
+                    "pe_ratio": 0 if is_forex_error else 0,
+                    "dividend_yield": 0 if is_forex_error else 0,
                     "fifty_two_week_high": 0,
                     "fifty_two_week_low": 0,
                     "timestamp": time.time(),

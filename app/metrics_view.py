@@ -13,6 +13,17 @@ logger = logging.getLogger(__name__)
 class MetricsView(BaseView):
     """メトリクス収集用ビュークラス."""
 
+    def _is_forex_pair(self, symbol: str) -> bool:
+        """シンボルが為替ペアかどうかを判定する.
+        
+        Args:
+            symbol: 判定するシンボル
+            
+        Returns:
+            為替ペアならTrue、そうでなければFalse
+        """
+        return symbol.endswith("=X")
+
     def _create_metric_labels(self, data: dict[str, Any]) -> dict[str, str]:
         """メトリクス用の基本ラベルを作成する.
         
@@ -48,21 +59,28 @@ class MetricsView(BaseView):
         """価格関連メトリクスを更新する.
         
         Args:
-            data: 株価データ
+            data: 株価データまたは為替レートデータ
             metrics_factory: メトリクスファクトリー
         """
         price_labels = self._create_price_labels(data)
-        metrics_factory.get_metric("stock_price").labels(**price_labels).set(
+        is_forex = self._is_forex_pair(data["symbol"])
+
+        metric_key = "forex_rate" if is_forex else "stock_price"
+        metrics_factory.get_metric(metric_key).labels(**price_labels).set(
             data["current_price"]
         )
 
     def _update_volume_and_market_metrics(self, data: dict[str, Any], metrics_factory: Any) -> None:
-        """出来高・市場関連メトリクスを更新する.
+        """出来高・市場関連メトリクスを更新する（株式のみ）.
         
         Args:
             data: 株価データ
             metrics_factory: メトリクスファクトリー
         """
+        # 為替ペアの場合は出来高・市場関連メトリクスを更新しない
+        if self._is_forex_pair(data["symbol"]):
+            return
+
         labels = self._create_metric_labels(data)
 
         metrics_factory.get_metric("stock_volume").labels(**labels).set(
@@ -85,15 +103,19 @@ class MetricsView(BaseView):
         """52週レンジ関連メトリクスを更新する.
         
         Args:
-            data: 株価データ
+            data: 株価データまたは為替レートデータ
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
+        is_forex = self._is_forex_pair(data["symbol"])
 
-        metrics_factory.get_metric("stock_52week_high").labels(**labels).set(
+        high_key = "forex_52week_high" if is_forex else "stock_52week_high"
+        low_key = "forex_52week_low" if is_forex else "stock_52week_low"
+
+        metrics_factory.get_metric(high_key).labels(**labels).set(
             data["fifty_two_week_high"]
         )
-        metrics_factory.get_metric("stock_52week_low").labels(**labels).set(
+        metrics_factory.get_metric(low_key).labels(**labels).set(
             data["fifty_two_week_low"]
         )
 
@@ -101,18 +123,23 @@ class MetricsView(BaseView):
         """価格変動関連メトリクスを更新する.
         
         Args:
-            data: 株価データ
+            data: 株価データまたは為替レートデータ
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
+        is_forex = self._is_forex_pair(data["symbol"])
 
-        metrics_factory.get_metric("stock_previous_close").labels(**labels).set(
+        close_key = "forex_previous_close" if is_forex else "stock_previous_close"
+        change_key = "forex_rate_change" if is_forex else "stock_price_change"
+        change_percent_key = "forex_rate_change_percent" if is_forex else "stock_price_change_percent"
+
+        metrics_factory.get_metric(close_key).labels(**labels).set(
             data["previous_close"]
         )
-        metrics_factory.get_metric("stock_price_change").labels(**labels).set(
+        metrics_factory.get_metric(change_key).labels(**labels).set(
             data["price_change"]
         )
-        metrics_factory.get_metric("stock_price_change_percent").labels(**labels).set(
+        metrics_factory.get_metric(change_percent_key).labels(**labels).set(
             data["price_change_percent"]
         )
 
@@ -120,18 +147,21 @@ class MetricsView(BaseView):
         """タイムスタンプ関連メトリクスを更新する.
         
         Args:
-            data: 株価データ
+            data: 株価データまたは為替レートデータ
             metrics_factory: メトリクスファクトリー
         """
-        metrics_factory.get_metric("stock_last_updated").labels(
+        is_forex = self._is_forex_pair(data["symbol"])
+        timestamp_key = "forex_last_updated" if is_forex else "stock_last_updated"
+
+        metrics_factory.get_metric(timestamp_key).labels(
             symbol=data["symbol"]
         ).set(data["timestamp"])
 
     def update_prometheus_metrics(self, stock_data_dict: dict[str, Any]) -> None:
-        """PrometheusメトリクスをStock dataで更新する.
+        """PrometheusメトリクスをStock dataまたはForex dataで更新する.
 
         Args:
-            stock_data_dict: 銘柄別の株価データ辞書
+            stock_data_dict: 銘柄別の株価データまたは為替レートデータ辞書
         """
         # MetricsFactoryをインポート（循環インポート回避）
         from main import metrics_factory
@@ -147,7 +177,9 @@ class MetricsView(BaseView):
 
             except Exception as e:
                 logger.error(f"Error updating metrics for {symbol}: {e}")
-                metrics_factory.get_metric("stock_fetch_errors").labels(
+                is_forex = self._is_forex_pair(symbol)
+                error_key = "forex_fetch_errors" if is_forex else "stock_fetch_errors"
+                metrics_factory.get_metric(error_key).labels(
                     symbol=symbol, error_type="metric_update_error"
                 ).inc()
 
@@ -163,7 +195,7 @@ class MetricsView(BaseView):
 
             logger.info(f"Fetching metrics for symbols: {symbols}")
 
-            # 株価データ取得
+            # 株価データまたは為替レートデータ取得
             stock_data = self.app.fetcher.get_stock_data(symbols)
 
             # メトリクス更新

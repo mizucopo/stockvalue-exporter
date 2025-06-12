@@ -216,3 +216,128 @@ class TestStockDataFetcher:
                     assert "timestamp" in fetcher.cache["AAPL"]
                     assert fetcher.cache["AAPL"]["data"]["symbol"] == "AAPL"
                     assert fetcher.cache["AAPL"]["timestamp"] == 1638360000
+
+    def test_is_forex_pair_true(self):
+        """為替ペアの判定（True）をテストする."""
+        fetcher = StockDataFetcher()
+
+        assert fetcher._is_forex_pair("USDJPY=X") is True
+        assert fetcher._is_forex_pair("EURJPY=X") is True
+        assert fetcher._is_forex_pair("GBPJPY=X") is True
+
+    def test_is_forex_pair_false(self):
+        """為替ペアの判定（False）をテストする."""
+        fetcher = StockDataFetcher()
+
+        assert fetcher._is_forex_pair("AAPL") is False
+        assert fetcher._is_forex_pair("GOOGL") is False
+        assert fetcher._is_forex_pair("BRK-B") is False
+        assert fetcher._is_forex_pair("5255.T") is False
+
+    @patch("stock_fetcher.yf")
+    def test_get_stock_data_forex_pair(self, mock_yf):
+        """為替ペアのデータ取得をテストする."""
+        fetcher = StockDataFetcher()
+
+        # yfinanceのモックを設定（為替レート用）
+        mock_ticker = Mock()
+        mock_info = {
+            "symbol": "USDJPY=X",
+            "shortName": "USD/JPY",
+            "regularMarketPrice": 143.898,
+            "regularMarketPreviousClose": 144.484,
+            "fiftyTwoWeekHigh": 161.942,
+            "fiftyTwoWeekLow": 139.578,
+            "exchange": "CCY",
+        }
+        mock_ticker.info = mock_info
+        mock_yf.Ticker.return_value = mock_ticker
+
+        with patch("time.time", return_value=1638360000):
+            result = fetcher.get_stock_data(["USDJPY=X"])
+
+            assert "USDJPY=X" in result
+            forex_data = result["USDJPY=X"]
+            assert forex_data["symbol"] == "USDJPY=X"
+            assert forex_data["name"] == "USD/JPY"
+            assert forex_data["current_price"] == 143.898
+            assert forex_data["currency"] == "JPY"
+            assert forex_data["exchange"] == "CCY"
+            # 為替ペア特有の値（株式では使用されない値）
+            assert forex_data["market_cap"] == 0
+            assert forex_data["pe_ratio"] == 0
+            assert forex_data["dividend_yield"] == 0
+            assert forex_data["volume"] == 0
+
+    @patch("stock_fetcher.yf")
+    def test_get_stock_data_forex_error(self, mock_yf):
+        """為替ペアのエラー時デフォルト値をテストする."""
+        mock_errors = Mock()
+        fetcher = StockDataFetcher(stock_fetch_errors=mock_errors)
+
+        # yfinanceで例外を発生させる
+        mock_yf.Ticker.side_effect = Exception("Network error")
+
+        with patch("time.time", return_value=1638360000):
+            result = fetcher.get_stock_data(["USDJPY=X"])
+
+            # エラー時のデフォルト値を確認（為替ペア用）
+            assert "USDJPY=X" in result
+            forex_data = result["USDJPY=X"]
+            assert forex_data["symbol"] == "USDJPY=X"
+            assert forex_data["currency"] == "JPY"
+            assert forex_data["exchange"] == "FX"
+            assert forex_data["current_price"] == 0
+            assert forex_data["market_cap"] == 0
+            assert forex_data["pe_ratio"] == 0
+            assert forex_data["dividend_yield"] == 0
+            assert forex_data["volume"] == 0
+
+    @patch("stock_fetcher.yf")
+    def test_get_stock_data_mixed_symbols(self, mock_yf):
+        """株式と為替ペアの混合シンボルをテストする."""
+        fetcher = StockDataFetcher()
+
+        def mock_ticker_side_effect(symbol):
+            mock_ticker = Mock()
+            if symbol == "AAPL":
+                mock_ticker.info = {
+                    "symbol": "AAPL",
+                    "shortName": "Apple Inc.",
+                    "regularMarketPrice": 150.0,
+                    "regularMarketPreviousClose": 148.0,
+                    "marketCap": 2500000000000,
+                    "trailingPE": 25.5,
+                    "dividendYield": 0.005,
+                    "volume": 50000000,
+                }
+            elif symbol == "USDJPY=X":
+                mock_ticker.info = {
+                    "symbol": "USDJPY=X",
+                    "shortName": "USD/JPY",
+                    "regularMarketPrice": 143.898,
+                    "regularMarketPreviousClose": 144.484,
+                    "exchange": "CCY",
+                }
+            return mock_ticker
+
+        mock_yf.Ticker.side_effect = mock_ticker_side_effect
+
+        with patch("time.time", return_value=1638360000):
+            result = fetcher.get_stock_data(["AAPL", "USDJPY=X"])
+
+            # 株式データの確認
+            assert "AAPL" in result
+            stock_data = result["AAPL"]
+            assert stock_data["market_cap"] == 2500000000000
+            assert stock_data["pe_ratio"] == 25.5
+            assert stock_data["dividend_yield"] == 0.005
+            assert stock_data["volume"] == 50000000
+
+            # 為替レートデータの確認
+            assert "USDJPY=X" in result
+            forex_data = result["USDJPY=X"]
+            assert forex_data["market_cap"] == 0
+            assert forex_data["pe_ratio"] == 0
+            assert forex_data["dividend_yield"] == 0
+            assert forex_data["volume"] == 0

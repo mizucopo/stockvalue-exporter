@@ -77,6 +77,49 @@ class MetricsFactory:
                 "labels": ["symbol"],
                 "key": "stock_last_updated",
             },
+            # 為替レート用メトリクス
+            {
+                "name": "forex_rate_current",
+                "description": "Current forex exchange rate",
+                "labels": ["symbol", "name", "currency", "exchange"],
+                "key": "forex_rate",
+            },
+            {
+                "name": "forex_previous_close",
+                "description": "Previous day closing rate",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "forex_previous_close",
+            },
+            {
+                "name": "forex_rate_change",
+                "description": "Rate change from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "forex_rate_change",
+            },
+            {
+                "name": "forex_rate_change_percent",
+                "description": "Rate change percentage from previous close",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "forex_rate_change_percent",
+            },
+            {
+                "name": "forex_52week_high",
+                "description": "52 week high rate",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "forex_52week_high",
+            },
+            {
+                "name": "forex_52week_low",
+                "description": "52 week low rate",
+                "labels": ["symbol", "name", "exchange"],
+                "key": "forex_52week_low",
+            },
+            {
+                "name": "forex_last_updated_timestamp",
+                "description": "Last updated timestamp for forex",
+                "labels": ["symbol"],
+                "key": "forex_last_updated",
+            },
         ],
         "counters": [
             {
@@ -84,6 +127,12 @@ class MetricsFactory:
                 "description": "Total stock fetch errors",
                 "labels": ["symbol", "error_type"],
                 "key": "stock_fetch_errors",
+            },
+            {
+                "name": "forex_fetch_errors_total",
+                "description": "Total forex fetch errors",
+                "labels": ["symbol", "error_type"],
+                "key": "forex_fetch_errors",
             }
         ],
         "histograms": [
@@ -92,6 +141,12 @@ class MetricsFactory:
                 "description": "Time spent fetching stock data",
                 "labels": ["symbol"],
                 "key": "stock_fetch_duration",
+            },
+            {
+                "name": "forex_fetch_duration_seconds",
+                "description": "Time spent fetching forex data",
+                "labels": ["symbol"],
+                "key": "forex_fetch_duration",
             }
         ],
     }
