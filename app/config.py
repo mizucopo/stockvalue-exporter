@@ -45,6 +45,21 @@ class Config:
         """
         return [symbol.strip().upper() for symbol in symbols_str.split(",") if symbol.strip()]
 
+    def _is_valid_symbol_format(self, symbol: str) -> bool:
+        """シンボルの文字形式が有効かチェックする.
+        
+        Args:
+            symbol: チェックするシンボル
+            
+        Returns:
+            有効な形式の場合True
+        """
+        import re
+        # 英数字、ピリオド、ハイフンのみを許可
+        # 例: AAPL, 5255.T, BRK-B, BTC-USD
+        pattern = r'^[A-Z0-9.-]+$'
+        return bool(re.match(pattern, symbol))
+
     @property
     def is_production(self) -> bool:
         """本番環境かどうかを判定する.
@@ -81,8 +96,9 @@ class Config:
             return False
 
         for symbol in symbols:
-            # 基本的な形式チェック（英数字、1-10文字）
-            if not symbol.isalnum() or len(symbol) < 1 or len(symbol) > 10:
+            # 基本的な形式チェック（英数字、ピリオド、ハイフン、1-15文字）
+            # 日本株（5255.T）、海外株（BRK-B）などをサポート
+            if not self._is_valid_symbol_format(symbol) or len(symbol) < 1 or len(symbol) > 15:
                 return False
 
         return True

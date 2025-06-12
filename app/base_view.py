@@ -80,7 +80,7 @@ class BaseView(MethodView):
         if not config.validate_symbols(final_symbols):
             raise ValueError(
                 f"Invalid symbols provided. Max {config.MAX_SYMBOLS_PER_REQUEST} symbols allowed, "
-                f"each must be 1-10 alphanumeric characters. Received: {final_symbols}"
+                f"each must be 1-15 characters (alphanumeric, periods, hyphens). Received: {final_symbols}"
             )
 
         return final_symbols
