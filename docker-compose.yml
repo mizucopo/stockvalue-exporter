@@ -1,0 +1,11 @@
+services:
+  prod:
+    build:
+      dockerfile: ./Dockerfile.prod
+    image: mizucopo/stockvalue-exporter:latest
+    platform: linux/amd64
+  dev:
+    build:
+      dockerfile: ./Dockerfile.dev
+    image: mizucopo/stockvalue-exporter:develop
+    platform: linux/amd64

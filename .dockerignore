@@ -1,0 +1,11 @@
+*/tests/
+*/test_*.py
+*/*_test.py
+
+*/.pytest_cache/
+*/.ruff_cache/
+*/.venv/
+*/__pycache__/
+*/htmlcov/
+
+*/.coverage

@@ -1,0 +1,36 @@
+# ビルドステージ
+FROM python:3.13.4-alpine AS builder
+
+RUN apk add --no-cache \
+    tzdata \
+    && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && echo "Asia/Tokyo" > /etc/timezone
+
+
+# 実行ステージ
+FROM python:3.13.4-alpine
+
+COPY --from=builder /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+COPY --from=builder /etc/timezone /etc/timezone
+
+ENV PIP_ROOT_USER_ACTION=ignore
+
+WORKDIR /app
+COPY app/.python-version \
+     app/pyproject.toml \
+     app/uv.lock \
+     /app/
+
+RUN pip install uv==0.7.12 \
+    && uv sync --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY app/ /app/
+
+RUN rm /app/.python-version \
+    && rm /app/uv.lock
+
+EXPOSE 9100
+
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9100", "--chdir", "/app", "main:web"]
