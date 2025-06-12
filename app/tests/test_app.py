@@ -1,10 +1,6 @@
 """Appクラスのテストモジュール."""
 
-import tempfile
-from pathlib import Path
 from unittest.mock import mock_open, patch
-
-import pytest
 
 from app import App
 
@@ -20,9 +16,9 @@ class TestApp:
                 "version": "1.0.0",
                 "description": "Test application",
             }
-            
+
             app = App()
-            
+
             assert app.name == "test-app"
             assert app.version == "1.0.0"
             assert app.description == "Test application"
@@ -69,7 +65,7 @@ description = "Stock value exporter"
             with patch("pathlib.Path.exists", return_value=True):
                 app = App()
                 info = app.get_app_info()
-                
+
                 assert info["name"] == "stockvalue-exporter"
                 assert info["version"] == "2.0.0"
                 assert info["description"] == "Stock value exporter"
@@ -79,7 +75,7 @@ description = "Stock value exporter"
         with patch("pathlib.Path.exists", return_value=False):
             app = App()
             info = app.get_app_info()
-            
+
             assert info["name"] == "stockvalue-exporter"
             assert info["version"] == "unknown"
             assert info["description"] == "Unknown"
@@ -90,7 +86,7 @@ description = "Stock value exporter"
             with patch("pathlib.Path.exists", return_value=True):
                 app = App()
                 info = app.get_app_info()
-                
+
                 assert info["name"] == "stockvalue-exporter"
                 assert info["version"] == "unknown"
                 assert info["description"] == "Unknown"
@@ -103,31 +99,31 @@ description = "Stock value exporter"
                 "version": "1.0.0",
                 "description": "Test application",
             }
-            
+
             app = App()
             result = app.get()
-            
+
             assert result == "test-app v1.0.0 is running!"
 
     def test_initialize_fetcher(self):
         """initialize_fetcherメソッドをテストする."""
         from unittest.mock import Mock
-        
+
         with patch.object(App, "get_app_info") as mock_get_app_info:
             mock_get_app_info.return_value = {
                 "name": "test-app",
                 "version": "1.0.0",
                 "description": "Test application",
             }
-            
+
             app = App()
-            
+
             mock_duration = Mock()
             mock_errors = Mock()
-            
+
             with patch("app.StockDataFetcher") as mock_fetcher:
                 app.initialize_fetcher(mock_duration, mock_errors)
-                
+
                 mock_fetcher.assert_called_once_with(
                     stock_fetch_duration=mock_duration,
                     stock_fetch_errors=mock_errors,

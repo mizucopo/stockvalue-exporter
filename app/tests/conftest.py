@@ -2,7 +2,7 @@
 
 import pytest
 from flask import Flask
-from prometheus_client import CollectorRegistry, REGISTRY
+from prometheus_client import REGISTRY, CollectorRegistry
 
 
 @pytest.fixture

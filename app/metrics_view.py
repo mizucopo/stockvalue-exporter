@@ -80,6 +80,42 @@ class MetricsView(BaseView):
                     symbol=symbol, error_type="metric_update_error"
                 ).inc()
 
+    def _parse_symbols_parameter(self) -> list[str]:
+        """URLパラメータからsymbolsを解析して銘柄リストを返す.
+
+        以下の形式をサポート:
+        - ?symbols=AAPL,GOOGL (カンマ区切り文字列)
+        - ?symbols=AAPL&symbols=GOOGL (配列形式)
+        - ?symbols=AAPL,GOOGL&symbols=MSFT (混合形式)
+
+        Returns:
+            正規化された銘柄リスト
+        """
+        # URLパラメータから全ての symbols 値を取得
+        symbols_list = request.args.getlist("symbols")
+
+        # symbols パラメータが全く存在しない場合
+        if "symbols" not in request.args:
+            return ["AAPL", "GOOGL", "MSFT", "TSLA"]
+
+        # 全てのパラメータ値を処理
+        symbols = []
+        for param_value in symbols_list:
+            if param_value:
+                # カンマ区切りの可能性を考慮して分割
+                split_symbols = [s.strip().upper() for s in param_value.split(",") if s.strip()]
+                symbols.extend(split_symbols)
+
+        # 重複を除去しつつ順序を保持
+        unique_symbols = []
+        seen = set()
+        for symbol in symbols:
+            if symbol not in seen:
+                unique_symbols.append(symbol)
+                seen.add(symbol)
+
+        return unique_symbols if unique_symbols else ["AAPL", "GOOGL", "MSFT", "TSLA"]
+
     def get(self) -> tuple[str, int, dict[str, str]]:
         """メトリクスデータを収集してPrometheus形式で返す.
 
@@ -87,30 +123,9 @@ class MetricsView(BaseView):
             Prometheusメトリクスデータ、ステータスコード、ヘッダーのタプル
         """
         try:
-            # URLパラメータから銘柄リストを取得（配列対応）
-            symbols_list = request.args.getlist("symbols")
+            # URLパラメータから銘柄リストを取得
+            symbols = self._parse_symbols_parameter()
 
-            if not symbols_list:
-                # 単一パラメータの場合（カンマ区切り）
-                symbols_param = request.args.get("symbols", "")
-                if symbols_param:
-                    symbols = [
-                        s.strip().upper() for s in symbols_param.split(",") if s.strip()
-                    ]
-                else:
-                    # デフォルト銘柄
-                    symbols = ["AAPL", "GOOGL", "MSFT", "TSLA"]
-            else:
-                # 配列パラメータの場合
-                symbols = [s.strip().upper() for s in symbols_list if s.strip()]
-
-            if not symbols:
-                logger.warning("No symbols provided for metrics collection")
-                return (
-                    generate_latest(),
-                    200,
-                    {"Content-Type": "text/plain; charset=utf-8"},
-                )
 
             logger.info(f"Fetching metrics for symbols: {symbols}")
 

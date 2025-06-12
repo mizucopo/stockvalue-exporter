@@ -53,7 +53,11 @@ MethodView (Flask)
 - **`health_view.py`** - ヘルスチェック (`/health`)
 - **`version_view.py`** - バージョン情報 (`/version`)
 - **`metrics_view.py`** - Prometheusメトリクス (`/metrics`)
+  - 拡張された symbols パラメータ解析機能 (`_parse_symbols_parameter()`)
+  - カンマ区切り、配列、混合形式のサポート
 - **`stocks_view.py`** - 株価データAPI (`/api/stocks`)
+  - 拡張された symbols パラメータ解析機能 (`_parse_symbols_parameter()`)
+  - カンマ区切り、配列、混合形式のサポート
 
 ### ビジネスロジック
 
@@ -80,10 +84,12 @@ MethodView (Flask)
 
 ### パラメータ仕様
 
-- **symbols**: カンマ区切りの株式銘柄コード
-  - 例: `AAPL,GOOGL,MSFT,TSLA`
-  - 配列形式: `?symbols=AAPL&symbols=GOOGL`
-  - デフォルト: `AAPL,GOOGL,MSFT,TSLA`
+- **symbols**: 株式銘柄コード（複数形式をサポート）
+  - **カンマ区切り**: `AAPL,GOOGL,MSFT,TSLA`
+  - **配列形式**: `?symbols=AAPL&symbols=GOOGL&symbols=MSFT&symbols=TSLA`
+  - **混合形式**: `?symbols=AAPL,GOOGL&symbols=MSFT&symbols=TSLA`
+  - **重複除去**: 同じ銘柄が複数指定された場合、自動的に重複を除去し順序を保持
+  - **デフォルト**: `AAPL,GOOGL,MSFT,TSLA`
 
 ## 開発環境設定
 
@@ -193,7 +199,7 @@ docker compose up dev
 
 - **カバレッジ**: 98% (目標: 80%以上)
 - **テストファイル数**: 9ファイル
-- **テスト数**: 55テスト
+- **テスト数**: 59テスト（拡張されたパラメータサポートを含む）
 - **フレームワーク**: pytest + フィクスチャーベース
 
 ### テストファイル
@@ -302,6 +308,49 @@ strict = true
 - **キャッシュ最適化**: 不要なAPI呼び出し削減
 - **メモリ効率**: 軽量なインメモリキャッシュ
 
+### パラメータ解析機能
+
+#### 実装詳細
+
+**`_parse_symbols_parameter()` メソッド**
+- **場所**: `MetricsView` および `StocksView` クラス
+- **目的**: 複数形式のsymbols パラメータを統一的に処理
+- **機能**:
+  - URLパラメータから全ての symbols 値を取得
+  - カンマ区切り文字列の分割処理
+  - 配列形式パラメータの処理
+  - 混合形式（カンマ区切り + 配列）の処理
+  - 重複銘柄の自動除去（順序保持）
+  - 空白文字の自動トリミング
+  - 大文字変換による正規化
+
+#### サポート形式
+
+```python
+# 以下の形式が全て同じ結果になる
+?symbols=AAPL,GOOGL,MSFT          # カンマ区切り
+?symbols=AAPL&symbols=GOOGL&symbols=MSFT    # 配列形式
+?symbols=AAPL,GOOGL&symbols=MSFT            # 混合形式
+?symbols=AAPL,GOOGL,AAPL&symbols=MSFT       # 重複あり（自動除去）
+?symbols=  aapl  , googl  &symbols= msft    # 空白・小文字（自動正規化）
+```
+
+#### テストカバレッジ
+
+新機能に対する包括的テストを追加：
+- **混合パラメータテスト**: カンマ区切りと配列の組み合わせ
+- **重複除去テスト**: 同一銘柄の重複指定処理
+- **空白処理テスト**: 余分な空白文字の処理
+- **デフォルト値テスト**: パラメータ未指定時の動作
+- **エラーハンドリングテスト**: 不正なパラメータの処理
+
+#### 利点
+
+- **Prometheus互換性**: 配列形式パラメータを直接サポート
+- **後方互換性**: 既存のカンマ区切り形式も引き続きサポート
+- **柔軟性**: 用途に応じて最適な形式を選択可能
+- **保守性**: 統一されたパラメータ解析ロジック
+
 ## トラブルシューティング
 
 ### よくある問題
@@ -319,8 +368,10 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app -p 9100:9100 -e LOG_LEV
 # 特定銘柄でのテスト（別ターミナル）
 curl "http://localhost:9100/api/stocks?symbols=AAPL"
 
-# メトリクス確認
-curl "http://localhost:9100/metrics?symbols=AAPL"
+# メトリクス確認（複数形式をサポート）
+curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL"
+curl "http://localhost:9100/metrics?symbols=AAPL&symbols=GOOGL"
+curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL&symbols=MSFT"
 
 # コンテナ内でのデバッグ（インタラクティブシェル）
 docker run --rm -it -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh

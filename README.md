@@ -9,7 +9,7 @@ Yahoo Finance API から株価データを取得し、リアルタイムでProme
 
 ## ✨ 特徴
 
-- 🎯 **高信頼性**: 98%テストカバレッジ、55テスト、包括的品質管理
+- 🎯 **高信頼性**: 98%テストカバレッジ、59テスト（拡張されたパラメータサポートを含む）、包括的品質管理
 - 🏗️ **モダンアーキテクチャ**: MVC、Factory、DI パターンによる保守性の高い設計
 - ⚡ **高性能**: 10分間キャッシュによるAPI制限対策
 - 📊 **豊富なメトリクス**: 11種類のGaugeメトリクス、エラー追跡、パフォーマンス計測
@@ -53,18 +53,24 @@ docker run -p 9100:9100 mizucopo/stockvalue-exporter:2.0.0
 
 ### パラメータ指定
 
-複数銘柄の株価を取得：
+複数銘柄の株価を取得（複数の形式をサポート）：
 
 ```bash
 # カンマ区切り
 curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL,MSFT"
 
 # 配列形式
-curl "http://localhost:9100/metrics?symbols=AAPL&symbols=GOOGL"
+curl "http://localhost:9100/metrics?symbols=AAPL&symbols=GOOGL&symbols=MSFT"
 
-# JSON API
+# 混合形式
+curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL&symbols=MSFT"
+
+# JSON API（すべての形式をサポート）
 curl "http://localhost:9100/api/stocks?symbols=AAPL,TSLA"
+curl "http://localhost:9100/api/stocks?symbols=AAPL&symbols=TSLA"
 ```
+
+**重複除去**: 同じ銘柄が複数回指定された場合、自動的に重複を除去し最初の出現順序を保持します。
 
 ## 🔧 技術仕様
 
@@ -115,7 +121,11 @@ scrape_configs:
       - targets: ['localhost:9100']
     scrape_interval: 30s
     params:
+      # カンマ区切り形式
       symbols: ['AAPL,GOOGL,MSFT,TSLA']
+
+      # または配列形式
+      # symbols: ['AAPL', 'GOOGL', 'MSFT', 'TSLA']
 ```
 
 ## 🛠️ 開発環境
@@ -152,6 +162,7 @@ docker compose up dev
 本プロジェクトは厳格な品質基準を維持しています：
 
 - **テストカバレッジ**: 98% (目標: 80%以上)
+- **テスト数**: 59テスト（拡張されたパラメータサポートを含む）
 - **リンター**: ruff による厳格なコードチェック
 - **フォーマッター**: black による一貫したコードスタイル
 - **型チェック**: mypy strict モード
