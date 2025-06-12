@@ -7,6 +7,8 @@ from typing import Any
 import yfinance as yf
 from prometheus_client import Counter, Histogram
 
+from cache import LRUCache
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,7 @@ class StockDataFetcher:
             stock_fetch_duration: フェッチ時間を計測するHistogramメトリクス
             stock_fetch_errors: エラー数を計測するCounterメトリクス
         """
-        self.cache = {}
-        self.cache_ttl = 600  # 10分間キャッシュ
+        self.cache = LRUCache()
         self.stock_fetch_duration = stock_fetch_duration
         self.stock_fetch_errors = stock_fetch_errors
 
@@ -45,8 +46,9 @@ class StockDataFetcher:
 
             try:
                 # キャッシュチェック
-                if self._is_cached(symbol):
-                    results[symbol] = self.cache[symbol]["data"]
+                cached_data = self.cache.get(symbol)
+                if cached_data is not None:
+                    results[symbol] = cached_data
                     continue
 
                 # Yahoo Finance APIから株価データ取得
@@ -89,7 +91,7 @@ class StockDataFetcher:
                 }
 
                 # キャッシュに保存
-                self.cache[symbol] = {"data": stock_data, "timestamp": time.time()}
+                self.cache.put(symbol, stock_data)
 
                 results[symbol] = stock_data
 
@@ -141,8 +143,20 @@ class StockDataFetcher:
         Returns:
             キャッシュが有効ならTrue、そうでなければFalse
         """
-        if symbol not in self.cache:
-            return False
+        return self.cache.get(symbol) is not None
 
-        cache_age = time.time() - self.cache[symbol]["timestamp"]
-        return cache_age < self.cache_ttl
+    def get_cache_stats(self) -> dict[str, Any]:
+        """キャッシュの統計情報を取得する.
+        
+        Returns:
+            キャッシュ統計情報
+        """
+        return self.cache.get_stats()
+
+    def cleanup_cache(self) -> int:
+        """期限切れのキャッシュをクリーンアップする.
+        
+        Returns:
+            削除されたアイテム数
+        """
+        return self.cache.cleanup_expired()

@@ -594,7 +594,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "flask" },
     { name = "gunicorn" },
-    { name = "pandas" },
     { name = "prometheus-flask-exporter" },
     { name = "yfinance" },
 ]
@@ -613,7 +612,6 @@ dev = [
 requires-dist = [
     { name = "flask", specifier = ">=3.1.1" },
     { name = "gunicorn", specifier = ">=23.0.0" },
-    { name = "pandas", specifier = ">=2.3.0" },
     { name = "prometheus-flask-exporter", specifier = ">=0.23.2" },
     { name = "yfinance", specifier = ">=0.2.62" },
 ]
