@@ -164,7 +164,7 @@ class StockDataFetcher:
 
                 results[symbol] = stock_data
 
-                # メトリクス記録
+                # メトリクス記録（デバッグメトリクスが有効な場合のみ）
                 if self.stock_fetch_duration:
                     duration = time.time() - start_time
                     self.stock_fetch_duration.labels(symbol=symbol).observe(duration)

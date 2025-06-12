@@ -279,49 +279,80 @@ class MetricsFactory:
         ],
     }
 
-    def __init__(self, config: dict[str, Any] | None = None, registry: CollectorRegistry | None = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None, registry: CollectorRegistry | None = None, app_config: Any = None) -> None:
         """メトリクスファクトリーを初期化する.
 
         Args:
             config: メトリクス設定辞書。Noneの場合はデフォルト設定を使用
             registry: Prometheusレジストリ。Noneの場合はデフォルトレジストリを使用
+            app_config: アプリケーション設定。メトリクス制御フラグを参照
         """
         self.config = config if config is not None else self.DEFAULT_METRICS_CONFIG
         self.registry = registry if registry is not None else REGISTRY
+        self.app_config = app_config
         self.metrics = {}
         self._create_metrics()
+
+    def _should_create_metric(self, metric_name: str) -> bool:
+        """メトリクスを作成すべきかどうかを判定する.
+        
+        Args:
+            metric_name: メトリクス名
+            
+        Returns:
+            作成すべき場合True
+        """
+        if self.app_config is None:
+            # 設定がない場合は全て作成
+            return True
+            
+        # 52週系メトリクス（Range Metrics）の制御
+        range_metric_patterns = ["52week_high", "52week_low"]
+        if any(pattern in metric_name for pattern in range_metric_patterns):
+            return getattr(self.app_config, 'ENABLE_RANGE_METRICS', True)
+            
+        # デバッグ系メトリクス（Duration, Errors）の制御
+        debug_metric_patterns = ["fetch_duration", "fetch_errors"]
+        if any(pattern in metric_name for pattern in debug_metric_patterns):
+            return getattr(self.app_config, 'ENABLE_DEBUG_METRICS', True)
+            
+        # その他のメトリクスは常に作成
+        return True
 
     def _create_metrics(self) -> None:
         """設定からメトリクスを生成する."""
         # Gaugeメトリクスを作成
         for gauge_config in self.config.get("gauges", []):
-            metric = Gauge(
-                gauge_config["name"],
-                gauge_config["description"],
-                gauge_config["labels"],
-                registry=self.registry,
-            )
-            self.metrics[gauge_config["key"]] = metric
+            if self._should_create_metric(gauge_config["name"]):
+                metric = Gauge(
+                    gauge_config["name"],
+                    gauge_config["description"],
+                    gauge_config["labels"],
+                    registry=self.registry,
+                )
+                self.metrics[gauge_config["key"]] = metric
 
         # Counterメトリクスを作成
         for counter_config in self.config.get("counters", []):
-            metric = Counter(
-                counter_config["name"],
-                counter_config["description"],
-                counter_config["labels"],
-                registry=self.registry,
-            )
-            self.metrics[counter_config["key"]] = metric
+            if self._should_create_metric(counter_config["name"]):
+                metric = Counter(
+                    counter_config["name"],
+                    counter_config["description"],
+                    counter_config["labels"],
+                    registry=self.registry,
+                )
+                self.metrics[counter_config["key"]] = metric
 
         # Histogramメトリクスを作成
         for histogram_config in self.config.get("histograms", []):
-            metric = Histogram(
-                histogram_config["name"],
-                histogram_config["description"],
-                histogram_config["labels"],
-                registry=self.registry,
-            )
-            self.metrics[histogram_config["key"]] = metric
+            if self._should_create_metric(histogram_config["name"]):
+                metric = Histogram(
+                    histogram_config["name"],
+                    histogram_config["description"],
+                    histogram_config["labels"],
+                    registry=self.registry,
+                )
+                self.metrics[histogram_config["key"]] = metric
 
     def get_metric(self, key: str) -> Gauge | Counter | Histogram | None:
         """キーでメトリクスを取得する.
@@ -386,13 +417,14 @@ class MetricsFactory:
         self._create_metrics()
 
     @classmethod
-    def create_default(cls, registry: CollectorRegistry | None = None) -> "MetricsFactory":
+    def create_default(cls, registry: CollectorRegistry | None = None, app_config: Any = None) -> "MetricsFactory":
         """デフォルト設定でMetricsFactoryインスタンスを作成する.
 
         Args:
             registry: Prometheusレジストリ。Noneの場合はデフォルトレジストリを使用
+            app_config: アプリケーション設定。メトリクス制御フラグを参照
 
         Returns:
             デフォルト設定のMetricsFactoryインスタンス
         """
-        return cls(registry=registry)
+        return cls(registry=registry, app_config=app_config)

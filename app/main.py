@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 web = Flask(__name__)
 
-# MetricsFactoryインスタンスを作成（デフォルト設定を使用）
-metrics_factory = MetricsFactory.create_default()
+# MetricsFactoryインスタンスを作成（アプリケーション設定を渡す）
+metrics_factory = MetricsFactory.create_default(app_config=config)
 
 
 # アプリケーション起動時に情報を取得

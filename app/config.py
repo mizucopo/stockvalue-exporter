@@ -37,6 +37,10 @@ class Config:
         # メトリクス管理設定
         self.AUTO_CLEAR_METRICS = os.getenv("AUTO_CLEAR_METRICS", "false").lower() == "true"
         self.METRICS_TTL_SECONDS = int(os.getenv("METRICS_TTL_SECONDS", "3600"))  # 1時間
+        
+        # メトリクス制御設定（本番環境では不要なメトリクスを無効化）
+        self.ENABLE_RANGE_METRICS = os.getenv("ENABLE_RANGE_METRICS", "false" if self.is_production else "true").lower() == "true"
+        self.ENABLE_DEBUG_METRICS = os.getenv("ENABLE_DEBUG_METRICS", "false" if self.is_production else "true").lower() == "true"
 
     def _parse_symbols_env(self, symbols_str: str) -> list[str]:
         """環境変数からシンボルリストを解析する.

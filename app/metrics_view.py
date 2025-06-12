@@ -191,12 +191,14 @@ class MetricsView(BaseView):
             high_key = "stock_52week_high"
             low_key = "stock_52week_low"
 
-        metrics_factory.get_metric(high_key).labels(**labels).set(
-            data["fifty_two_week_high"]
-        )
-        metrics_factory.get_metric(low_key).labels(**labels).set(
-            data["fifty_two_week_low"]
-        )
+        # メトリクスが存在する場合のみ更新（ENABLE_RANGE_METRICS設定による制御）
+        high_metric = metrics_factory.get_metric(high_key)
+        low_metric = metrics_factory.get_metric(low_key)
+        
+        if high_metric is not None:
+            high_metric.labels(**labels).set(data["fifty_two_week_high"])
+        if low_metric is not None:
+            low_metric.labels(**labels).set(data["fifty_two_week_low"])
 
     def _update_change_metrics(self, data: dict[str, Any], metrics_factory: Any) -> None:
         """価格変動関連メトリクスを更新する.
