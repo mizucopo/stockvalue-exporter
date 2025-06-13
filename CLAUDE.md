@@ -4,8 +4,8 @@
 
 ## プロジェクト概要
 
-Python と Flask を使用して構築された株価監視用の Prometheus カスタムエクスポーターです。
-Yahoo Finance API から株価データを取得し、Prometheus メトリクスとして公開する高品質で拡張可能なアプリケーションです。
+Python と Flask を使用して構築された金融データ監視用の Prometheus カスタムエクスポーターです。
+Yahoo Finance API から株価・指数・暗号通貨・為替データを取得し、Prometheus メトリクスとして公開する高品質で拡張可能なアプリケーションです。
 
 ## アーキテクチャ概要
 
@@ -79,17 +79,17 @@ MethodView (Flask)
 | `/` | GET | アプリケーション状態 | なし |
 | `/health` | GET | JSON形式ヘルスチェック | なし |
 | `/version` | GET | アプリケーションバージョン情報 | なし |
-| `/metrics` | GET | Prometheusメトリクス | `?symbols=AAPL,GOOGL` |
-| `/api/stocks` | GET | 株価データJSON | `?symbols=AAPL,GOOGL` |
+| `/metrics` | GET | Prometheusメトリクス | `?symbols=AAPL,^GSPC,BTC-USD` |
+| `/api/stocks` | GET | 金融データJSON | `?symbols=AAPL,^N225,BTC-USD` |
 
 ### パラメータ仕様
 
-- **symbols**: 株式銘柄コード（複数形式をサポート）
-  - **カンマ区切り**: `AAPL,GOOGL,MSFT,TSLA`
-  - **配列形式**: `?symbols=AAPL&symbols=GOOGL&symbols=MSFT&symbols=TSLA`
-  - **混合形式**: `?symbols=AAPL,GOOGL&symbols=MSFT&symbols=TSLA`
-  - **重複除去**: 同じ銘柄が複数指定された場合、自動的に重複を除去し順序を保持
-  - **デフォルト**: `AAPL,GOOGL,MSFT,TSLA`
+- **symbols**: 金融シンボルコード（複数形式をサポート）
+  - **カンマ区切り**: `AAPL,^GSPC,BTC-USD,998405.T`
+  - **配列形式**: `?symbols=AAPL&symbols=^GSPC&symbols=BTC-USD&symbols=^N225`
+  - **混合形式**: `?symbols=AAPL,^GSPC&symbols=BTC-USD&symbols=^N225`
+  - **重複除去**: 同じシンボルが複数指定された場合、自動的に重複を除去し順序を保持
+  - **デフォルト**: `AAPL,GOOGL,MSFT,TSLA,^GSPC,^NDX,998405.T,^N225,BTC-USD`
 
 ## 開発環境設定
 

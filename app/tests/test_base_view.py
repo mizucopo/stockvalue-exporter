@@ -1,6 +1,6 @@
 """BaseViewクラスのテストモジュール."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from base_view import BaseView
 
@@ -13,9 +13,9 @@ class TestBaseView:
         mock_app = Mock()
         mock_app.name = "test-app"
 
-        with patch("main.app", mock_app):
-            base_view = BaseView()
-            assert base_view.app == mock_app
+        # BaseViewインスタンスを直接アプリで初期化
+        base_view = BaseView(app_instance=mock_app)
+        assert base_view.app == mock_app
 
     def test_inheritance_from_method_view(self):
         """MethodViewからの継承をテストする."""
@@ -26,41 +26,44 @@ class TestBaseView:
     def test_parse_symbols_parameter_forex_pair(self, request_context):
         """為替ペアシンボルの解析をテストする."""
         mock_app = Mock()
-        with patch("main.app", mock_app):
-            base_view = BaseView()
+        base_view = BaseView(app_instance=mock_app)
 
-            # Flask test clientでリクエストを模擬
-            with patch("base_view.request") as mock_request:
-                mock_request.args.getlist.return_value = ["USDJPY=X"]
-                mock_request.args.__contains__.return_value = True
+        # Flask test clientでリクエストを模擬
+        with patch("base_view.request") as mock_request:
+            mock_args = MagicMock()
+            mock_args.getlist.return_value = ["USDJPY=X"]
+            mock_args.__contains__ = lambda self, key: key == "symbols"
+            mock_request.args = mock_args
 
-                result = base_view._parse_symbols_parameter()
-                assert result == ["USDJPY=X"]
+            result = base_view._parse_symbols_parameter()
+            assert result == ["USDJPY=X"]
 
     def test_parse_symbols_parameter_mixed_symbols(self, request_context):
         """株式と為替ペアの混合シンボルの解析をテストする."""
         mock_app = Mock()
-        with patch("main.app", mock_app):
-            base_view = BaseView()
+        base_view = BaseView(app_instance=mock_app)
 
-            # Flask test clientでリクエストを模擬
-            with patch("base_view.request") as mock_request:
-                mock_request.args.getlist.return_value = ["AAPL,USDJPY=X,GOOGL"]
-                mock_request.args.__contains__.return_value = True
+        # Flask test clientでリクエストを模擬
+        with patch("base_view.request") as mock_request:
+            mock_args = MagicMock()
+            mock_args.getlist.return_value = ["AAPL,USDJPY=X,GOOGL"]
+            mock_args.__contains__ = lambda self, key: key == "symbols"
+            mock_request.args = mock_args
 
-                result = base_view._parse_symbols_parameter()
-                assert result == ["AAPL", "USDJPY=X", "GOOGL"]
+            result = base_view._parse_symbols_parameter()
+            assert result == ["AAPL", "USDJPY=X", "GOOGL"]
 
     def test_parse_symbols_parameter_multiple_forex_pairs(self, request_context):
         """複数の為替ペアシンボルの解析をテストする."""
         mock_app = Mock()
-        with patch("main.app", mock_app):
-            base_view = BaseView()
+        base_view = BaseView(app_instance=mock_app)
 
-            # Flask test clientでリクエストを模擬
-            with patch("base_view.request") as mock_request:
-                mock_request.args.getlist.return_value = ["USDJPY=X,EURJPY=X,GBPJPY=X"]
-                mock_request.args.__contains__.return_value = True
+        # Flask test clientでリクエストを模擬
+        with patch("base_view.request") as mock_request:
+            mock_args = MagicMock()
+            mock_args.getlist.return_value = ["USDJPY=X,EURJPY=X,GBPJPY=X"]
+            mock_args.__contains__ = lambda self, key: key == "symbols"
+            mock_request.args = mock_args
 
-                result = base_view._parse_symbols_parameter()
-                assert result == ["USDJPY=X", "EURJPY=X", "GBPJPY=X"]
+            result = base_view._parse_symbols_parameter()
+            assert result == ["USDJPY=X", "EURJPY=X", "GBPJPY=X"]

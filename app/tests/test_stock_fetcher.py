@@ -11,7 +11,7 @@ from stock_fetcher import StockDataFetcher
 class TestStockDataFetcher:
     """StockDataFetcherクラスのテストケース."""
 
-    def test_init(self):
+    def test_init(self, isolated_registry):
         """StockDataFetcherクラスの初期化をテストする."""
         mock_duration = Mock()
         mock_errors = Mock()
@@ -23,7 +23,7 @@ class TestStockDataFetcher:
         assert fetcher.stock_fetch_duration == mock_duration
         assert fetcher.stock_fetch_errors == mock_errors
 
-    def test_init_with_none_parameters(self):
+    def test_init_with_none_parameters(self, isolated_registry):
         """Noneパラメータでの初期化をテストする."""
         fetcher = StockDataFetcher()
 
@@ -39,7 +39,7 @@ class TestStockDataFetcher:
         result = fetcher._is_cached("AAPL")
         assert result is False
 
-    def test_is_cached_expired(self):
+    def test_is_cached_expired(self, isolated_registry):
         """期限切れキャッシュのテストする."""
         fetcher = StockDataFetcher()
 
@@ -50,7 +50,7 @@ class TestStockDataFetcher:
         result = fetcher._is_cached("AAPL")
         assert result is False
 
-    def test_is_cached_valid(self):
+    def test_is_cached_valid(self, isolated_registry):
         """有効なキャッシュのテストする."""
         fetcher = StockDataFetcher()
 
@@ -61,7 +61,7 @@ class TestStockDataFetcher:
         result = fetcher._is_cached("AAPL")
         assert result is True
 
-    def test_get_stock_data_from_cache(self):
+    def test_get_stock_data_from_cache(self, isolated_registry):
         """キャッシュからのデータ取得をテストする."""
         fetcher = StockDataFetcher()
 

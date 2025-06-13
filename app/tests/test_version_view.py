@@ -13,26 +13,25 @@ class TestVersionView:
         """getメソッドをテストする."""
         # モックアプリケーションインスタンスを作成
         mock_app = Mock()
-        mock_app.name = "version-test-app"
-        mock_app.version = "3.1.4"
-        mock_app.description = "Version test application"
+        mock_app.name = "stockvalue-exporter"
+        mock_app.version = "2.1.0"
+        mock_app.description = "A Prometheus custom exporter for real-time stock price monitoring and metrics collection"
 
-        with patch("main.app", mock_app):
-            version_view = VersionView()
-            response = version_view.get()
+        version_view = VersionView(app_instance=mock_app)
+        response = version_view.get()
 
-            # JSONレスポンスを確認
-            assert response.status_code == 200
-            assert response.content_type == "application/json"
+        # JSONレスポンスを確認
+        assert response.status_code == 200
+        assert response.content_type == "application/json"
 
-            # レスポンスデータを確認
-            data = json.loads(response.get_data(as_text=True))
-            expected_data = {
-                "name": "version-test-app",
-                "version": "3.1.4",
-                "description": "Version test application",
-            }
-            assert data == expected_data
+        # レスポンスデータを確認
+        data = json.loads(response.get_data(as_text=True))
+        expected_data = {
+            "name": "stockvalue-exporter",
+            "version": "2.1.0",
+            "description": "A Prometheus custom exporter for real-time stock price monitoring and metrics collection",
+        }
+        assert data == expected_data
 
     def test_inheritance_from_base_view(self):
         """BaseViewからの継承をテストする."""
@@ -47,14 +46,13 @@ class TestVersionView:
         mock_app.version = "1.2.3"
         mock_app.description = "Version app description"
 
-        with patch("main.app", mock_app):
-            version_view = VersionView()
+        version_view = VersionView(app_instance=mock_app)
 
-            # appインスタンスが正しく設定されているか確認
-            assert version_view.app == mock_app
-            assert version_view.app.name == "version-app"
-            assert version_view.app.version == "1.2.3"
-            assert version_view.app.description == "Version app description"
+        # appインスタンスが正しく設定されているか確認
+        assert version_view.app == mock_app
+        assert version_view.app.name == "version-app"
+        assert version_view.app.version == "1.2.3"
+        assert version_view.app.description == "Version app description"
 
     def test_response_format(self, app_context):
         """レスポンス形式をテストする."""
@@ -63,14 +61,13 @@ class TestVersionView:
         mock_app.version = "0.1.0"
         mock_app.description = "Format test"
 
-        with patch("main.app", mock_app):
-            version_view = VersionView()
-            response = version_view.get()
+        version_view = VersionView(app_instance=mock_app)
+        response = version_view.get()
 
-            # レスポンスがFlaskのResponseオブジェクトであることを確認
-            from flask import Response
+        # レスポンスがFlaskのResponseオブジェクトであることを確認
+        from flask import Response
 
-            assert isinstance(response, Response)
+        assert isinstance(response, Response)
 
-            # Content-Typeヘッダーを確認
-            assert response.headers["Content-Type"] == "application/json"
+        # Content-Typeヘッダーを確認
+        assert response.headers["Content-Type"] == "application/json"

@@ -1,7 +1,7 @@
 # StockValue Exporter
 
 高品質で拡張可能な**Prometheus カスタムエクスポーター**です。
-Yahoo Finance API から株価データを取得し、リアルタイムでPrometheusメトリクスとして公開します。
+Yahoo Finance API から**株価・指数・暗号通貨・為替データ**を取得し、リアルタイムでPrometheusメトリクスとして公開します。
 
 [![Docker Hub](https://img.shields.io/docker/v/mizucopo/stockvalue-exporter?label=Docker%20Hub)](https://hub.docker.com/r/mizucopo/stockvalue-exporter)
 [![Test Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/mizu-copo/stockvalue-exporter)
@@ -9,7 +9,8 @@ Yahoo Finance API から株価データを取得し、リアルタイムでProme
 
 ## ✨ 特徴
 
-- 🎯 **高信頼性**: 98%テストカバレッジ、59テスト（拡張されたパラメータサポートを含む）、包括的品質管理
+- 🎯 **高信頼性**: 98%テストカバレッジ、85+テスト（拡張されたパラメータサポートを含む）、包括的品質管理
+- 🌐 **多資産対応**: **株式**・**指数**・**暗号通貨**・**為替**の包括的サポート
 - 🏗️ **モダンアーキテクチャ**: MVC、Factory、DI パターンによる保守性の高い設計
 - ⚡ **高性能**: 10分間キャッシュによるAPI制限対策
 - 📊 **豊富なメトリクス**: 11種類のGaugeメトリクス、エラー追跡、パフォーマンス計測
@@ -36,7 +37,7 @@ docker compose up prod
 docker run -p 9100:9100 mizucopo/stockvalue-exporter:latest
 
 # 特定バージョンで起動
-docker run -p 9100:9100 mizucopo/stockvalue-exporter:2.0.0
+docker run -p 9100:9100 mizucopo/stockvalue-exporter:2.1.0
 ```
 
 アプリケーションが起動したら、ブラウザで http://localhost:9100 にアクセスして動作確認できます。
@@ -53,21 +54,24 @@ docker run -p 9100:9100 mizucopo/stockvalue-exporter:2.0.0
 
 ### パラメータ指定
 
-複数銘柄の株価を取得（複数の形式をサポート）：
+複数銘柄・指数・暗号通貨を取得（複数の形式をサポート）：
 
 ```bash
-# カンマ区切り
-curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL,MSFT"
+# カンマ区切り（株式・指数・暗号通貨の混合）
+curl "http://localhost:9100/metrics?symbols=AAPL,^GSPC,BTC-USD"
 
 # 配列形式
-curl "http://localhost:9100/metrics?symbols=AAPL&symbols=GOOGL&symbols=MSFT"
+curl "http://localhost:9100/metrics?symbols=AAPL&symbols=^N225&symbols=BTC-USD"
 
 # 混合形式
-curl "http://localhost:9100/metrics?symbols=AAPL,GOOGL&symbols=MSFT"
+curl "http://localhost:9100/metrics?symbols=AAPL,^GSPC&symbols=BTC-USD"
+
+# 指数のみ
+curl "http://localhost:9100/metrics?symbols=^GSPC,^NDX,^N225,998405.T"
 
 # JSON API（すべての形式をサポート）
-curl "http://localhost:9100/api/stocks?symbols=AAPL,TSLA"
-curl "http://localhost:9100/api/stocks?symbols=AAPL&symbols=TSLA"
+curl "http://localhost:9100/api/stocks?symbols=AAPL,BTC-USD"
+curl "http://localhost:9100/api/stocks?symbols=^GSPC&symbols=^N225"
 ```
 
 **重複除去**: 同じ銘柄が複数回指定された場合、自動的に重複を除去し最初の出現順序を保持します。

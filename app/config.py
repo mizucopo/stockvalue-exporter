@@ -22,10 +22,10 @@ class Config:
 
         # 株価関連設定
         self.DEFAULT_SYMBOLS = self._parse_symbols_env(
-            os.getenv("DEFAULT_SYMBOLS", "AAPL,GOOGL,MSFT,TSLA")
+            os.getenv("DEFAULT_SYMBOLS", "AAPL,GOOGL,MSFT,TSLA,^GSPC,^NDX,998405.T,^N225,BTC-USD")
         )
         self.CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "600"))
-        self.MAX_SYMBOLS_PER_REQUEST = int(os.getenv("MAX_SYMBOLS_PER_REQUEST", "10"))
+        self.MAX_SYMBOLS_PER_REQUEST = int(os.getenv("MAX_SYMBOLS_PER_REQUEST", "12"))
 
         # API設定
         self.REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))

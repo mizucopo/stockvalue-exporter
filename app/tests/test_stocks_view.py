@@ -23,30 +23,30 @@ class TestStocksView:
         }
         mock_fetcher.get_stock_data.return_value = mock_stock_data
 
-        with patch("main.app", mock_app):
-            with patch("stocks_view.request") as mock_request:
-                # URLパラメータなしの場合 - MagicMockを使用してcoroutineを回避
-                mock_args = MagicMock()
-                mock_args.getlist.return_value = ["AAPL,GOOGL,MSFT,TSLA"]
-                mock_args.get.return_value = "AAPL,GOOGL,MSFT,TSLA"
-                mock_args.__contains__ = lambda self, key: key == "symbols"
-                mock_request.args = mock_args
+        stocks_view = StocksView(app_instance=mock_app)
+        
+        with patch("stocks_view.request") as mock_request:
+            # URLパラメータなしの場合 - MagicMockを使用してcoroutineを回避
+            mock_args = MagicMock()
+            mock_args.getlist.return_value = ["AAPL,GOOGL,MSFT,TSLA"]
+            mock_args.get.return_value = "AAPL,GOOGL,MSFT,TSLA"
+            mock_args.__contains__ = lambda self, key: key == "symbols"
+            mock_request.args = mock_args
 
-                stocks_view = StocksView()
-                response = stocks_view.get()
+            response = stocks_view.get()
 
-                # JSONレスポンスを確認
-                assert response.status_code == 200
-                assert response.content_type == "application/json"
+            # JSONレスポンスを確認
+            assert response.status_code == 200
+            assert response.content_type == "application/json"
 
-                # レスポンスデータを確認
-                data = json.loads(response.get_data(as_text=True))
-                assert "timestamp" in data
-                assert data["symbols"] == ["AAPL", "GOOGL", "MSFT", "TSLA"]
-                assert data["data"] == mock_stock_data
+            # レスポンスデータを確認
+            data = json.loads(response.get_data(as_text=True))
+            assert "timestamp" in data
+            assert data["symbols"] == ["AAPL", "GOOGL", "MSFT", "TSLA"]
+            assert data["data"] == mock_stock_data
 
-                # fetcherが正しい引数で呼ばれたか確認
-                mock_fetcher.get_stock_data.assert_called_once_with(
+            # fetcherが正しい引数で呼ばれたか確認
+            mock_fetcher.get_stock_data.assert_called_once_with(
                     ["AAPL", "GOOGL", "MSFT", "TSLA"]
                 )
 
@@ -64,16 +64,16 @@ class TestStocksView:
         }
         mock_fetcher.get_stock_data.return_value = mock_stock_data
 
-        with patch("main.app", mock_app):
-            with patch("stocks_view.request") as mock_request:
-                mock_args = MagicMock()
-                mock_args.getlist.return_value = ["nvda,amd"]
-                mock_args.get.return_value = "nvda,amd"
-                mock_args.__contains__ = lambda self, key: key == "symbols"
-                mock_request.args = mock_args
+        stocks_view = StocksView(app_instance=mock_app)
+        
+        with patch("stocks_view.request") as mock_request:
+            mock_args = MagicMock()
+            mock_args.getlist.return_value = ["nvda,amd"]
+            mock_args.get.return_value = "nvda,amd"
+            mock_args.__contains__ = lambda self, key: key == "symbols"
+            mock_request.args = mock_args
 
-                stocks_view = StocksView()
-                response = stocks_view.get()
+            response = stocks_view.get()
 
                 data = json.loads(response.get_data(as_text=True))
                 assert data["symbols"] == ["NVDA", "AMD"]

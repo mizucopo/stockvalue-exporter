@@ -64,18 +64,23 @@ class StockHandler(AssetHandler):
     """株式用のハンドラー."""
 
     def get_price_metric_key(self) -> str:
+        """価格メトリクスのキーを返す."""
         return "stock_price"
 
     def get_volume_metric_key(self) -> str | None:
+        """出来高メトリクスのキーを返す."""
         return "stock_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
+        """時価総額メトリクスのキーを返す."""
         return "stock_market_cap"
 
     def get_range_metric_keys(self) -> tuple[str, str]:
+        """52週レンジメトリクスのキーを返す."""
         return ("stock_52week_high", "stock_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
+        """価格変動メトリクスのキーを返す."""
         return (
             "stock_previous_close",
             "stock_price_change",
@@ -83,18 +88,23 @@ class StockHandler(AssetHandler):
         )
 
     def get_timestamp_metric_key(self) -> str:
+        """タイムスタンプメトリクスのキーを返す."""
         return "stock_last_updated"
 
     def get_error_metric_key(self) -> str:
+        """エラーメトリクスのキーを返す."""
         return "stock_fetch_errors"
 
     def should_update_volume(self) -> bool:
+        """出来高メトリクスを更新するかどうかを返す."""
         return True
 
     def should_update_market_metrics(self) -> bool:
+        """市場メトリクスを更新するかどうかを返す."""
         return True
 
     def get_additional_metrics(self) -> dict[str, Any]:
+        """追加のメトリクス情報を返す."""
         return {"stock_pe_ratio": "pe_ratio", "stock_dividend_yield": "dividend_yield"}
 
 
