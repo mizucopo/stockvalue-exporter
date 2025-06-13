@@ -3,8 +3,10 @@
 import logging
 
 from flask import Flask
+from prometheus_client import Counter, Histogram
 
 from app import App
+from base_view import BaseView
 from config import config
 from health_view import HealthView
 from metrics_factory import MetricsFactory
@@ -32,14 +34,22 @@ APP_DESCRIPTION = app.description
 app.set_metrics_factory(metrics_factory)
 
 # StockDataFetcherのappへの初期化
-app.initialize_fetcher(
-    metrics_factory.get_metric("stock_fetch_duration"),
-    metrics_factory.get_metric("stock_fetch_errors"),
-)
+duration_metric = metrics_factory.get_metric("stock_fetch_duration")
+errors_metric = metrics_factory.get_metric("stock_fetch_errors")
+
+# 型安全性のチェック
+if not isinstance(duration_metric, Histogram):
+    raise TypeError(
+        f"Expected Histogram for stock_fetch_duration, got {type(duration_metric)}"
+    )
+if not isinstance(errors_metric, Counter):
+    raise TypeError(
+        f"Expected Counter for stock_fetch_errors, got {type(errors_metric)}"
+    )
+
+app.initialize_fetcher(duration_metric, errors_metric)
 
 # ビュークラスにアプリケーションインスタンスを設定（依存性注入）
-from base_view import BaseView
-
 BaseView.set_app_instance(app)
 
 # URLルールの登録

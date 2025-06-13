@@ -3,13 +3,15 @@
 import json
 from unittest.mock import Mock
 
+from flask import Flask
+
 from health_view import HealthView
 
 
 class TestHealthView:
     """HealthViewクラスのテストケース."""
 
-    def test_get_method(self, app_context):
+    def test_get_method(self, app_context: Flask) -> None:
         """getメソッドをテストする."""
         # モックアプリケーションインスタンスを作成
         mock_app = Mock()
@@ -35,13 +37,13 @@ class TestHealthView:
         }
         assert data == expected_data
 
-    def test_inheritance_from_base_view(self):
+    def test_inheritance_from_base_view(self) -> None:
         """BaseViewからの継承をテストする."""
         from base_view import BaseView
 
         assert issubclass(HealthView, BaseView)
 
-    def test_app_access(self):
+    def test_app_access(self) -> None:
         """appインスタンスへのアクセスをテストする."""
         mock_app = Mock()
         mock_app.name = "health-test"

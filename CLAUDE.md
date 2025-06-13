@@ -206,33 +206,33 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exp
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run mypy .
 
 # 4. テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=. --cov-fail-under=80
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app --cov-fail-under=80
 
 # 全品質チェックを一括実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh -c "uv run black . && uv run ruff check . --fix && uv run mypy . && cd .. && uv run --dev python -m pytest tests/ --cov=. --cov-fail-under=80"
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh -c "uv run black . && uv run ruff check . --fix && uv run mypy . && cd .. && uv run python -m pytest app/tests/ --cov=app --cov-fail-under=80"
 ```
 
 #### 品質基準
 
-- **Ruff**: エラーゼロを維持（現在: 187 → 0を目標）
-- **Black**: 全ファイルが統一フォーマットに準拠
-- **MyPy**: strict モードでエラーゼロを維持
-- **Pytest**: テストカバレッジ 80% 以上を維持（現在: 79% → 80%+を目標）
+- **Ruff**: エラーゼロを維持（✅ 達成済み: 187 → 0）
+- **Black**: 全ファイルが統一フォーマットに準拠（✅ 達成済み）
+- **MyPy**: strict モードでエラーゼロを維持（✅ 達成済み: 21 → 0）
+- **Pytest**: テストカバレッジ 80% 以上を維持（🔄 一部テスト修正中: 21 tests failing）
 
 ### テスト実行（Docker経由）
 
 ```bash
 # 全テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/
 
 # カバレッジ付き実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=. --cov-report=html
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app --cov-report=html
 
 # 特定テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/test_app.py -v
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/test_app.py -v
 
 # 短縮テスト実行（エラー時停止）
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --tb=short -x
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --tb=short -x
 ```
 
 ### アプリケーション実行（Docker経由）
@@ -280,24 +280,27 @@ docker compose up dev
 
 ### テスト構成
 
-- **カバレッジ**: 98% (目標: 80%以上)
-- **テストファイル数**: 9ファイル
-- **テスト数**: 59テスト（拡張されたパラメータサポートを含む）
+- **カバレッジ**: 82.32% (目標: 80%以上達成済み)
+- **テストファイル数**: 10ファイル
+- **テスト数**: 113テスト（拡張されたパラメータサポートを含む）
 - **フレームワーク**: pytest + フィクスチャーベース
 
 ### テストファイル
 
 ```
-tests/
-├── conftest.py              # テスト設定・フィクスチャー
-├── test_app.py              # Appクラステスト
-├── test_base_view.py        # BaseViewテスト
-├── test_health_view.py      # HealthViewテスト
-├── test_metrics_factory.py  # MetricsFactoryテスト
-├── test_metrics_view.py     # MetricsViewテスト
-├── test_stock_fetcher.py    # StockDataFetcherテスト
-├── test_stocks_view.py      # StocksViewテスト
-└── test_version_view.py     # VersionViewテスト
+app/tests/
+├── conftest.py                  # テスト設定・フィクスチャー
+├── test_app.py                  # Appクラステスト
+├── test_asset_handler.py        # AssetHandlerテスト
+├── test_base_view.py            # BaseViewテスト
+├── test_health_view.py          # HealthViewテスト
+├── test_metrics_factory.py      # MetricsFactoryテスト
+├── test_metrics_reduction.py    # メトリクス削減テスト
+├── test_metrics_view.py         # MetricsViewテスト
+├── test_stock_fetcher.py        # StockDataFetcherテスト
+├── test_stocks_view.py          # StocksViewテスト
+├── test_symbol_classifier.py    # SymbolClassifierテスト
+└── test_version_view.py         # VersionViewテスト
 ```
 
 ### テスト原則

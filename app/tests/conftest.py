@@ -1,7 +1,6 @@
 """テスト設定ファイル."""
 
 from collections.abc import Generator
-from typing import Any
 
 import pytest
 from flask import Flask
@@ -43,7 +42,7 @@ def isolated_registry() -> Generator[CollectorRegistry]:
 
 
 @pytest.fixture
-def request_context(app: Flask) -> Generator[Any]:
+def request_context(app: Flask) -> Generator[None]:
     """Flaskリクエストコンテキスト."""
     with app.test_request_context():
         yield

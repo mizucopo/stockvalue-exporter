@@ -1,5 +1,6 @@
 """BaseViewクラスのテストモジュール."""
 
+from collections.abc import Generator
 from unittest.mock import MagicMock, Mock, patch
 
 from base_view import BaseView
@@ -8,7 +9,7 @@ from base_view import BaseView
 class TestBaseView:
     """BaseViewクラスのテストケース."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """BaseViewクラスの初期化をテストする."""
         mock_app = Mock()
         mock_app.name = "test-app"
@@ -17,13 +18,15 @@ class TestBaseView:
         base_view = BaseView(app_instance=mock_app)
         assert base_view.app == mock_app
 
-    def test_inheritance_from_method_view(self):
+    def test_inheritance_from_method_view(self) -> None:
         """MethodViewからの継承をテストする."""
         from flask.views import MethodView
 
         assert issubclass(BaseView, MethodView)
 
-    def test_parse_symbols_parameter_forex_pair(self, request_context):
+    def test_parse_symbols_parameter_forex_pair(
+        self, request_context: Generator[None]
+    ) -> None:
         """為替ペアシンボルの解析をテストする."""
         mock_app = Mock()
         base_view = BaseView(app_instance=mock_app)
@@ -38,7 +41,9 @@ class TestBaseView:
             result = base_view._parse_symbols_parameter()
             assert result == ["USDJPY=X"]
 
-    def test_parse_symbols_parameter_mixed_symbols(self, request_context):
+    def test_parse_symbols_parameter_mixed_symbols(
+        self, request_context: Generator[None]
+    ) -> None:
         """株式と為替ペアの混合シンボルの解析をテストする."""
         mock_app = Mock()
         base_view = BaseView(app_instance=mock_app)
@@ -53,7 +58,9 @@ class TestBaseView:
             result = base_view._parse_symbols_parameter()
             assert result == ["AAPL", "USDJPY=X", "GOOGL"]
 
-    def test_parse_symbols_parameter_multiple_forex_pairs(self, request_context):
+    def test_parse_symbols_parameter_multiple_forex_pairs(
+        self, request_context: Generator[None]
+    ) -> None:
         """複数の為替ペアシンボルの解析をテストする."""
         mock_app = Mock()
         base_view = BaseView(app_instance=mock_app)

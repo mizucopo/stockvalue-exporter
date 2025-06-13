@@ -58,7 +58,6 @@ select = [
 ignore = [
     "D203", "D212",   # docstring style conflicts
     "E501",           # line length (Black handles)
-    "ANN101", "ANN102", # self/cls annotations
 ]
 
 [tool.ruff.lint.pydocstyle]

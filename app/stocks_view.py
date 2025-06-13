@@ -39,26 +39,24 @@ class StocksView(BaseView):
 
         except ValueError as e:
             logger.warning(f"Invalid input parameters: {e}")
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid input parameters",
-                        "message": str(e),
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                ),
-                400,
+            response = jsonify(
+                {
+                    "error": "Invalid input parameters",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
             )
+            response.status_code = 400
+            return response
 
         except Exception as e:
             logger.error(f"Error in stocks endpoint: {e}")
-            return (
-                jsonify(
-                    {
-                        "error": "Internal server error",
-                        "message": "An error occurred while fetching stock data",
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                ),
-                500,
+            response = jsonify(
+                {
+                    "error": "Internal server error",
+                    "message": "An error occurred while fetching stock data",
+                    "timestamp": datetime.now().isoformat(),
+                }
             )
+            response.status_code = 500
+            return response

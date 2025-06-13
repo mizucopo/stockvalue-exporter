@@ -3,12 +3,15 @@
 import logging
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 from flask.views import MethodView
 from prometheus_client import Counter, Histogram
 
 from stock_fetcher import StockDataFetcher
+
+if TYPE_CHECKING:
+    from metrics_view import MetricsFactoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +25,24 @@ class App(MethodView):
         self.name = self.app_info["name"]
         self.version = self.app_info["version"]
         self.description = self.app_info["description"]
-        self.metrics_factory: Any | None = None
+        self._metrics_factory: MetricsFactoryProtocol | None = None
 
-    def set_metrics_factory(self, metrics_factory: Any) -> None:  # noqa: ANN401
+    @property
+    def metrics_factory(self) -> "MetricsFactoryProtocol":
+        """MetricsFactoryインスタンスを取得する."""
+        if self._metrics_factory is None:
+            raise RuntimeError(
+                "MetricsFactory not initialized. Call set_metrics_factory first."
+            )
+        return self._metrics_factory
+
+    def set_metrics_factory(self, metrics_factory: "MetricsFactoryProtocol") -> None:
         """MetricsFactoryインスタンスを設定する.
 
         Args:
             metrics_factory: MetricsFactoryインスタンス
         """
-        self.metrics_factory = metrics_factory
+        self._metrics_factory = metrics_factory
 
     def initialize_fetcher(
         self, stock_fetch_duration: Histogram, stock_fetch_errors: Counter
@@ -52,7 +64,8 @@ class App(MethodView):
 
             with open(pyproject_path, "rb") as f:
                 data = tomllib.load(f)
-                return data.get("project", {}).get("version", "unknown")
+                version: str | int = data.get("project", {}).get("version", "unknown")
+                return version
         except Exception as e:
             print(f"Error reading version from pyproject.toml: {e}")
             return 1

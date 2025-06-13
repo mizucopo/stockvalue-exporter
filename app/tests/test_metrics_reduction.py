@@ -11,7 +11,7 @@ from metrics_factory import MetricsFactory
 class TestMetricsReduction:
     """メトリクス削減機能のテストクラス."""
 
-    def test_default_metrics_all_enabled(self):
+    def test_default_metrics_all_enabled(self) -> None:
         """デフォルト設定で全メトリクスが作成されることをテストする."""
         factory = MetricsFactory.create_default()
 
@@ -27,7 +27,7 @@ class TestMetricsReduction:
         assert "stock_fetch_duration" in all_metrics
         assert "stock_fetch_errors" in all_metrics
 
-    def test_range_metrics_disabled(self):
+    def test_range_metrics_disabled(self) -> None:
         """ENABLE_RANGE_METRICS=Falseで52週系メトリクスが無効化されることをテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
@@ -64,7 +64,7 @@ class TestMetricsReduction:
         # 削減効果を確認（43 - 8 = 35個）
         assert len(all_metrics) == 35
 
-    def test_debug_metrics_disabled(self):
+    def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
@@ -101,7 +101,7 @@ class TestMetricsReduction:
         # 削減効果を確認（43 - 8 = 35個）
         assert len(all_metrics) == 35
 
-    def test_both_metrics_disabled(self):
+    def test_both_metrics_disabled(self) -> None:
         """両方無効化で最大削減効果をテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
@@ -157,25 +157,25 @@ class TestMetricsReduction:
         for metric_key in core_metrics:
             assert metric_key in all_metrics
 
-    def test_production_config_defaults(self):
+    def test_production_config_defaults(self) -> None:
         """本番環境設定のデフォルト値をテストする."""
         with patch.dict("os.environ", {"ENVIRONMENT": "production"}):
             config = Config()
 
             # 本番環境では削減系メトリクスがデフォルトで無効
-            assert config.ENABLE_RANGE_METRICS == False
-            assert config.ENABLE_DEBUG_METRICS == False
+            assert not config.ENABLE_RANGE_METRICS
+            assert not config.ENABLE_DEBUG_METRICS
 
-    def test_development_config_defaults(self):
+    def test_development_config_defaults(self) -> None:
         """開発環境設定のデフォルト値をテストする."""
         with patch.dict("os.environ", {"ENVIRONMENT": "development"}, clear=True):
             config = Config()
 
             # 開発環境では全メトリクスがデフォルトで有効
-            assert config.ENABLE_RANGE_METRICS == True
-            assert config.ENABLE_DEBUG_METRICS == True
+            assert config.ENABLE_RANGE_METRICS
+            assert config.ENABLE_DEBUG_METRICS
 
-    def test_config_override_with_env_vars(self):
+    def test_config_override_with_env_vars(self) -> None:
         """環境変数による設定オーバーライドをテストする."""
         with patch.dict(
             "os.environ",
@@ -188,10 +188,10 @@ class TestMetricsReduction:
             config = Config()
 
             # 環境変数でオーバーライドされることを確認
-            assert config.ENABLE_RANGE_METRICS == True
-            assert config.ENABLE_DEBUG_METRICS == True
+            assert config.ENABLE_RANGE_METRICS
+            assert config.ENABLE_DEBUG_METRICS
 
-    def test_metrics_reduction_impact(self):
+    def test_metrics_reduction_impact(self) -> None:
         """メトリクス削減の効果を数値で確認する."""
         # フル設定用レジストリ
         full_registry = CollectorRegistry()

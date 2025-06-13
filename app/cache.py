@@ -2,14 +2,15 @@
 
 import time
 from collections import OrderedDict
-from typing import Any, TypeVar
+from collections.abc import Iterator
+from typing import Any, Generic, TypeVar
 
 from config import config
 
 T = TypeVar("T")
 
 
-class LRUCache:
+class LRUCache(Generic[T]):
     """メモリ制限とTTL機能を持つLRUキャッシュクラス."""
 
     def __init__(
@@ -47,7 +48,8 @@ class LRUCache:
         self._access_times[key] = time.time()
         self._cache.move_to_end(key)
 
-        return self._cache[key]["value"]
+        value: T = self._cache[key]["value"]
+        return value
 
     def put(self, key: str, value: T) -> None:
         """キャッシュに値を設定する.
@@ -97,7 +99,7 @@ class LRUCache:
             return True
 
         created_at = self._cache[key]["created_at"]
-        return time.time() - created_at > self.ttl_seconds
+        return bool(time.time() - created_at > self.ttl_seconds)
 
     def _remove(self, key: str) -> None:
         """キーをキャッシュから削除する.
@@ -147,3 +149,47 @@ class LRUCache:
             "expired_items": expired_count,
             "memory_usage_ratio": len(self._cache) / self.max_size,
         }
+
+    # Dict-like interface for backward compatibility
+    def __getitem__(self, key: str) -> T:
+        """Dict-like item access."""
+        value = self.get(key)
+        if value is None:
+            raise KeyError(key)
+        return value
+
+    def __setitem__(self, key: str, value: T) -> None:
+        """Dict-like item assignment."""
+        self.put(key, value)
+
+    def __delitem__(self, key: str) -> None:
+        """Dict-like item deletion."""
+        if key not in self._cache:
+            raise KeyError(key)
+        self._remove(key)
+
+    def __contains__(self, key: str) -> bool:
+        """Dict-like membership test."""
+        return key in self._cache and not self._is_expired(key)
+
+    def __len__(self) -> int:
+        """Dict-like length."""
+        return len(self._cache)
+
+    def __iter__(self) -> Iterator[str]:
+        """Dict-like iteration over keys."""
+        return iter(self._cache.keys())
+
+    def keys(self) -> Iterator[str]:
+        """Dict-like keys method."""
+        return iter(self._cache.keys())
+
+    def __eq__(self, other: object) -> bool:
+        """Dict-like equality comparison."""
+        if isinstance(other, dict):
+            if len(other) == 0 and len(self._cache) == 0:
+                return True
+            # For non-empty dicts, convert to dict and compare
+            cache_dict = {k: self._cache[k]["value"] for k in self._cache}
+            return cache_dict == other
+        return False

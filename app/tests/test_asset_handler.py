@@ -16,7 +16,7 @@ from symbol_classifier import AssetType
 class TestStockHandler:
     """StockHandlerクラスのテスト."""
 
-    def test_stock_handler_methods(self):
+    def test_stock_handler_methods(self) -> None:
         """株式ハンドラーの各メソッドをテストする."""
         handler = StockHandler()
 
@@ -47,7 +47,7 @@ class TestStockHandler:
 class TestForexHandler:
     """ForexHandlerクラスのテスト."""
 
-    def test_forex_handler_methods(self):
+    def test_forex_handler_methods(self) -> None:
         """為替ハンドラーの各メソッドをテストする."""
         handler = ForexHandler()
 
@@ -73,7 +73,7 @@ class TestForexHandler:
 class TestIndexHandler:
     """IndexHandlerクラスのテスト."""
 
-    def test_index_handler_methods(self):
+    def test_index_handler_methods(self) -> None:
         """指数ハンドラーの各メソッドをテストする."""
         handler = IndexHandler()
 
@@ -99,7 +99,7 @@ class TestIndexHandler:
 class TestCryptoHandler:
     """CryptoHandlerクラスのテスト."""
 
-    def test_crypto_handler_methods(self):
+    def test_crypto_handler_methods(self) -> None:
         """暗号通貨ハンドラーの各メソッドをテストする."""
         handler = CryptoHandler()
 
@@ -125,27 +125,27 @@ class TestCryptoHandler:
 class TestAssetHandlerFactory:
     """AssetHandlerFactoryクラスのテスト."""
 
-    def test_get_stock_handler(self):
+    def test_get_stock_handler(self) -> None:
         """株式ハンドラー取得をテストする."""
         handler = AssetHandlerFactory.get_handler(AssetType.STOCK)
         assert isinstance(handler, StockHandler)
 
-    def test_get_forex_handler(self):
+    def test_get_forex_handler(self) -> None:
         """為替ハンドラー取得をテストする."""
         handler = AssetHandlerFactory.get_handler(AssetType.FOREX)
         assert isinstance(handler, ForexHandler)
 
-    def test_get_index_handler(self):
+    def test_get_index_handler(self) -> None:
         """指数ハンドラー取得をテストする."""
         handler = AssetHandlerFactory.get_handler(AssetType.INDEX)
         assert isinstance(handler, IndexHandler)
 
-    def test_get_crypto_handler(self):
+    def test_get_crypto_handler(self) -> None:
         """暗号通貨ハンドラー取得をテストする."""
         handler = AssetHandlerFactory.get_handler(AssetType.CRYPTO)
         assert isinstance(handler, CryptoHandler)
 
-    def test_unsupported_asset_type(self):
+    def test_unsupported_asset_type(self) -> None:
         """未サポートの資産タイプでValueErrorが発生することをテストする."""
 
         # 存在しない資産タイプを無理やり作成してテスト
@@ -153,9 +153,9 @@ class TestAssetHandlerFactory:
             pass
 
         with pytest.raises(ValueError, match="Unsupported asset type"):
-            AssetHandlerFactory.get_handler(FakeAssetType())
+            AssetHandlerFactory.get_handler(FakeAssetType())  # type: ignore[arg-type]
 
-    def test_same_instance_returned(self):
+    def test_same_instance_returned(self) -> None:
         """同じ資産タイプに対して同じインスタンスが返されることをテストする."""
         handler1 = AssetHandlerFactory.get_handler(AssetType.STOCK)
         handler2 = AssetHandlerFactory.get_handler(AssetType.STOCK)
@@ -165,12 +165,12 @@ class TestAssetHandlerFactory:
 class TestAssetHandlerAbstractMethods:
     """AssetHandlerの抽象メソッドのテスト."""
 
-    def test_abstract_methods_cannot_instantiate(self):
+    def test_abstract_methods_cannot_instantiate(self) -> None:
         """AssetHandlerは抽象クラスなのでインスタンス化できないことをテストする."""
         with pytest.raises(TypeError):
-            AssetHandler()
+            AssetHandler()  # type: ignore[abstract]
 
-    def test_concrete_handlers_implement_all_methods(self):
+    def test_concrete_handlers_implement_all_methods(self) -> None:
         """具象ハンドラーが全ての抽象メソッドを実装していることをテストする."""
         handlers = [StockHandler(), ForexHandler(), IndexHandler(), CryptoHandler()]
 
@@ -206,7 +206,7 @@ class TestHandlerReturnTypes:
     @pytest.mark.parametrize(
         "handler_class", [StockHandler, ForexHandler, IndexHandler, CryptoHandler]
     )
-    def test_return_types(self, handler_class):
+    def test_return_types(self, handler_class: type[AssetHandler]) -> None:
         """各ハンドラーの戻り値の型をテストする."""
         handler = handler_class()
 

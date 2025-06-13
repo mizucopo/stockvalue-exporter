@@ -1,8 +1,9 @@
 """VersionViewクラスのテストモジュール."""
 
 import json
-from typing import Any
 from unittest.mock import Mock
+
+from flask import Flask
 
 from version_view import VersionView
 
@@ -10,7 +11,7 @@ from version_view import VersionView
 class TestVersionView:
     """VersionViewクラスのテストケース."""
 
-    def test_get_method(self, app_context: Any) -> None:
+    def test_get_method(self, app_context: Flask) -> None:
         """getメソッドをテストする."""
         # モックアプリケーションインスタンスを作成
         mock_app = Mock()
@@ -55,7 +56,7 @@ class TestVersionView:
         assert version_view.app.version == "1.2.3"
         assert version_view.app.description == "Version app description"
 
-    def test_response_format(self, app_context: Any) -> None:
+    def test_response_format(self, app_context: Flask) -> None:
         """レスポンス形式をテストする."""
         mock_app = Mock()
         mock_app.name = "format-test"

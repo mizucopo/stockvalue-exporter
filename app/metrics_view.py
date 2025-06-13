@@ -1,19 +1,49 @@
 """メトリクスビューモジュール."""
 
 import logging
-from typing import Any
+from typing import Any, Protocol
 
-from prometheus_client import generate_latest
+from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
 from asset_handler import AssetHandlerFactory
 from base_view import BaseView
 from symbol_classifier import SymbolClassifier
+
+
+class MetricsFactoryProtocol(Protocol):
+    """メトリクスファクトリーのプロトコル."""
+
+    def get_metric(self, metric_key: str) -> Gauge | Counter | Histogram | None:
+        """指定されたキーのメトリクスを取得する."""
+        ...
+
+    def clear_all_metrics(self) -> None:
+        """全てのメトリクスをクリアする."""
+        ...
+
 
 logger = logging.getLogger(__name__)
 
 
 class MetricsView(BaseView):
     """メトリクス収集用ビュークラス."""
+
+    def _set_gauge_metric(
+        self,
+        metric: Gauge | Counter | Histogram | None,
+        labels: dict[str, str],
+        value: float,
+    ) -> None:
+        """Gaugeメトリクスに値を設定する（型安全）."""
+        if metric is not None and isinstance(metric, Gauge):
+            metric.labels(**labels).set(value)
+
+    def _increment_counter_metric(
+        self, metric: Gauge | Counter | Histogram | None, labels: dict[str, str]
+    ) -> None:
+        """Counterメトリクスをインクリメントする（型安全）."""
+        if metric is not None and isinstance(metric, Counter):
+            metric.labels(**labels).inc()
 
     def _create_metric_labels(self, data: dict[str, Any]) -> dict[str, str]:
         """メトリクス用の基本ラベルを作成する.
@@ -46,7 +76,9 @@ class MetricsView(BaseView):
             "exchange": data["exchange"],
         }
 
-    def _update_price_metrics(self, data: dict[str, Any], metrics_factory: Any) -> None:
+    def _update_price_metrics(
+        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
+    ) -> None:
         """価格関連メトリクスを更新する.
 
         Args:
@@ -58,12 +90,11 @@ class MetricsView(BaseView):
         handler = AssetHandlerFactory.get_handler(asset_type)
 
         metric_key = handler.get_price_metric_key()
-        metrics_factory.get_metric(metric_key).labels(**price_labels).set(
-            data["current_price"]
-        )
+        metric = metrics_factory.get_metric(metric_key)
+        self._set_gauge_metric(metric, price_labels, data["current_price"])
 
     def _update_volume_and_market_metrics(
-        self, data: dict[str, Any], metrics_factory: Any
+        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
     ) -> None:
         """出来高・市場関連メトリクスを更新する.
 
@@ -83,14 +114,14 @@ class MetricsView(BaseView):
         # 出来高メトリクスの更新
         volume_key = handler.get_volume_metric_key()
         if volume_key:
-            metrics_factory.get_metric(volume_key).labels(**labels).set(data["volume"])
+            volume_metric = metrics_factory.get_metric(volume_key)
+            self._set_gauge_metric(volume_metric, labels, data["volume"])
 
         # 時価総額メトリクスの更新
         market_cap_key = handler.get_market_cap_metric_key()
         if market_cap_key:
-            metrics_factory.get_metric(market_cap_key).labels(**labels).set(
-                data["market_cap"]
-            )
+            market_cap_metric = metrics_factory.get_metric(market_cap_key)
+            self._set_gauge_metric(market_cap_metric, labels, data["market_cap"])
 
         # 追加メトリクスの更新（株式のPER、配当利回りなど）
         if handler.should_update_market_metrics():
@@ -101,9 +132,12 @@ class MetricsView(BaseView):
                 if data_key == "dividend_yield":
                     value = value * 100 if value else 0
 
-                metrics_factory.get_metric(metric_key).labels(**labels).set(value)
+                metric = metrics_factory.get_metric(metric_key)
+                self._set_gauge_metric(metric, labels, value)
 
-    def _update_range_metrics(self, data: dict[str, Any], metrics_factory: Any) -> None:
+    def _update_range_metrics(
+        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
+    ) -> None:
         """52週レンジ関連メトリクスを更新する.
 
         Args:
@@ -120,13 +154,11 @@ class MetricsView(BaseView):
         high_metric = metrics_factory.get_metric(high_key)
         low_metric = metrics_factory.get_metric(low_key)
 
-        if high_metric is not None:
-            high_metric.labels(**labels).set(data["fifty_two_week_high"])
-        if low_metric is not None:
-            low_metric.labels(**labels).set(data["fifty_two_week_low"])
+        self._set_gauge_metric(high_metric, labels, data["fifty_two_week_high"])
+        self._set_gauge_metric(low_metric, labels, data["fifty_two_week_low"])
 
     def _update_change_metrics(
-        self, data: dict[str, Any], metrics_factory: Any
+        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
     ) -> None:
         """価格変動関連メトリクスを更新する.
 
@@ -140,18 +172,18 @@ class MetricsView(BaseView):
 
         close_key, change_key, change_percent_key = handler.get_change_metric_keys()
 
-        metrics_factory.get_metric(close_key).labels(**labels).set(
-            data["previous_close"]
-        )
-        metrics_factory.get_metric(change_key).labels(**labels).set(
-            data["price_change"]
-        )
-        metrics_factory.get_metric(change_percent_key).labels(**labels).set(
-            data["price_change_percent"]
+        close_metric = metrics_factory.get_metric(close_key)
+        change_metric = metrics_factory.get_metric(change_key)
+        change_percent_metric = metrics_factory.get_metric(change_percent_key)
+
+        self._set_gauge_metric(close_metric, labels, data["previous_close"])
+        self._set_gauge_metric(change_metric, labels, data["price_change"])
+        self._set_gauge_metric(
+            change_percent_metric, labels, data["price_change_percent"]
         )
 
     def _update_timestamp_metrics(
-        self, data: dict[str, Any], metrics_factory: Any
+        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
     ) -> None:
         """タイムスタンプ関連メトリクスを更新する.
 
@@ -163,9 +195,9 @@ class MetricsView(BaseView):
         handler = AssetHandlerFactory.get_handler(asset_type)
 
         timestamp_key = handler.get_timestamp_metric_key()
-        metrics_factory.get_metric(timestamp_key).labels(symbol=data["symbol"]).set(
-            data["timestamp"]
-        )
+        timestamp_metric = metrics_factory.get_metric(timestamp_key)
+        timestamp_labels = {"symbol": data["symbol"]}
+        self._set_gauge_metric(timestamp_metric, timestamp_labels, data["timestamp"])
 
     def update_prometheus_metrics(self, stock_data_dict: dict[str, Any]) -> None:
         """PrometheusメトリクスをStock data、Forex data、Index data、またはCrypto dataで更新する.
@@ -190,9 +222,9 @@ class MetricsView(BaseView):
                 handler = AssetHandlerFactory.get_handler(asset_type)
 
                 error_key = handler.get_error_metric_key()
-                metrics_factory.get_metric(error_key).labels(
-                    symbol=symbol, error_type="metric_update_error"
-                ).inc()
+                error_metric = metrics_factory.get_metric(error_key)
+                error_labels = {"symbol": symbol, "error_type": "metric_update_error"}
+                self._increment_counter_metric(error_metric, error_labels)
 
     def get(self) -> tuple[str, int, dict[str, str]]:
         """メトリクスデータを収集してPrometheus形式で返す.
@@ -282,7 +314,11 @@ class MetricsView(BaseView):
         Returns:
             Prometheusメトリクスデータ、ステータスコード、ヘッダーのタプル
         """
-        return generate_latest(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+        return (
+            generate_latest().decode("utf-8"),
+            200,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
 
     def _handle_validation_error(
         self, error: ValueError
@@ -296,7 +332,11 @@ class MetricsView(BaseView):
             エラーレスポンスのタプル
         """
         logger.warning(f"Invalid input parameters: {error}")
-        return generate_latest(), 400, {"Content-Type": "text/plain; charset=utf-8"}
+        return (
+            generate_latest().decode("utf-8"),
+            400,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
 
     def _handle_general_error(
         self, error: Exception
@@ -310,4 +350,8 @@ class MetricsView(BaseView):
             エラーレスポンスのタプル
         """
         logger.error(f"Error in metrics endpoint: {error}")
-        return generate_latest(), 500, {"Content-Type": "text/plain; charset=utf-8"}
+        return (
+            generate_latest().decode("utf-8"),
+            500,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )

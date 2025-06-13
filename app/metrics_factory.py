@@ -1,8 +1,15 @@
 """メトリクスファクトリーモジュール."""
 
-from typing import Any
+from typing import Any, Protocol
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
+
+
+class ConfigProtocol(Protocol):
+    """設定オブジェクトのプロトコル."""
+
+    ENABLE_RANGE_METRICS: bool
+    ENABLE_DEBUG_METRICS: bool
 
 
 class MetricsFactory:
@@ -283,7 +290,7 @@ class MetricsFactory:
         self,
         config: dict[str, Any] | None = None,
         registry: CollectorRegistry | None = None,
-        app_config: Any = None,
+        app_config: ConfigProtocol | None = None,
     ) -> None:
         """メトリクスファクトリーを初期化する.
 
@@ -295,7 +302,7 @@ class MetricsFactory:
         self.config = config if config is not None else self.DEFAULT_METRICS_CONFIG
         self.registry = registry if registry is not None else REGISTRY
         self.app_config = app_config
-        self.metrics = {}
+        self.metrics: dict[str, Gauge | Counter | Histogram] = {}
         self._create_metrics()
 
     def _should_create_metric(self, metric_name: str) -> bool:
@@ -328,36 +335,39 @@ class MetricsFactory:
         """設定からメトリクスを生成する."""
         # Gaugeメトリクスを作成
         for gauge_config in self.config.get("gauges", []):
-            if self._should_create_metric(gauge_config["name"]):
+            name = str(gauge_config["name"])
+            if self._should_create_metric(name):
                 metric = Gauge(
-                    gauge_config["name"],
-                    gauge_config["description"],
-                    gauge_config["labels"],
+                    name,
+                    str(gauge_config["description"]),
+                    list(gauge_config["labels"]),
                     registry=self.registry,
                 )
-                self.metrics[gauge_config["key"]] = metric
+                self.metrics[str(gauge_config["key"])] = metric
 
         # Counterメトリクスを作成
         for counter_config in self.config.get("counters", []):
-            if self._should_create_metric(counter_config["name"]):
-                metric = Counter(
-                    counter_config["name"],
-                    counter_config["description"],
-                    counter_config["labels"],
+            name = str(counter_config["name"])
+            if self._should_create_metric(name):
+                counter_metric = Counter(
+                    name,
+                    str(counter_config["description"]),
+                    list(counter_config["labels"]),
                     registry=self.registry,
                 )
-                self.metrics[counter_config["key"]] = metric
+                self.metrics[str(counter_config["key"])] = counter_metric
 
         # Histogramメトリクスを作成
         for histogram_config in self.config.get("histograms", []):
-            if self._should_create_metric(histogram_config["name"]):
-                metric = Histogram(
-                    histogram_config["name"],
-                    histogram_config["description"],
-                    histogram_config["labels"],
+            name = str(histogram_config["name"])
+            if self._should_create_metric(name):
+                histogram_metric = Histogram(
+                    name,
+                    str(histogram_config["description"]),
+                    list(histogram_config["labels"]),
                     registry=self.registry,
                 )
-                self.metrics[histogram_config["key"]] = metric
+                self.metrics[str(histogram_config["key"])] = histogram_metric
 
     def get_metric(self, key: str) -> Gauge | Counter | Histogram | None:
         """キーでメトリクスを取得する.
@@ -423,7 +433,9 @@ class MetricsFactory:
 
     @classmethod
     def create_default(
-        cls, registry: CollectorRegistry | None = None, app_config: Any = None
+        cls,
+        registry: CollectorRegistry | None = None,
+        app_config: ConfigProtocol | None = None,
     ) -> "MetricsFactory":
         """デフォルト設定でMetricsFactoryインスタンスを作成する.
 

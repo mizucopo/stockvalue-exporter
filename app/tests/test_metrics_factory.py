@@ -1,8 +1,9 @@
 """MetricsFactoryクラスのテストモジュール."""
 
+from typing import Any
 from unittest.mock import Mock, patch
 
-from prometheus_client import Counter, Gauge, Histogram
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 from metrics_factory import MetricsFactory
 
@@ -10,7 +11,9 @@ from metrics_factory import MetricsFactory
 class TestMetricsFactory:
     """MetricsFactoryクラスのテストケース."""
 
-    def test_init_with_default_config(self, isolated_registry):
+    def test_init_with_default_config(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """デフォルト設定での初期化をテストする."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -18,7 +21,9 @@ class TestMetricsFactory:
         assert isinstance(factory.metrics, dict)
         assert len(factory.metrics) > 0
 
-    def test_init_with_custom_config(self, isolated_registry):
+    def test_init_with_custom_config(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """カスタム設定での初期化をテストする."""
         custom_config = {
             "gauges": [
@@ -40,7 +45,9 @@ class TestMetricsFactory:
             mock_create.assert_called_once()
 
     @patch("metrics_factory.Gauge")
-    def test_create_gauge_metrics(self, mock_gauge, isolated_registry):
+    def test_create_gauge_metrics(
+        self, mock_gauge: Mock, isolated_registry: CollectorRegistry
+    ) -> None:
         """Gaugeメトリクス作成をテストする."""
         custom_config = {
             "gauges": [
@@ -72,7 +79,9 @@ class TestMetricsFactory:
         assert factory.metrics["test_gauge_key"] == mock_gauge_instance
 
     @patch("metrics_factory.Counter")
-    def test_create_counter_metrics(self, mock_counter, isolated_registry):
+    def test_create_counter_metrics(
+        self, mock_counter: Mock, isolated_registry: CollectorRegistry
+    ) -> None:
         """Counterメトリクス作成をテストする."""
         custom_config = {
             "gauges": [],
@@ -104,7 +113,9 @@ class TestMetricsFactory:
         assert factory.metrics["test_counter_key"] == mock_counter_instance
 
     @patch("metrics_factory.Histogram")
-    def test_create_histogram_metrics(self, mock_histogram, isolated_registry):
+    def test_create_histogram_metrics(
+        self, mock_histogram: Mock, isolated_registry: CollectorRegistry
+    ) -> None:
         """Histogramメトリクス作成をテストする."""
         custom_config = {
             "gauges": [],
@@ -135,7 +146,7 @@ class TestMetricsFactory:
         # メトリクスが正しく保存されたか確認
         assert factory.metrics["test_histogram_key"] == mock_histogram_instance
 
-    def test_get_metric_existing(self, isolated_registry):
+    def test_get_metric_existing(self, isolated_registry: CollectorRegistry) -> None:
         """存在するメトリクスの取得をテストする."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -144,14 +155,16 @@ class TestMetricsFactory:
         assert metric is not None
         assert isinstance(metric, Gauge)
 
-    def test_get_metric_non_existing(self, isolated_registry):
+    def test_get_metric_non_existing(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """存在しないメトリクスの取得をテストする."""
         factory = MetricsFactory(registry=isolated_registry)
 
         metric = factory.get_metric("non_existing_metric")
         assert metric is None
 
-    def test_get_all_metrics(self, isolated_registry):
+    def test_get_all_metrics(self, isolated_registry: CollectorRegistry) -> None:
         """全メトリクス取得をテストする."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -163,14 +176,16 @@ class TestMetricsFactory:
         assert "stock_price" in all_metrics
         assert "stock_fetch_errors" in all_metrics
 
-    def test_create_default_classmethod(self, isolated_registry):
+    def test_create_default_classmethod(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """create_defaultクラスメソッドをテストする."""
         factory = MetricsFactory.create_default(registry=isolated_registry)
 
         assert isinstance(factory, MetricsFactory)
         assert factory.config == MetricsFactory.DEFAULT_METRICS_CONFIG
 
-    def test_default_metrics_config_structure(self):
+    def test_default_metrics_config_structure(self) -> None:
         """デフォルトメトリクス設定の構造をテストする."""
         config = MetricsFactory.DEFAULT_METRICS_CONFIG
 
@@ -189,7 +204,9 @@ class TestMetricsFactory:
             assert "labels" in gauge_config
             assert "key" in gauge_config
 
-    def test_metrics_creation_with_all_types(self, isolated_registry):
+    def test_metrics_creation_with_all_types(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """全種類のメトリクス作成をテストする."""
         # デフォルト設定には全種類のメトリクスが含まれている
         factory = MetricsFactory(registry=isolated_registry)
@@ -209,9 +226,9 @@ class TestMetricsFactory:
         assert has_counter, "Counterメトリクスが作成されていません"
         assert has_histogram, "Histogramメトリクスが作成されていません"
 
-    def test_empty_config_sections(self, isolated_registry):
+    def test_empty_config_sections(self, isolated_registry: CollectorRegistry) -> None:
         """空の設定セクションでの動作をテストする."""
-        empty_config = {
+        empty_config: dict[str, list[dict[str, Any]]] = {
             "gauges": [],
             "counters": [],
             "histograms": [],
@@ -222,7 +239,9 @@ class TestMetricsFactory:
         assert len(factory.metrics) == 0
         assert factory.get_all_metrics() == {}
 
-    def test_missing_config_sections(self, isolated_registry):
+    def test_missing_config_sections(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """設定セクションが欠けている場合の動作をテストする."""
         partial_config = {
             "gauges": [
@@ -241,7 +260,7 @@ class TestMetricsFactory:
         assert len(factory.metrics) == 1
         assert "test" in factory.metrics
 
-    def test_clear_all_metrics(self, isolated_registry):
+    def test_clear_all_metrics(self, isolated_registry: CollectorRegistry) -> None:
         """全メトリクスクリア機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -249,10 +268,11 @@ class TestMetricsFactory:
         stock_price = factory.get_metric("stock_price")
         stock_volume = factory.get_metric("stock_volume")
 
-        if stock_price and stock_volume:
+        if stock_price and isinstance(stock_price, Gauge):
             stock_price.labels(
                 symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
             ).set(150.0)
+        if stock_volume and isinstance(stock_volume, Gauge):
             stock_volume.labels(
                 symbol="AAPL", name="Apple Inc.", exchange="NASDAQ"
             ).set(1000000)
@@ -269,14 +289,14 @@ class TestMetricsFactory:
         assert len(metrics_after) == len(metrics_before)  # メトリクス定義は残る
 
         # 新しい値を設定できることを確認
-        if stock_price:
+        if stock_price and isinstance(stock_price, Gauge):
             stock_price.labels(
                 symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
             ).set(100.0)
             # メトリクスが正常に動作することを確認
             assert stock_price is not None
 
-    def test_unregister_all_metrics(self, isolated_registry):
+    def test_unregister_all_metrics(self, isolated_registry: CollectorRegistry) -> None:
         """全メトリクスのレジストリからの削除機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -298,7 +318,7 @@ class TestMetricsFactory:
         registry_collectors_after = len(isolated_registry._collector_to_names)
         assert registry_collectors_after < registry_collectors_before
 
-    def test_recreate_metrics(self, isolated_registry):
+    def test_recreate_metrics(self, isolated_registry: CollectorRegistry) -> None:
         """メトリクス再作成機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
 
@@ -308,7 +328,7 @@ class TestMetricsFactory:
 
         # いくつかのメトリクスに値を設定
         stock_price = factory.get_metric("stock_price")
-        if stock_price:
+        if stock_price and isinstance(stock_price, Gauge):
             stock_price.labels(
                 symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
             ).set(150.0)
@@ -330,7 +350,9 @@ class TestMetricsFactory:
             symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
         ).set(200.0)
 
-    def test_unregister_already_unregistered_metric(self, isolated_registry):
+    def test_unregister_already_unregistered_metric(
+        self, isolated_registry: CollectorRegistry
+    ) -> None:
         """既に削除されたメトリクスの削除試行のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
 

@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Any
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]
 from prometheus_client import Counter, Histogram
 
 from cache import LRUCache
@@ -27,7 +27,8 @@ class StockDataFetcher:
             stock_fetch_duration: フェッチ時間を計測するHistogramメトリクス
             stock_fetch_errors: エラー数を計測するCounterメトリクス
         """
-        self.cache = LRUCache()
+        self.cache: LRUCache[dict[str, Any]] = LRUCache()
+        self.cache_ttl = self.cache.ttl_seconds  # テスト用のプロパティ
         self.stock_fetch_duration = stock_fetch_duration
         self.stock_fetch_errors = stock_fetch_errors
 
