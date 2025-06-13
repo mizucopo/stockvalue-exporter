@@ -164,6 +164,30 @@ class StockDataFetcher:
             "timestamp": time.time(),
         }
 
+    def _get_currency_symbol(self, currency: str) -> str:
+        """通貨コードに対応する通貨記号を取得する.
+
+        Args:
+            currency: 通貨コード (USD, JPY, EUR等)
+
+        Returns:
+            対応する通貨記号
+        """
+        currency_symbols = {
+            "USD": "$",
+            "JPY": "¥",
+            "EUR": "€",
+            "GBP": "£",
+            "CNY": "¥",
+            "KRW": "₩",
+            "AUD": "A$",
+            "CAD": "C$",
+            "CHF": "CHF",
+            "HKD": "HK$",
+            "SGD": "S$",
+        }
+        return currency_symbols.get(currency.upper(), currency)
+
     def _record_metrics(
         self,
         symbol: str,
@@ -228,9 +252,11 @@ class StockDataFetcher:
                 # 成功メトリクス記録
                 self._record_metrics(symbol, start_time, success=True)
 
+                # 適切な通貨記号を取得
+                currency_symbol = self._get_currency_symbol(stock_data['currency'])
                 logger.info(
-                    f"Successfully fetched data for {symbol}: ${stock_data['current_price']} "
-                    f"(${stock_data['price_change']:+.2f}, {stock_data['price_change_percent']:+.2f}%)"
+                    f"Successfully fetched data for {symbol}: {currency_symbol}{stock_data['current_price']} "
+                    f"({currency_symbol}{stock_data['price_change']:+.2f}, {stock_data['price_change_percent']:+.2f}%)"
                 )
 
             except Exception as e:

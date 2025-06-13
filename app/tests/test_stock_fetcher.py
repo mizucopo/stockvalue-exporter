@@ -331,6 +331,31 @@ class TestStockDataFetcher:
             assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
 
+    def test_get_currency_symbol(self) -> None:
+        """通貨記号の取得をテストする."""
+        fetcher = StockDataFetcher()
+
+        # 主要通貨の記号を確認
+        assert fetcher._get_currency_symbol("USD") == "$"
+        assert fetcher._get_currency_symbol("JPY") == "¥"
+        assert fetcher._get_currency_symbol("EUR") == "€"
+        assert fetcher._get_currency_symbol("GBP") == "£"
+        assert fetcher._get_currency_symbol("CNY") == "¥"
+        assert fetcher._get_currency_symbol("KRW") == "₩"
+        assert fetcher._get_currency_symbol("AUD") == "A$"
+        assert fetcher._get_currency_symbol("CAD") == "C$"
+        assert fetcher._get_currency_symbol("CHF") == "CHF"
+        assert fetcher._get_currency_symbol("HKD") == "HK$"
+        assert fetcher._get_currency_symbol("SGD") == "S$"
+
+        # 大文字小文字の処理を確認
+        assert fetcher._get_currency_symbol("usd") == "$"
+        assert fetcher._get_currency_symbol("jpy") == "¥"
+
+        # 未知の通貨コードの場合はそのまま返す
+        assert fetcher._get_currency_symbol("UNKNOWN") == "UNKNOWN"
+        assert fetcher._get_currency_symbol("XYZ") == "XYZ"
+
     @patch("stock_fetcher.yf")
     def test_get_stock_data_index(self, mock_yf: Mock) -> None:
         """指数のデータ取得をテストする."""
