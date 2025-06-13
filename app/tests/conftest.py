@@ -1,12 +1,15 @@
 """テスト設定ファイル."""
 
+from collections.abc import Generator
+from typing import Any
+
 import pytest
 from flask import Flask
 from prometheus_client import REGISTRY, CollectorRegistry
 
 
 @pytest.fixture
-def app():
+def app() -> Flask:
     """テスト用Flaskアプリケーション."""
     app = Flask(__name__)
     app.config["TESTING"] = True
@@ -14,14 +17,14 @@ def app():
 
 
 @pytest.fixture
-def app_context(app):
+def app_context(app: Flask) -> Generator[Flask]:
     """Flaskアプリケーションコンテキスト."""
     with app.app_context():
         yield app
 
 
 @pytest.fixture
-def clean_registry():
+def clean_registry() -> Generator[None]:
     """Prometheusメトリクスレジストリをクリーンアップ."""
     # テスト前の状態を保存
     collectors = list(REGISTRY._collector_to_names.keys())
@@ -33,14 +36,14 @@ def clean_registry():
 
 
 @pytest.fixture
-def isolated_registry():
+def isolated_registry() -> Generator[CollectorRegistry]:
     """各テスト用に独立したPrometheusレジストリを提供."""
     registry = CollectorRegistry()
     yield registry
 
 
 @pytest.fixture
-def request_context(app):
+def request_context(app: Flask) -> Generator[Any]:
     """Flaskリクエストコンテキスト."""
     with app.test_request_context():
         yield

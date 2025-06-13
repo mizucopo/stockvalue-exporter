@@ -24,7 +24,7 @@ class TestStocksView:
         mock_fetcher.get_stock_data.return_value = mock_stock_data
 
         stocks_view = StocksView(app_instance=mock_app)
-        
+
         with patch("stocks_view.request") as mock_request:
             # URLパラメータなしの場合 - MagicMockを使用してcoroutineを回避
             mock_args = MagicMock()
@@ -47,8 +47,8 @@ class TestStocksView:
 
             # fetcherが正しい引数で呼ばれたか確認
             mock_fetcher.get_stock_data.assert_called_once_with(
-                    ["AAPL", "GOOGL", "MSFT", "TSLA"]
-                )
+                ["AAPL", "GOOGL", "MSFT", "TSLA"]
+            )
 
     def test_get_method_with_custom_symbols_comma_separated(
         self, app_context, request_context
@@ -65,7 +65,7 @@ class TestStocksView:
         mock_fetcher.get_stock_data.return_value = mock_stock_data
 
         stocks_view = StocksView(app_instance=mock_app)
-        
+
         with patch("stocks_view.request") as mock_request:
             mock_args = MagicMock()
             mock_args.getlist.return_value = ["nvda,amd"]
@@ -75,11 +75,11 @@ class TestStocksView:
 
             response = stocks_view.get()
 
-                data = json.loads(response.get_data(as_text=True))
-                assert data["symbols"] == ["NVDA", "AMD"]
-                assert data["data"] == mock_stock_data
+            data = json.loads(response.get_data(as_text=True))
+            assert data["symbols"] == ["NVDA", "AMD"]
+            assert data["data"] == mock_stock_data
 
-                mock_fetcher.get_stock_data.assert_called_once_with(["NVDA", "AMD"])
+            mock_fetcher.get_stock_data.assert_called_once_with(["NVDA", "AMD"])
 
     def test_get_method_with_array_parameters(self, app_context, request_context):
         """配列パラメータでのgetメソッドをテストする."""

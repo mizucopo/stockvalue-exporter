@@ -1,7 +1,7 @@
 """HealthViewクラスのテストモジュール."""
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from health_view import HealthView
 

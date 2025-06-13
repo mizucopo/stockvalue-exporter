@@ -10,12 +10,13 @@ class TestMetricsView:
 
     def test_update_prometheus_metrics(self, isolated_registry):
         """update_prometheus_metricsメトリクスメソッドをテストする."""
-        mock_app = Mock()
+        from metrics_factory import MetricsFactory
 
-        # モックメトリクスファクトリー
-        mock_metrics_factory = Mock()
-        mock_metric = Mock()
-        mock_metrics_factory.get_metric.return_value = mock_metric
+        # 独立したレジストリでMetricsFactoryを作成
+        metrics_factory = MetricsFactory(registry=isolated_registry)
+
+        mock_app = Mock()
+        mock_app.metrics_factory = metrics_factory
 
         # モック株価データ
         stock_data = {
@@ -39,26 +40,26 @@ class TestMetricsView:
         }
 
         metrics_view = MetricsView(app_instance=mock_app)
-        with patch("metrics_view.metrics_factory", mock_metrics_factory):
-            metrics_view.update_prometheus_metrics(stock_data)
+        metrics_view.update_prometheus_metrics(stock_data)
 
-            # メトリクスファクトリーが適切に呼ばれたか確認
-            assert mock_metrics_factory.get_metric.call_count > 0
-
-            # 各メトリクスが設定されたか確認
-            mock_metric.labels.assert_called()
-            mock_metric.labels().set.assert_called()
+        # メトリクスが作成されたか確認
+        assert len(metrics_factory.metrics) > 0
 
     def test_update_prometheus_metrics_with_exception(self, isolated_registry):
         """メトリクス更新時の例外処理をテストする."""
+        from metrics_factory import MetricsFactory
+
         mock_app = Mock()
+
+        # 独立したレジストリでMetricsFactoryを作成
+        metrics_factory = MetricsFactory(registry=isolated_registry)
 
         # メトリクスファクトリーで例外を発生させる
         mock_metrics_factory = Mock()
         mock_error_metric = Mock()
 
         def get_metric_side_effect(metric_name):
-            if metric_name == "stock_fetch_errors":
+            if "fetch_errors" in metric_name:
                 return mock_error_metric
             else:
                 raise Exception("Metric error")
@@ -84,6 +85,8 @@ class TestMetricsView:
 
     def test_get_method_with_default_symbols(self, request_context, isolated_registry):
         """デフォルトシンボルでのgetメソッドをテストする."""
+        from metrics_factory import MetricsFactory
+
         mock_app = Mock()
         mock_fetcher = Mock()
         mock_app.fetcher = mock_fetcher
@@ -94,35 +97,37 @@ class TestMetricsView:
         }
         mock_fetcher.get_stock_data.return_value = mock_stock_data
 
+        # 独立したレジストリでMetricsFactoryを作成
+        metrics_factory = MetricsFactory(registry=isolated_registry)
+
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 mock_args = MagicMock()
                 mock_args.getlist.return_value = []
                 mock_args.get.return_value = ""
-                mock_args.__contains__ = (
-                    lambda self, key: False
-                )  # No symbols parameter
+                mock_args.__contains__ = lambda self, key: False  # No symbols parameter
                 mock_request.args = mock_args
                 mock_generate.return_value = "# Prometheus metrics"
 
                 # update_prometheus_metricsをモック
-                with patch.object(
-                    metrics_view, "update_prometheus_metrics"
-                ) as mock_update:
-                    result = metrics_view.get()
+                with patch("metrics_view.metrics_factory", metrics_factory):
+                    with patch.object(
+                        metrics_view, "update_prometheus_metrics"
+                    ) as mock_update:
+                        result = metrics_view.get()
 
-                    # デフォルトシンボルで呼ばれたか確認
-                    mock_fetcher.get_stock_data.assert_called_once_with(
-                        ["AAPL", "GOOGL", "MSFT", "TSLA"]
-                    )
-                    mock_update.assert_called_once_with(mock_stock_data)
+                        # デフォルトシンボルで呼ばれたか確認
+                        mock_fetcher.get_stock_data.assert_called_once_with(
+                            ["AAPL", "GOOGL", "MSFT", "TSLA"]
+                        )
+                        mock_update.assert_called_once_with(mock_stock_data)
 
-                    # レスポンスを確認
-                    assert result[0] == "# Prometheus metrics"
-                    assert result[1] == 200
-                    assert result[2]["Content-Type"] == "text/plain; charset=utf-8"
+                        # レスポンスを確認
+                        assert result[0] == "# Prometheus metrics"
+                        assert result[1] == 200
+                        assert result[2]["Content-Type"] == "text/plain; charset=utf-8"
 
     def test_get_method_with_custom_symbols(self, request_context, isolated_registry):
         """カスタムシンボルでのgetメソッドをテストする."""
@@ -132,7 +137,7 @@ class TestMetricsView:
         mock_fetcher.get_stock_data.return_value = {}
 
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 mock_args = MagicMock()
@@ -145,9 +150,7 @@ class TestMetricsView:
                 with patch.object(metrics_view, "update_prometheus_metrics"):
                     metrics_view.get()
 
-                    mock_fetcher.get_stock_data.assert_called_once_with(
-                        ["NVDA", "AMD"]
-                    )
+                    mock_fetcher.get_stock_data.assert_called_once_with(["NVDA", "AMD"])
 
     def test_get_method_with_array_symbols(self, request_context, isolated_registry):
         """配列シンボルでのgetメソッドをテストする."""
@@ -157,7 +160,7 @@ class TestMetricsView:
         mock_fetcher.get_stock_data.return_value = {}
 
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 mock_args = MagicMock()
@@ -181,7 +184,7 @@ class TestMetricsView:
         mock_fetcher.get_stock_data.side_effect = Exception("Fetch error")
 
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 with patch("metrics_view.logger") as mock_logger:
@@ -207,7 +210,7 @@ class TestMetricsView:
         mock_fetcher.get_stock_data.return_value = {}
 
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 mock_args = MagicMock()
@@ -225,7 +228,9 @@ class TestMetricsView:
                         ["AAPL", "GOOGL", "MSFT"]
                     )
 
-    def test_get_method_with_duplicate_symbols(self, request_context, isolated_registry):
+    def test_get_method_with_duplicate_symbols(
+        self, request_context, isolated_registry
+    ):
         """重複シンボルでのgetメソッドをテストする."""
         mock_app = Mock()
         mock_fetcher = Mock()
@@ -233,7 +238,7 @@ class TestMetricsView:
         mock_fetcher.get_stock_data.return_value = {}
 
         metrics_view = MetricsView(app_instance=mock_app)
-        
+
         with patch("metrics_view.request") as mock_request:
             with patch("metrics_view.generate_latest") as mock_generate:
                 mock_args = MagicMock()

@@ -1,7 +1,8 @@
 """VersionViewクラスのテストモジュール."""
 
 import json
-from unittest.mock import Mock, patch
+from typing import Any
+from unittest.mock import Mock
 
 from version_view import VersionView
 
@@ -9,7 +10,7 @@ from version_view import VersionView
 class TestVersionView:
     """VersionViewクラスのテストケース."""
 
-    def test_get_method(self, app_context):
+    def test_get_method(self, app_context: Any) -> None:
         """getメソッドをテストする."""
         # モックアプリケーションインスタンスを作成
         mock_app = Mock()
@@ -33,13 +34,13 @@ class TestVersionView:
         }
         assert data == expected_data
 
-    def test_inheritance_from_base_view(self):
+    def test_inheritance_from_base_view(self) -> None:
         """BaseViewからの継承をテストする."""
         from base_view import BaseView
 
         assert issubclass(VersionView, BaseView)
 
-    def test_app_access(self):
+    def test_app_access(self) -> None:
         """appインスタンスへのアクセスをテストする."""
         mock_app = Mock()
         mock_app.name = "version-app"
@@ -54,7 +55,7 @@ class TestVersionView:
         assert version_view.app.version == "1.2.3"
         assert version_view.app.description == "Version app description"
 
-    def test_response_format(self, app_context):
+    def test_response_format(self, app_context: Any) -> None:
         """レスポンス形式をテストする."""
         mock_app = Mock()
         mock_app.name = "format-test"

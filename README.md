@@ -163,13 +163,49 @@ docker compose up dev
 
 ### コード品質
 
-本プロジェクトは厳格な品質基準を維持しています：
+本プロジェクトは、4つの厳格な品質ツールで高品質なコードベースを維持しています：
 
-- **テストカバレッジ**: 98% (目標: 80%以上)
-- **テスト数**: 59テスト（拡張されたパラメータサポートを含む）
-- **リンター**: ruff による厳格なコードチェック
-- **フォーマッター**: black による一貫したコードスタイル
-- **型チェック**: mypy strict モード
+#### 品質メトリクス
+
+- **テストカバレッジ**: 79% (目標: 80%以上)
+- **テスト数**: 113テスト（包括的なユニットテスト）
+- **Ruff エラー**: 187 (目標: 0)
+- **MyPy**: strict モード準拠
+
+#### 4つのコード品質ツール
+
+**1. Ruff - 高速Pythonリンター**
+- Flake8、isort、pydocstyle等を統合
+- コードスタイル、セキュリティ問題を検出
+- 自動修正機能付き
+
+**2. Black - コードフォーマッター**
+- PEP8準拠の自動フォーマット
+- 88文字行長制限
+- 一貫したコードスタイル強制
+
+**3. MyPy - 静的型チェッカー**
+- 型ヒント基づく検証
+- strict モード運用
+- 実行時エラーの事前検出
+
+**4. Pytest - テストフレームワーク**
+- カバレッジ測定機能
+- フィクスチャベーステスト
+- 包括的なテストスイート
+
+#### 品質チェック実行
+
+```bash
+# 統合品質チェック
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh -c "uv run black . && uv run ruff check . --fix && uv run mypy . && cd .. && uv run --dev python -m pytest tests/ --cov=. --cov-fail-under=80"
+
+# 個別実行
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run ruff check .        # リント
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run black .          # フォーマット
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run mypy .           # 型チェック
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=.  # テスト
+```
 
 ## ⚙️ 設定
 

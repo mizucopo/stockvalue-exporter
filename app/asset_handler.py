@@ -112,18 +112,23 @@ class ForexHandler(AssetHandler):
     """為替用のハンドラー."""
 
     def get_price_metric_key(self) -> str:
+        """為替レートメトリクスのキーを返す."""
         return "forex_rate"
 
     def get_volume_metric_key(self) -> str | None:
+        """出来高メトリクスのキーを返す（為替では使用しない）."""
         return None  # 為替は出来高なし
 
     def get_market_cap_metric_key(self) -> str | None:
+        """時価総額メトリクスのキーを返す（為替では使用しない）."""
         return None  # 為替は時価総額なし
 
     def get_range_metric_keys(self) -> tuple[str, str]:
+        """52週レンジメトリクスのキーを返す."""
         return ("forex_52week_high", "forex_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
+        """為替レート変動メトリクスのキーを返す."""
         return (
             "forex_previous_close",
             "forex_rate_change",
@@ -131,18 +136,23 @@ class ForexHandler(AssetHandler):
         )
 
     def get_timestamp_metric_key(self) -> str:
+        """タイムスタンプメトリクスのキーを返す."""
         return "forex_last_updated"
 
     def get_error_metric_key(self) -> str:
+        """エラーメトリクスのキーを返す."""
         return "forex_fetch_errors"
 
     def should_update_volume(self) -> bool:
+        """出来高メトリクスを更新するかどうかを返す."""
         return False
 
     def should_update_market_metrics(self) -> bool:
+        """市場メトリクスを更新するかどうかを返す."""
         return False
 
     def get_additional_metrics(self) -> dict[str, Any]:
+        """追加のメトリクス情報を返す."""
         return {}
 
 
@@ -150,18 +160,23 @@ class IndexHandler(AssetHandler):
     """指数用のハンドラー."""
 
     def get_price_metric_key(self) -> str:
+        """指数価格メトリクスのキーを返す."""
         return "index_value"
 
     def get_volume_metric_key(self) -> str | None:
+        """指数出来高メトリクスのキーを返す."""
         return "index_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
+        """時価総額メトリクスのキーを返す（指数では使用しない）."""
         return None  # 指数は時価総額なし
 
     def get_range_metric_keys(self) -> tuple[str, str]:
+        """52週レンジメトリクスのキーを返す."""
         return ("index_52week_high", "index_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
+        """指数価格変動メトリクスのキーを返す."""
         return (
             "index_previous_close",
             "index_value_change",
@@ -169,18 +184,23 @@ class IndexHandler(AssetHandler):
         )
 
     def get_timestamp_metric_key(self) -> str:
+        """タイムスタンプメトリクスのキーを返す."""
         return "index_last_updated"
 
     def get_error_metric_key(self) -> str:
+        """エラーメトリクスのキーを返す."""
         return "index_fetch_errors"
 
     def should_update_volume(self) -> bool:
+        """出来高メトリクスを更新するかどうかを返す."""
         return True
 
     def should_update_market_metrics(self) -> bool:
+        """市場メトリクスを更新するかどうかを返す."""
         return False
 
     def get_additional_metrics(self) -> dict[str, Any]:
+        """追加のメトリクス情報を返す."""
         return {}
 
 
@@ -188,18 +208,23 @@ class CryptoHandler(AssetHandler):
     """暗号通貨用のハンドラー."""
 
     def get_price_metric_key(self) -> str:
+        """暗号通貨価格メトリクスのキーを返す."""
         return "crypto_price"
 
     def get_volume_metric_key(self) -> str | None:
+        """暗号通貨出来高メトリクスのキーを返す."""
         return "crypto_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
+        """暗号通貨時価総額メトリクスのキーを返す."""
         return "crypto_market_cap"
 
     def get_range_metric_keys(self) -> tuple[str, str]:
+        """52週レンジメトリクスのキーを返す."""
         return ("crypto_52week_high", "crypto_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
+        """暗号通貨価格変動メトリクスのキーを返す."""
         return (
             "crypto_previous_close",
             "crypto_price_change",
@@ -207,18 +232,23 @@ class CryptoHandler(AssetHandler):
         )
 
     def get_timestamp_metric_key(self) -> str:
+        """タイムスタンプメトリクスのキーを返す."""
         return "crypto_last_updated"
 
     def get_error_metric_key(self) -> str:
+        """エラーメトリクスのキーを返す."""
         return "crypto_fetch_errors"
 
     def should_update_volume(self) -> bool:
+        """出来高メトリクスを更新するかどうかを返す."""
         return True
 
     def should_update_market_metrics(self) -> bool:
+        """市場メトリクスを更新するかどうかを返す."""
         return True  # 暗号通貨は時価総額あり、PER・配当利回りなし
 
     def get_additional_metrics(self) -> dict[str, Any]:
+        """追加のメトリクス情報を返す."""
         return {}
 
 
