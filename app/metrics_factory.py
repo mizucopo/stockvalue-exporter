@@ -249,7 +249,7 @@ class MetricsFactory:
                 "description": "Total cryptocurrency fetch errors",
                 "labels": ["symbol", "error_type"],
                 "key": "crypto_fetch_errors",
-            }
+            },
         ],
         "histograms": [
             {
@@ -275,11 +275,16 @@ class MetricsFactory:
                 "description": "Time spent fetching cryptocurrency data",
                 "labels": ["symbol"],
                 "key": "crypto_fetch_duration",
-            }
+            },
         ],
     }
 
-    def __init__(self, config: dict[str, Any] | None = None, registry: CollectorRegistry | None = None, app_config: Any = None) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any] | None = None,
+        registry: CollectorRegistry | None = None,
+        app_config: Any = None,
+    ) -> None:
         """メトリクスファクトリーを初期化する.
 
         Args:
@@ -295,27 +300,27 @@ class MetricsFactory:
 
     def _should_create_metric(self, metric_name: str) -> bool:
         """メトリクスを作成すべきかどうかを判定する.
-        
+
         Args:
             metric_name: メトリクス名
-            
+
         Returns:
             作成すべき場合True
         """
         if self.app_config is None:
             # 設定がない場合は全て作成
             return True
-            
+
         # 52週系メトリクス（Range Metrics）の制御
         range_metric_patterns = ["52week_high", "52week_low"]
         if any(pattern in metric_name for pattern in range_metric_patterns):
-            return getattr(self.app_config, 'ENABLE_RANGE_METRICS', True)
-            
+            return getattr(self.app_config, "ENABLE_RANGE_METRICS", True)
+
         # デバッグ系メトリクス（Duration, Errors）の制御
         debug_metric_patterns = ["fetch_duration", "fetch_errors"]
         if any(pattern in metric_name for pattern in debug_metric_patterns):
-            return getattr(self.app_config, 'ENABLE_DEBUG_METRICS', True)
-            
+            return getattr(self.app_config, "ENABLE_DEBUG_METRICS", True)
+
         # その他のメトリクスは常に作成
         return True
 
@@ -375,7 +380,7 @@ class MetricsFactory:
 
     def clear_all_metrics(self) -> None:
         """全てのメトリクスのデータをクリアする（レジストリからは削除しない）.
-        
+
         注意: この操作により、全てのシンボルのメトリクスデータが削除されます。
         メトリクス自体はレジストリに残ります。
         """
@@ -388,7 +393,7 @@ class MetricsFactory:
 
     def unregister_all_metrics(self) -> None:
         """全てのメトリクスをレジストリから完全に削除する.
-        
+
         注意: この操作により、メトリクスがレジストリから完全に削除されます。
         再利用するには新しいMetricsFactoryインスタンスを作成する必要があります。
         """
@@ -401,23 +406,25 @@ class MetricsFactory:
             except Exception:
                 # その他のエラーは無視
                 pass
-        
+
         # メトリクス辞書をクリア
         self.metrics.clear()
 
     def recreate_metrics(self) -> None:
         """全てのメトリクスを再作成する.
-        
+
         既存のメトリクスをレジストリから削除してから、新しいメトリクスを作成します。
         """
         # 既存のメトリクスを削除
         self.unregister_all_metrics()
-        
+
         # 新しいメトリクスを作成
         self._create_metrics()
 
     @classmethod
-    def create_default(cls, registry: CollectorRegistry | None = None, app_config: Any = None) -> "MetricsFactory":
+    def create_default(
+        cls, registry: CollectorRegistry | None = None, app_config: Any = None
+    ) -> "MetricsFactory":
         """デフォルト設定でMetricsFactoryインスタンスを作成する.
 
         Args:

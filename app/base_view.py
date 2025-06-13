@@ -11,7 +11,6 @@ from config import config
 class BaseView(MethodView):
     """すべてのViewクラスの基底クラス."""
 
-
     # クラス変数でアプリケーションインスタンスを保持
     _app_instance: Any | None = None
 
@@ -37,6 +36,7 @@ class BaseView(MethodView):
         else:
             # 後方互換性のためのフォールバック（循環インポート）
             from main import app
+
             self.app = app
 
     def _parse_symbols_parameter(self) -> list[str]:
@@ -74,7 +74,9 @@ class BaseView(MethodView):
         unique_symbols = list(dict.fromkeys(symbols))
 
         # フォールバック処理
-        final_symbols = unique_symbols if unique_symbols else config.DEFAULT_SYMBOLS.copy()
+        final_symbols = (
+            unique_symbols if unique_symbols else config.DEFAULT_SYMBOLS.copy()
+        )
 
         # 入力検証
         if not config.validate_symbols(final_symbols):

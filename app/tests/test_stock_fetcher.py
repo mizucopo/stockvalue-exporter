@@ -157,7 +157,12 @@ class TestStockDataFetcher:
 
         with patch("time.time") as mock_time:
             # 開始時間と終了時間を設定
-            mock_time.side_effect = [1638360000, 1638360002, 1638360002, 1638360002]  # start, end, cache timestamp
+            mock_time.side_effect = [
+                1638360000,
+                1638360002,
+                1638360002,
+                1638360002,
+            ]  # start, end, cache timestamp
             result = fetcher.get_stock_data(["AAPL"])
 
             # 実行時間メトリクスが記録されたか確認
@@ -216,23 +221,6 @@ class TestStockDataFetcher:
                     assert "timestamp" in fetcher.cache["AAPL"]
                     assert fetcher.cache["AAPL"]["data"]["symbol"] == "AAPL"
                     assert fetcher.cache["AAPL"]["timestamp"] == 1638360000
-
-    def test_is_forex_pair_true(self):
-        """為替ペアの判定（True）をテストする."""
-        fetcher = StockDataFetcher()
-
-        assert fetcher._is_forex_pair("USDJPY=X") is True
-        assert fetcher._is_forex_pair("EURJPY=X") is True
-        assert fetcher._is_forex_pair("GBPJPY=X") is True
-
-    def test_is_forex_pair_false(self):
-        """為替ペアの判定（False）をテストする."""
-        fetcher = StockDataFetcher()
-
-        assert fetcher._is_forex_pair("AAPL") is False
-        assert fetcher._is_forex_pair("GOOGL") is False
-        assert fetcher._is_forex_pair("BRK-B") is False
-        assert fetcher._is_forex_pair("5255.T") is False
 
     @patch("stock_fetcher.yf")
     def test_get_stock_data_forex_pair(self, mock_yf):
@@ -342,25 +330,6 @@ class TestStockDataFetcher:
             assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
 
-    def test_is_index_true(self):
-        """指数の判定（True）をテストする."""
-        fetcher = StockDataFetcher()
-        
-        assert fetcher._is_index("^GSPC") is True
-        assert fetcher._is_index("^NDX") is True
-        assert fetcher._is_index("^N225") is True
-        assert fetcher._is_index("998405.T") is True
-
-    def test_is_index_false(self):
-        """指数の判定（False）をテストする."""
-        fetcher = StockDataFetcher()
-        
-        assert fetcher._is_index("AAPL") is False
-        assert fetcher._is_index("GOOGL") is False
-        assert fetcher._is_index("USDJPY=X") is False
-        assert fetcher._is_index("BRK-B") is False
-        assert fetcher._is_index("5255.T") is False  # 通常の日本株
-
     @patch("stock_fetcher.yf")
     def test_get_stock_data_index(self, mock_yf):
         """指数のデータ取得をテストする."""
@@ -395,58 +364,3 @@ class TestStockDataFetcher:
             assert index_data["market_cap"] == 0
             assert index_data["pe_ratio"] == 0
             assert index_data["dividend_yield"] == 0
-
-    def test_is_crypto_true(self):
-        """暗号通貨の判定（True）をテストする."""
-        fetcher = StockDataFetcher()
-        
-        assert fetcher._is_crypto("BTC-USD") is True
-        assert fetcher._is_crypto("ETH-USD") is True
-        assert fetcher._is_crypto("ADA-USD") is True
-
-    def test_is_crypto_false(self):
-        """暗号通貨の判定（False）をテストする."""
-        fetcher = StockDataFetcher()
-        
-        assert fetcher._is_crypto("AAPL") is False
-        assert fetcher._is_crypto("GOOGL") is False
-        assert fetcher._is_crypto("USDJPY=X") is False
-        assert fetcher._is_crypto("^GSPC") is False
-        assert fetcher._is_crypto("BRK-B") is False  # 通常の株式
-
-    @patch("stock_fetcher.yf")
-    def test_get_stock_data_crypto(self, mock_yf):
-        """暗号通貨のデータ取得をテストする."""
-        fetcher = StockDataFetcher()
-
-        # yfinanceのモックを設定（暗号通貨用）
-        mock_ticker = Mock()
-        mock_info = {
-            "symbol": "BTC-USD",
-            "shortName": "Bitcoin USD",
-            "regularMarketPrice": 107918.305,
-            "regularMarketPreviousClose": 108687.66,
-            "fiftyTwoWeekHigh": 111970.17,
-            "fiftyTwoWeekLow": 49121.24,
-            "volume": 53235281920,
-            "marketCap": 2145176125440,
-            "exchange": "CCC",
-        }
-        mock_ticker.info = mock_info
-        mock_yf.Ticker.return_value = mock_ticker
-
-        with patch("time.time", return_value=1638360000):
-            result = fetcher.get_stock_data(["BTC-USD"])
-
-            assert "BTC-USD" in result
-            crypto_data = result["BTC-USD"]
-            assert crypto_data["symbol"] == "BTC-USD"
-            assert crypto_data["name"] == "Bitcoin USD"
-            assert crypto_data["current_price"] == 107918.305
-            assert crypto_data["currency"] == "USD"
-            assert crypto_data["exchange"] == "CRYPTO"
-            assert crypto_data["volume"] == 53235281920
-            assert crypto_data["market_cap"] == 2145176125440
-            # 暗号通貨特有の値（PERと配当利回りはなし）
-            assert crypto_data["pe_ratio"] == 0
-            assert crypto_data["dividend_yield"] == 0

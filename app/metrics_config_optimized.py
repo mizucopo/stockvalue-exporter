@@ -103,16 +103,16 @@ OPTIMIZED_METRICS_CONFIG = {
 
 # asset_type の値定義
 ASSET_TYPES = {
-    "STOCK": "stock",      # 株式
-    "FOREX": "forex",      # 為替
-    "INDEX": "index",      # 指数
-    "CRYPTO": "crypto",    # 暗号通貨
+    "STOCK": "stock",  # 株式
+    "FOREX": "forex",  # 為替
+    "INDEX": "index",  # 指数
+    "CRYPTO": "crypto",  # 暗号通貨
 }
 
 # 統合効果
 REDUCTION_IMPACT = {
     "before": 43,  # 統合前のメトリクス数
-    "after": 13,   # 統合後のメトリクス数
+    "after": 13,  # 統合後のメトリクス数
     "reduction": 30,  # 削減数
     "reduction_percent": 69.8,  # 削減率（%）
 }
@@ -130,6 +130,6 @@ BENEFITS = [
 CONSIDERATIONS = [
     "既存のダッシュボードやアラートの更新が必要",
     "一部のクエリでlabel filteringが必要になる",
-    "asset_type=\"stock\" のようなフィルタリングが必要",
+    'asset_type="stock" のようなフィルタリングが必要',
     "株式固有メトリクス（PE比、配当利回り）は統合不可",
 ]

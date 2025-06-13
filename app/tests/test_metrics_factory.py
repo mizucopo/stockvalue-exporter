@@ -65,7 +65,7 @@ class TestMetricsFactory:
             "test_gauge",
             "Test gauge description",
             ["symbol", "name"],
-            registry=isolated_registry
+            registry=isolated_registry,
         )
 
         # メトリクスが正しく保存されたか確認
@@ -97,7 +97,7 @@ class TestMetricsFactory:
             "test_counter",
             "Test counter description",
             ["error_type"],
-            registry=isolated_registry
+            registry=isolated_registry,
         )
 
         # メトリクスが正しく保存されたか確認
@@ -129,7 +129,7 @@ class TestMetricsFactory:
             "test_histogram",
             "Test histogram description",
             ["operation"],
-            registry=isolated_registry
+            registry=isolated_registry,
         )
 
         # メトリクスが正しく保存されたか確認
@@ -195,9 +195,15 @@ class TestMetricsFactory:
         factory = MetricsFactory(registry=isolated_registry)
 
         # 各種類のメトリクスが作成されているか確認
-        has_gauge = any(isinstance(metric, Gauge) for metric in factory.metrics.values())
-        has_counter = any(isinstance(metric, Counter) for metric in factory.metrics.values())
-        has_histogram = any(isinstance(metric, Histogram) for metric in factory.metrics.values())
+        has_gauge = any(
+            isinstance(metric, Gauge) for metric in factory.metrics.values()
+        )
+        has_counter = any(
+            isinstance(metric, Counter) for metric in factory.metrics.values()
+        )
+        has_histogram = any(
+            isinstance(metric, Histogram) for metric in factory.metrics.values()
+        )
 
         assert has_gauge, "Gaugeメトリクスが作成されていません"
         assert has_counter, "Counterメトリクスが作成されていません"
@@ -238,50 +244,56 @@ class TestMetricsFactory:
     def test_clear_all_metrics(self, isolated_registry):
         """全メトリクスクリア機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
-        
+
         # いくつかのメトリクスに値を設定
         stock_price = factory.get_metric("stock_price")
         stock_volume = factory.get_metric("stock_volume")
-        
+
         if stock_price and stock_volume:
-            stock_price.labels(symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ").set(150.0)
-            stock_volume.labels(symbol="AAPL", name="Apple Inc.", exchange="NASDAQ").set(1000000)
-        
+            stock_price.labels(
+                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
+            ).set(150.0)
+            stock_volume.labels(
+                symbol="AAPL", name="Apple Inc.", exchange="NASDAQ"
+            ).set(1000000)
+
         # メトリクスが設定されていることを確認
         metrics_before = factory.get_all_metrics()
         assert len(metrics_before) > 0
-        
+
         # 全メトリクスをクリア
         factory.clear_all_metrics()
-        
+
         # メトリクス自体は存在するが、値がクリアされていることを確認
         metrics_after = factory.get_all_metrics()
         assert len(metrics_after) == len(metrics_before)  # メトリクス定義は残る
-        
+
         # 新しい値を設定できることを確認
         if stock_price:
-            stock_price.labels(symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ").set(100.0)
+            stock_price.labels(
+                symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
+            ).set(100.0)
             # メトリクスが正常に動作することを確認
             assert stock_price is not None
 
     def test_unregister_all_metrics(self, isolated_registry):
         """全メトリクスのレジストリからの削除機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
-        
+
         # 最初にメトリクスが存在することを確認
         initial_metrics = factory.get_all_metrics()
         assert len(initial_metrics) > 0
-        
+
         # レジストリにメトリクスが登録されていることを確認
         registry_collectors_before = len(isolated_registry._collector_to_names)
         assert registry_collectors_before > 0
-        
+
         # 全メトリクスをレジストリから削除
         factory.unregister_all_metrics()
-        
+
         # メトリクス辞書がクリアされていることを確認
         assert len(factory.metrics) == 0
-        
+
         # レジストリからメトリクスが削除されていることを確認
         registry_collectors_after = len(isolated_registry._collector_to_names)
         assert registry_collectors_after < registry_collectors_before
@@ -289,40 +301,44 @@ class TestMetricsFactory:
     def test_recreate_metrics(self, isolated_registry):
         """メトリクス再作成機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
-        
+
         # 最初のメトリクス数を記録
         initial_metrics_count = len(factory.get_all_metrics())
         assert initial_metrics_count > 0
-        
+
         # いくつかのメトリクスに値を設定
         stock_price = factory.get_metric("stock_price")
         if stock_price:
-            stock_price.labels(symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ").set(150.0)
-        
+            stock_price.labels(
+                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
+            ).set(150.0)
+
         # メトリクスを再作成
         factory.recreate_metrics()
-        
+
         # メトリクス数が元と同じであることを確認
         recreated_metrics = factory.get_all_metrics()
         assert len(recreated_metrics) == initial_metrics_count
-        
+
         # 新しいメトリクスインスタンスが作成されていることを確認
         new_stock_price = factory.get_metric("stock_price")
         assert new_stock_price is not None
         assert isinstance(new_stock_price, Gauge)
-        
+
         # 新しいメトリクスに値を設定できることを確認
-        new_stock_price.labels(symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ").set(200.0)
+        new_stock_price.labels(
+            symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
+        ).set(200.0)
 
     def test_unregister_already_unregistered_metric(self, isolated_registry):
         """既に削除されたメトリクスの削除試行のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
-        
+
         # 一度削除
         factory.unregister_all_metrics()
-        
+
         # 再度削除しても例外が発生しないことを確認
         factory.unregister_all_metrics()
-        
+
         # メトリクス辞書が空であることを確認
         assert len(factory.metrics) == 0

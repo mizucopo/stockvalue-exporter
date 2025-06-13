@@ -3,6 +3,7 @@
 import logging
 import tomllib
 from pathlib import Path
+from typing import Any
 
 from flask.views import MethodView
 from prometheus_client import Counter, Histogram
@@ -21,6 +22,15 @@ class App(MethodView):
         self.name = self.app_info["name"]
         self.version = self.app_info["version"]
         self.description = self.app_info["description"]
+        self.metrics_factory: Any | None = None
+
+    def set_metrics_factory(self, metrics_factory: Any) -> None:  # noqa: ANN401
+        """MetricsFactoryインスタンスを設定する.
+
+        Args:
+            metrics_factory: MetricsFactoryインスタンス
+        """
+        self.metrics_factory = metrics_factory
 
     def initialize_fetcher(
         self, stock_fetch_duration: Histogram, stock_fetch_errors: Counter

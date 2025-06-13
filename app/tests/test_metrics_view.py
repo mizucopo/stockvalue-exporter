@@ -57,11 +57,13 @@ class TestMetricsView:
         # メトリクスファクトリーで例外を発生させる
         mock_metrics_factory = Mock()
         mock_error_metric = Mock()
+
         def get_metric_side_effect(metric_name):
             if metric_name == "stock_fetch_errors":
                 return mock_error_metric
             else:
                 raise Exception("Metric error")
+
         mock_metrics_factory.get_metric.side_effect = get_metric_side_effect
 
         stock_data = {
@@ -101,14 +103,18 @@ class TestMetricsView:
                     mock_args = MagicMock()
                     mock_args.getlist.return_value = []
                     mock_args.get.return_value = ""
-                    mock_args.__contains__ = lambda self, key: False  # No symbols parameter
+                    mock_args.__contains__ = (
+                        lambda self, key: False
+                    )  # No symbols parameter
                     mock_request.args = mock_args
                     mock_generate.return_value = "# Prometheus metrics"
 
                     metrics_view = MetricsView()
 
                     # update_prometheus_metricsをモック
-                    with patch.object(metrics_view, "update_prometheus_metrics") as mock_update:
+                    with patch.object(
+                        metrics_view, "update_prometheus_metrics"
+                    ) as mock_update:
                         result = metrics_view.get()
 
                         # デフォルトシンボルで呼ばれたか確認
@@ -144,7 +150,9 @@ class TestMetricsView:
                     with patch.object(metrics_view, "update_prometheus_metrics"):
                         metrics_view.get()
 
-                        mock_fetcher.get_stock_data.assert_called_once_with(["NVDA", "AMD"])
+                        mock_fetcher.get_stock_data.assert_called_once_with(
+                            ["NVDA", "AMD"]
+                        )
 
     def test_get_method_with_array_symbols(self, request_context):
         """配列シンボルでのgetメソッドをテストする."""
@@ -167,7 +175,9 @@ class TestMetricsView:
                     with patch.object(metrics_view, "update_prometheus_metrics"):
                         metrics_view.get()
 
-                        mock_fetcher.get_stock_data.assert_called_once_with(["TSLA", "META"])
+                        mock_fetcher.get_stock_data.assert_called_once_with(
+                            ["TSLA", "META"]
+                        )
 
     def test_get_method_with_exception(self, request_context):
         """getメソッドでの例外処理をテストする."""
@@ -218,7 +228,9 @@ class TestMetricsView:
                         metrics_view.get()
 
                         # 重複を除去して順序を保持した結果を期待
-                        mock_fetcher.get_stock_data.assert_called_once_with(["AAPL", "GOOGL", "MSFT"])
+                        mock_fetcher.get_stock_data.assert_called_once_with(
+                            ["AAPL", "GOOGL", "MSFT"]
+                        )
 
     def test_get_method_with_duplicate_symbols(self, request_context):
         """重複シンボルでのgetメソッドをテストする."""
@@ -243,7 +255,9 @@ class TestMetricsView:
                         metrics_view.get()
 
                         # 重複を除去して順序を保持した結果を期待
-                        mock_fetcher.get_stock_data.assert_called_once_with(["AAPL", "GOOGL"])
+                        mock_fetcher.get_stock_data.assert_called_once_with(
+                            ["AAPL", "GOOGL"]
+                        )
 
     def test_inheritance_from_base_view(self):
         """BaseViewからの継承をテストする."""
@@ -253,10 +267,10 @@ class TestMetricsView:
 
     def test_get_method_with_clear_parameter(self, app, isolated_registry):
         """clearパラメータ付きでのメトリクス取得をテストする."""
-        with app.test_request_context('/?symbols=AAPL&clear=true'):
-            with patch('config.config') as mock_config:
+        with app.test_request_context("/?symbols=AAPL&clear=true"):
+            with patch("config.config") as mock_config:
                 mock_config.AUTO_CLEAR_METRICS = False
-                
+
                 # MockアプリケーションにfetcherAttributeを追加
                 mock_app = Mock()
                 mock_app.fetcher.get_stock_data.return_value = {
@@ -278,27 +292,27 @@ class TestMetricsView:
                         "timestamp": 1638360000,
                     }
                 }
-                
-                with patch('main.metrics_factory') as mock_metrics_factory:
+
+                with patch("main.metrics_factory") as mock_metrics_factory:
                     mock_metrics_factory.clear_all_metrics = Mock()
-                    
+
                     view = MetricsView()
                     view.app = mock_app
-                    
+
                     response, status_code, headers = view.get()
-                    
+
                     # メトリクスクリアが呼ばれたことを確認
                     mock_metrics_factory.clear_all_metrics.assert_called_once()
-                    
+
                     assert status_code == 200
                     assert headers["Content-Type"] == "text/plain; charset=utf-8"
 
     def test_get_method_with_auto_clear_config(self, app, isolated_registry):
         """AUTO_CLEAR_METRICS設定でのメトリクス取得をテストする."""
-        with app.test_request_context('/?symbols=AAPL'):
-            with patch('config.config') as mock_config:
+        with app.test_request_context("/?symbols=AAPL"):
+            with patch("config.config") as mock_config:
                 mock_config.AUTO_CLEAR_METRICS = True  # 自動クリア有効
-                
+
                 # MockアプリケーションにfetcherAttributeを追加
                 mock_app = Mock()
                 mock_app.fetcher.get_stock_data.return_value = {
@@ -320,26 +334,26 @@ class TestMetricsView:
                         "timestamp": 1638360000,
                     }
                 }
-                
-                with patch('main.metrics_factory') as mock_metrics_factory:
-                        mock_metrics_factory.clear_all_metrics = Mock()
-                        
-                        view = MetricsView()
-                        view.app = mock_app
-                        
-                        response, status_code, headers = view.get()
-                        
-                        # 自動クリアが呼ばれたことを確認
-                        mock_metrics_factory.clear_all_metrics.assert_called_once()
-                        
-                        assert status_code == 200
-                        assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+                with patch("main.metrics_factory") as mock_metrics_factory:
+                    mock_metrics_factory.clear_all_metrics = Mock()
+
+                    view = MetricsView()
+                    view.app = mock_app
+
+                    response, status_code, headers = view.get()
+
+                    # 自動クリアが呼ばれたことを確認
+                    mock_metrics_factory.clear_all_metrics.assert_called_once()
+
+                    assert status_code == 200
+                    assert headers["Content-Type"] == "text/plain; charset=utf-8"
 
     def test_get_method_without_clear(self, app, isolated_registry):
         """クリアパラメータなしでのメトリクス取得をテストする."""
-        with app.test_request_context('/?symbols=AAPL'):
-            with patch('config.config.AUTO_CLEAR_METRICS', False):  # 自動クリア無効
-                
+        with app.test_request_context("/?symbols=AAPL"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):  # 自動クリア無効
+
                 # MockアプリケーションにfetcherAttributeを追加
                 mock_app = Mock()
                 mock_app.fetcher.get_stock_data.return_value = {
@@ -361,17 +375,17 @@ class TestMetricsView:
                         "timestamp": 1638360000,
                     }
                 }
-                
-                with patch('main.metrics_factory') as mock_metrics_factory:
-                        mock_metrics_factory.clear_all_metrics = Mock()
-                        
-                        view = MetricsView()
-                        view.app = mock_app
-                        
-                        response, status_code, headers = view.get()
-                        
-                        # メトリクスクリアが呼ばれていないことを確認
-                        mock_metrics_factory.clear_all_metrics.assert_not_called()
-                        
-                        assert status_code == 200
-                        assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+                with patch("main.metrics_factory") as mock_metrics_factory:
+                    mock_metrics_factory.clear_all_metrics = Mock()
+
+                    view = MetricsView()
+                    view.app = mock_app
+
+                    response, status_code, headers = view.get()
+
+                    # メトリクスクリアが呼ばれていないことを確認
+                    mock_metrics_factory.clear_all_metrics.assert_not_called()
+
+                    assert status_code == 200
+                    assert headers["Content-Type"] == "text/plain; charset=utf-8"

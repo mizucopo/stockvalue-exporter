@@ -46,9 +46,13 @@ class TestStocksView:
                 assert data["data"] == mock_stock_data
 
                 # fetcherが正しい引数で呼ばれたか確認
-                mock_fetcher.get_stock_data.assert_called_once_with(["AAPL", "GOOGL", "MSFT", "TSLA"])
+                mock_fetcher.get_stock_data.assert_called_once_with(
+                    ["AAPL", "GOOGL", "MSFT", "TSLA"]
+                )
 
-    def test_get_method_with_custom_symbols_comma_separated(self, app_context, request_context):
+    def test_get_method_with_custom_symbols_comma_separated(
+        self, app_context, request_context
+    ):
         """カンマ区切りのカスタムシンボルでのgetメソッドをテストする."""
         mock_app = Mock()
         mock_fetcher = Mock()
@@ -158,7 +162,9 @@ class TestStocksView:
                 assert data["symbols"] == ["AAPL", "GOOGL", "MSFT"]
                 assert data["data"] == mock_stock_data
 
-                mock_fetcher.get_stock_data.assert_called_once_with(["AAPL", "GOOGL", "MSFT"])
+                mock_fetcher.get_stock_data.assert_called_once_with(
+                    ["AAPL", "GOOGL", "MSFT"]
+                )
 
     def test_get_method_with_duplicate_symbols(self, app_context, request_context):
         """重複シンボルでのgetメソッドをテストする."""

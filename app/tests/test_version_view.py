@@ -69,6 +69,7 @@ class TestVersionView:
 
             # レスポンスがFlaskのResponseオブジェクトであることを確認
             from flask import Response
+
             assert isinstance(response, Response)
 
             # Content-Typeヘッダーを確認

@@ -28,6 +28,9 @@ APP_NAME = app.name
 APP_VERSION = app.version
 APP_DESCRIPTION = app.description
 
+# MetricsFactoryをappに設定（循環インポート解決）
+app.set_metrics_factory(metrics_factory)
+
 # StockDataFetcherのappへの初期化
 app.initialize_fetcher(
     metrics_factory.get_metric("stock_fetch_duration"),
@@ -50,6 +53,8 @@ if __name__ == "__main__":
     print(f"Starting {APP_NAME} v{APP_VERSION}")
     print(f"Description: {APP_DESCRIPTION}")
     print(f"Metrics available at: http://{config.HOST}:{config.PORT}/metrics")
-    print(f"Example: http://{config.HOST}:{config.PORT}/metrics?symbols=AAPL,GOOGL,MSFT")
+    print(
+        f"Example: http://{config.HOST}:{config.PORT}/metrics?symbols=AAPL,GOOGL,MSFT"
+    )
     print(f"Environment: {'Production' if config.is_production else 'Development'}")
     web.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)

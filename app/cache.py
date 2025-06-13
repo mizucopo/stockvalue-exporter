@@ -6,13 +6,15 @@ from typing import Any, TypeVar
 
 from config import config
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class LRUCache:
     """メモリ制限とTTL機能を持つLRUキャッシュクラス."""
 
-    def __init__(self, max_size: int | None = None, ttl_seconds: int | None = None) -> None:
+    def __init__(
+        self, max_size: int | None = None, ttl_seconds: int | None = None
+    ) -> None:
         """LRUキャッシュを初期化する.
 
         Args:
@@ -45,7 +47,7 @@ class LRUCache:
         self._access_times[key] = time.time()
         self._cache.move_to_end(key)
 
-        return self._cache[key]['value']
+        return self._cache[key]["value"]
 
     def put(self, key: str, value: T) -> None:
         """キャッシュに値を設定する.
@@ -58,10 +60,7 @@ class LRUCache:
 
         if key in self._cache:
             # 既存の項目を更新
-            self._cache[key] = {
-                'value': value,
-                'created_at': current_time
-            }
+            self._cache[key] = {"value": value, "created_at": current_time}
             self._access_times[key] = current_time
             self._cache.move_to_end(key)
         else:
@@ -69,10 +68,7 @@ class LRUCache:
             if len(self._cache) >= self.max_size:
                 self._evict_lru()
 
-            self._cache[key] = {
-                'value': value,
-                'created_at': current_time
-            }
+            self._cache[key] = {"value": value, "created_at": current_time}
             self._access_times[key] = current_time
 
     def clear(self) -> None:
@@ -100,7 +96,7 @@ class LRUCache:
         if key not in self._cache:
             return True
 
-        created_at = self._cache[key]['created_at']
+        created_at = self._cache[key]["created_at"]
         return time.time() - created_at > self.ttl_seconds
 
     def _remove(self, key: str) -> None:
@@ -129,10 +125,7 @@ class LRUCache:
         Returns:
             削除されたアイテム数
         """
-        expired_keys = [
-            key for key in self._cache.keys()
-            if self._is_expired(key)
-        ]
+        expired_keys = [key for key in self._cache.keys() if self._is_expired(key)]
 
         for key in expired_keys:
             self._remove(key)
@@ -145,15 +138,12 @@ class LRUCache:
         Returns:
             統計情報の辞書
         """
-        expired_count = sum(
-            1 for key in self._cache.keys()
-            if self._is_expired(key)
-        )
+        expired_count = sum(1 for key in self._cache.keys() if self._is_expired(key))
 
         return {
-            'total_items': len(self._cache),
-            'max_size': self.max_size,
-            'ttl_seconds': self.ttl_seconds,
-            'expired_items': expired_count,
-            'memory_usage_ratio': len(self._cache) / self.max_size,
+            "total_items": len(self._cache),
+            "max_size": self.max_size,
+            "ttl_seconds": self.ttl_seconds,
+            "expired_items": expired_count,
+            "memory_usage_ratio": len(self._cache) / self.max_size,
         }
