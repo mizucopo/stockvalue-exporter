@@ -5,7 +5,7 @@ Yahoo Finance API から**株価・指数・暗号通貨・為替データ**を�
 
 [![Docker Hub](https://img.shields.io/docker/v/mizucopo/stockvalue-exporter?label=Docker%20Hub)](https://hub.docker.com/r/mizucopo/stockvalue-exporter)
 [![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/mizu-copo/stockvalue-exporter)
-[![Python](https://img.shields.io/badge/python-3.13+-blue)](https://www.python.org)
+[![Python](https://img.shields.io/badge/python-3.13.5+-blue)](https://www.python.org)
 
 ## ✨ 特徴
 
@@ -80,7 +80,7 @@ curl "http://localhost:9100/api/stocks?symbols=^GSPC&symbols=^N225"
 
 ### アーキテクチャ
 
-- **言語**: Python 3.13+
+- **言語**: Python 3.13.5+
 - **フレームワーク**: Flask with MethodView pattern
 - **パッケージ管理**: uv (高速、モダン)
 - **設計パターン**: MVC, Factory, Template Method, Dependency Injection
