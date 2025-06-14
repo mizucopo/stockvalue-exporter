@@ -67,7 +67,7 @@ class App(MethodView):
                 version: str | int = data.get("project", {}).get("version", "unknown")
                 return version
         except Exception as e:
-            print(f"Error reading version from pyproject.toml: {e}")
+            logger.error(f"Error reading version from pyproject.toml: {e}")
             return 1
 
     def get_app_info(self) -> dict[str, str]:
@@ -93,7 +93,7 @@ class App(MethodView):
                     ),
                 }
         except Exception as e:
-            print(f"Error reading app info from pyproject.toml: {e}")
+            logger.error(f"Error reading app info from pyproject.toml: {e}")
             return {
                 "name": "stockvalue-exporter",
                 "version": "unknown",
