@@ -264,17 +264,17 @@ class TestMetricsFactory:
         """全メトリクスクリア機能のテスト."""
         factory = MetricsFactory(registry=isolated_registry)
 
-        # いくつかのメトリクスに値を設定
-        stock_price = factory.get_metric("stock_price")
-        stock_volume = factory.get_metric("stock_volume")
+        # いくつかのメトリクスに値を設定（統一メトリクス名を使用）
+        financial_price = factory.get_metric("financial_price")
+        financial_volume = factory.get_metric("financial_volume")
 
-        if stock_price and isinstance(stock_price, Gauge):
-            stock_price.labels(
-                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
+        if financial_price and isinstance(financial_price, Gauge):
+            financial_price.labels(
+                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ", asset_type="stock"
             ).set(150.0)
-        if stock_volume and isinstance(stock_volume, Gauge):
-            stock_volume.labels(
-                symbol="AAPL", name="Apple Inc.", exchange="NASDAQ"
+        if financial_volume and isinstance(financial_volume, Gauge):
+            financial_volume.labels(
+                symbol="AAPL", name="Apple Inc.", exchange="NASDAQ", asset_type="stock"
             ).set(1000000)
 
         # メトリクスが設定されていることを確認
@@ -289,12 +289,12 @@ class TestMetricsFactory:
         assert len(metrics_after) == len(metrics_before)  # メトリクス定義は残る
 
         # 新しい値を設定できることを確認
-        if stock_price and isinstance(stock_price, Gauge):
-            stock_price.labels(
-                symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
+        if financial_price and isinstance(financial_price, Gauge):
+            financial_price.labels(
+                symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ", asset_type="stock"
             ).set(100.0)
             # メトリクスが正常に動作することを確認
-            assert stock_price is not None
+            assert financial_price is not None
 
     def test_unregister_all_metrics(self, isolated_registry: CollectorRegistry) -> None:
         """全メトリクスのレジストリからの削除機能のテスト."""
