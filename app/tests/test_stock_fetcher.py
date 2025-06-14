@@ -18,7 +18,7 @@ class TestStockDataFetcher:
 
         fetcher = StockDataFetcher(mock_duration, mock_errors)
 
-        assert fetcher.cache._cache == {}
+        assert len(fetcher.cache) == 0
         assert fetcher.cache_ttl == 600
         assert fetcher.financial_fetch_duration == mock_duration
         assert fetcher.financial_fetch_errors == mock_errors
@@ -29,7 +29,7 @@ class TestStockDataFetcher:
         """Noneパラメータでの初期化をテストする."""
         fetcher = StockDataFetcher()
 
-        assert fetcher.cache._cache == {}
+        assert len(fetcher.cache) == 0
         assert fetcher.cache_ttl == 600
         assert fetcher.financial_fetch_duration is None
         assert fetcher.financial_fetch_errors is None
