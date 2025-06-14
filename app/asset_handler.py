@@ -65,35 +65,35 @@ class StockHandler(AssetHandler):
 
     def get_price_metric_key(self) -> str:
         """価格メトリクスのキーを返す."""
-        return "stock_price"
+        return "financial_price"
 
     def get_volume_metric_key(self) -> str | None:
         """出来高メトリクスのキーを返す."""
-        return "stock_volume"
+        return "financial_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
         """時価総額メトリクスのキーを返す."""
-        return "stock_market_cap"
+        return "financial_market_cap"
 
     def get_range_metric_keys(self) -> tuple[str, str]:
         """52週レンジメトリクスのキーを返す."""
-        return ("stock_52week_high", "stock_52week_low")
+        return ("financial_52week_high", "financial_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
         """価格変動メトリクスのキーを返す."""
         return (
-            "stock_previous_close",
-            "stock_price_change",
-            "stock_price_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
 
     def get_timestamp_metric_key(self) -> str:
         """タイムスタンプメトリクスのキーを返す."""
-        return "stock_last_updated"
+        return "financial_last_updated"
 
     def get_error_metric_key(self) -> str:
         """エラーメトリクスのキーを返す."""
-        return "stock_fetch_errors"
+        return "financial_fetch_errors"
 
     def should_update_volume(self) -> bool:
         """出来高メトリクスを更新するかどうかを返す."""
@@ -113,7 +113,7 @@ class ForexHandler(AssetHandler):
 
     def get_price_metric_key(self) -> str:
         """為替レートメトリクスのキーを返す."""
-        return "forex_rate"
+        return "financial_price"
 
     def get_volume_metric_key(self) -> str | None:
         """出来高メトリクスのキーを返す（為替では使用しない）."""
@@ -125,23 +125,23 @@ class ForexHandler(AssetHandler):
 
     def get_range_metric_keys(self) -> tuple[str, str]:
         """52週レンジメトリクスのキーを返す."""
-        return ("forex_52week_high", "forex_52week_low")
+        return ("financial_52week_high", "financial_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
         """為替レート変動メトリクスのキーを返す."""
         return (
-            "forex_previous_close",
-            "forex_rate_change",
-            "forex_rate_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
 
     def get_timestamp_metric_key(self) -> str:
         """タイムスタンプメトリクスのキーを返す."""
-        return "forex_last_updated"
+        return "financial_last_updated"
 
     def get_error_metric_key(self) -> str:
         """エラーメトリクスのキーを返す."""
-        return "forex_fetch_errors"
+        return "financial_fetch_errors"
 
     def should_update_volume(self) -> bool:
         """出来高メトリクスを更新するかどうかを返す."""
@@ -161,11 +161,11 @@ class IndexHandler(AssetHandler):
 
     def get_price_metric_key(self) -> str:
         """指数価格メトリクスのキーを返す."""
-        return "index_value"
+        return "financial_price"
 
     def get_volume_metric_key(self) -> str | None:
         """指数出来高メトリクスのキーを返す."""
-        return "index_volume"
+        return "financial_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
         """時価総額メトリクスのキーを返す（指数では使用しない）."""
@@ -173,23 +173,23 @@ class IndexHandler(AssetHandler):
 
     def get_range_metric_keys(self) -> tuple[str, str]:
         """52週レンジメトリクスのキーを返す."""
-        return ("index_52week_high", "index_52week_low")
+        return ("financial_52week_high", "financial_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
         """指数価格変動メトリクスのキーを返す."""
         return (
-            "index_previous_close",
-            "index_value_change",
-            "index_value_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
 
     def get_timestamp_metric_key(self) -> str:
         """タイムスタンプメトリクスのキーを返す."""
-        return "index_last_updated"
+        return "financial_last_updated"
 
     def get_error_metric_key(self) -> str:
         """エラーメトリクスのキーを返す."""
-        return "index_fetch_errors"
+        return "financial_fetch_errors"
 
     def should_update_volume(self) -> bool:
         """出来高メトリクスを更新するかどうかを返す."""
@@ -209,35 +209,35 @@ class CryptoHandler(AssetHandler):
 
     def get_price_metric_key(self) -> str:
         """暗号通貨価格メトリクスのキーを返す."""
-        return "crypto_price"
+        return "financial_price"
 
     def get_volume_metric_key(self) -> str | None:
         """暗号通貨出来高メトリクスのキーを返す."""
-        return "crypto_volume"
+        return "financial_volume"
 
     def get_market_cap_metric_key(self) -> str | None:
         """暗号通貨時価総額メトリクスのキーを返す."""
-        return "crypto_market_cap"
+        return "financial_market_cap"
 
     def get_range_metric_keys(self) -> tuple[str, str]:
         """52週レンジメトリクスのキーを返す."""
-        return ("crypto_52week_high", "crypto_52week_low")
+        return ("financial_52week_high", "financial_52week_low")
 
     def get_change_metric_keys(self) -> tuple[str, str, str]:
         """暗号通貨価格変動メトリクスのキーを返す."""
         return (
-            "crypto_previous_close",
-            "crypto_price_change",
-            "crypto_price_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
 
     def get_timestamp_metric_key(self) -> str:
         """タイムスタンプメトリクスのキーを返す."""
-        return "crypto_last_updated"
+        return "financial_last_updated"
 
     def get_error_metric_key(self) -> str:
         """エラーメトリクスのキーを返す."""
-        return "crypto_fetch_errors"
+        return "financial_fetch_errors"
 
     def should_update_volume(self) -> bool:
         """出来高メトリクスを更新するかどうかを返す."""

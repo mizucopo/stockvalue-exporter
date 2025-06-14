@@ -20,20 +20,20 @@ class TestStockHandler:
         """株式ハンドラーの各メソッドをテストする."""
         handler = StockHandler()
 
-        assert handler.get_price_metric_key() == "stock_price"
-        assert handler.get_volume_metric_key() == "stock_volume"
-        assert handler.get_market_cap_metric_key() == "stock_market_cap"
+        assert handler.get_price_metric_key() == "financial_price"
+        assert handler.get_volume_metric_key() == "financial_volume"
+        assert handler.get_market_cap_metric_key() == "financial_market_cap"
         assert handler.get_range_metric_keys() == (
-            "stock_52week_high",
-            "stock_52week_low",
+            "financial_52week_high",
+            "financial_52week_low",
         )
         assert handler.get_change_metric_keys() == (
-            "stock_previous_close",
-            "stock_price_change",
-            "stock_price_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
-        assert handler.get_timestamp_metric_key() == "stock_last_updated"
-        assert handler.get_error_metric_key() == "stock_fetch_errors"
+        assert handler.get_timestamp_metric_key() == "financial_last_updated"
+        assert handler.get_error_metric_key() == "financial_fetch_errors"
         assert handler.should_update_volume() is True
         assert handler.should_update_market_metrics() is True
 
@@ -48,20 +48,20 @@ class TestForexHandler:
         """為替ハンドラーの各メソッドをテストする."""
         handler = ForexHandler()
 
-        assert handler.get_price_metric_key() == "forex_rate"
+        assert handler.get_price_metric_key() == "financial_price"
         assert handler.get_volume_metric_key() is None
         assert handler.get_market_cap_metric_key() is None
         assert handler.get_range_metric_keys() == (
-            "forex_52week_high",
-            "forex_52week_low",
+            "financial_52week_high",
+            "financial_52week_low",
         )
         assert handler.get_change_metric_keys() == (
-            "forex_previous_close",
-            "forex_rate_change",
-            "forex_rate_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
-        assert handler.get_timestamp_metric_key() == "forex_last_updated"
-        assert handler.get_error_metric_key() == "forex_fetch_errors"
+        assert handler.get_timestamp_metric_key() == "financial_last_updated"
+        assert handler.get_error_metric_key() == "financial_fetch_errors"
         assert handler.should_update_volume() is False
         assert handler.should_update_market_metrics() is False
         assert handler.get_additional_metrics() == {}
@@ -74,20 +74,20 @@ class TestIndexHandler:
         """指数ハンドラーの各メソッドをテストする."""
         handler = IndexHandler()
 
-        assert handler.get_price_metric_key() == "index_value"
-        assert handler.get_volume_metric_key() == "index_volume"
+        assert handler.get_price_metric_key() == "financial_price"
+        assert handler.get_volume_metric_key() == "financial_volume"
         assert handler.get_market_cap_metric_key() is None
         assert handler.get_range_metric_keys() == (
-            "index_52week_high",
-            "index_52week_low",
+            "financial_52week_high",
+            "financial_52week_low",
         )
         assert handler.get_change_metric_keys() == (
-            "index_previous_close",
-            "index_value_change",
-            "index_value_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
-        assert handler.get_timestamp_metric_key() == "index_last_updated"
-        assert handler.get_error_metric_key() == "index_fetch_errors"
+        assert handler.get_timestamp_metric_key() == "financial_last_updated"
+        assert handler.get_error_metric_key() == "financial_fetch_errors"
         assert handler.should_update_volume() is True
         assert handler.should_update_market_metrics() is False
         assert handler.get_additional_metrics() == {}
@@ -100,20 +100,20 @@ class TestCryptoHandler:
         """暗号通貨ハンドラーの各メソッドをテストする."""
         handler = CryptoHandler()
 
-        assert handler.get_price_metric_key() == "crypto_price"
-        assert handler.get_volume_metric_key() == "crypto_volume"
-        assert handler.get_market_cap_metric_key() == "crypto_market_cap"
+        assert handler.get_price_metric_key() == "financial_price"
+        assert handler.get_volume_metric_key() == "financial_volume"
+        assert handler.get_market_cap_metric_key() == "financial_market_cap"
         assert handler.get_range_metric_keys() == (
-            "crypto_52week_high",
-            "crypto_52week_low",
+            "financial_52week_high",
+            "financial_52week_low",
         )
         assert handler.get_change_metric_keys() == (
-            "crypto_previous_close",
-            "crypto_price_change",
-            "crypto_price_change_percent",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
         )
-        assert handler.get_timestamp_metric_key() == "crypto_last_updated"
-        assert handler.get_error_metric_key() == "crypto_fetch_errors"
+        assert handler.get_timestamp_metric_key() == "financial_last_updated"
+        assert handler.get_error_metric_key() == "financial_fetch_errors"
         assert handler.should_update_volume() is True
         assert handler.should_update_market_metrics() is True
         assert handler.get_additional_metrics() == {}
