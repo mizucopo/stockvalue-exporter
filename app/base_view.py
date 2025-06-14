@@ -1,22 +1,39 @@
 """ベースビュークラスモジュール."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Protocol
 
 from flask import request
 from flask.views import MethodView
 
 from config import config
 
+if TYPE_CHECKING:
+    from metrics_view import MetricsFactoryProtocol
+    from stock_fetcher import StockDataFetcher
+
+
+class AppProtocol(Protocol):
+    """アプリケーションインスタンスのプロトコル."""
+
+    name: str
+    version: str
+    description: str
+    fetcher: "StockDataFetcher"
+
+    @property
+    def metrics_factory(self) -> "MetricsFactoryProtocol":
+        """MetricsFactoryインスタンスを取得する."""
+        ...
+
 
 class BaseView(MethodView):
     """すべてのViewクラスの基底クラス."""
 
-
     # クラス変数でアプリケーションインスタンスを保持
-    _app_instance: Any | None = None
+    _app_instance: AppProtocol | None = None
 
     @classmethod
-    def set_app_instance(cls, app_instance: Any) -> None:
+    def set_app_instance(cls, app_instance: AppProtocol) -> None:
         """全てのビューに使用するアプリケーションインスタンスを設定する.
 
         Args:
@@ -24,7 +41,7 @@ class BaseView(MethodView):
         """
         cls._app_instance = app_instance
 
-    def __init__(self, app_instance: Any | None = None) -> None:
+    def __init__(self, app_instance: AppProtocol | None = None) -> None:
         """ベースビューを初期化する.
 
         Args:
@@ -37,6 +54,7 @@ class BaseView(MethodView):
         else:
             # 後方互換性のためのフォールバック（循環インポート）
             from main import app
+
             self.app = app
 
     def _parse_symbols_parameter(self) -> list[str]:
@@ -74,13 +92,15 @@ class BaseView(MethodView):
         unique_symbols = list(dict.fromkeys(symbols))
 
         # フォールバック処理
-        final_symbols = unique_symbols if unique_symbols else config.DEFAULT_SYMBOLS.copy()
+        final_symbols = (
+            unique_symbols if unique_symbols else config.DEFAULT_SYMBOLS.copy()
+        )
 
         # 入力検証
         if not config.validate_symbols(final_symbols):
             raise ValueError(
                 f"Invalid symbols provided. Max {config.MAX_SYMBOLS_PER_REQUEST} symbols allowed, "
-                f"each must be 1-10 alphanumeric characters. Received: {final_symbols}"
+                f"each must be 1-15 characters (alphanumeric, periods, hyphens). Received: {final_symbols}"
             )
 
         return final_symbols

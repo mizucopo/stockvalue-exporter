@@ -326,3 +326,9 @@ grafana_data/
 
 # Ruff cache
 .ruff_cache/
+
+# Claude Code
+.claude/settings.local.json
+
+# Original files
+TODO.local.md
