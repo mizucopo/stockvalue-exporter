@@ -173,23 +173,56 @@ class LRUCache(Generic[T]):
         return key in self._cache and not self._is_expired(key)
 
     def __len__(self) -> int:
-        """Dict-like length."""
-        return len(self._cache)
+        """Dict-like length.
+
+        Returns:
+            Number of non-expired items in cache
+
+        Note:
+            This method returns only non-expired items for consistency
+            with other dict-like operations like __contains__.
+        """
+        return len([key for key in self._cache if not self._is_expired(key)])
 
     def __iter__(self) -> Iterator[str]:
-        """Dict-like iteration over keys."""
-        return iter(self._cache.keys())
+        """Dict-like iteration over keys.
+
+        Returns:
+            Iterator over non-expired keys only
+
+        Note:
+            This method returns only non-expired keys for consistency
+            with other dict-like operations like __contains__ and __len__.
+        """
+        return iter(key for key in self._cache.keys() if not self._is_expired(key))
 
     def keys(self) -> Iterator[str]:
-        """Dict-like keys method."""
-        return iter(self._cache.keys())
+        """Dict-like keys method.
+
+        Returns:
+            Iterator over non-expired keys only
+
+        Note:
+            This method returns only non-expired keys for consistency
+            with other dict-like operations like __contains__ and __len__.
+        """
+        return iter(key for key in self._cache.keys() if not self._is_expired(key))
 
     def __eq__(self, other: object) -> bool:
-        """Dict-like equality comparison."""
+        """Dict-like equality comparison.
+
+        Note:
+            Only compares non-expired items for consistency
+            with other dict-like operations.
+        """
         if isinstance(other, dict):
-            if len(other) == 0 and len(self._cache) == 0:
+            # Get non-expired items only
+            non_expired_keys = [
+                k for k in self._cache.keys() if not self._is_expired(k)
+            ]
+            if len(other) == 0 and len(non_expired_keys) == 0:
                 return True
-            # For non-empty dicts, convert to dict and compare
-            cache_dict = {k: self._cache[k]["value"] for k in self._cache}
+            # For non-empty dicts, convert to dict and compare (non-expired items only)
+            cache_dict = {k: self._cache[k]["value"] for k in non_expired_keys}
             return cache_dict == other
         return False

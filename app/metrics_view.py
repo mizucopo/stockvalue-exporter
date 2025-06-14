@@ -215,22 +215,24 @@ class MetricsView(BaseView):
         """メトリクスクリア関連のフラグを取得する.
 
         Returns:
-            url_clear, only_requested, auto_clear, clear_metricsのタプル
+            url_clear, force_clear_metrics, auto_clear, clear_metricsのタプル
         """
         from flask import request
 
         from config import config
 
         url_clear = request.args.get("clear", "false").lower() in ["true", "1", "yes"]
-        only_requested = request.args.get("only_requested", "false").lower() in [
+        # Note: force_clear_metrics parameter forces clearing all metrics regardless of request
+        # This is useful for ensuring clean metric state before updating with new data
+        force_clear_metrics = request.args.get("force_clear", "false").lower() in [
             "true",
             "1",
             "yes",
         ]
         auto_clear = config.AUTO_CLEAR_METRICS
-        clear_metrics = url_clear or auto_clear or only_requested
+        clear_metrics = url_clear or auto_clear or force_clear_metrics
 
-        return url_clear, only_requested, auto_clear, clear_metrics
+        return url_clear, force_clear_metrics, auto_clear, clear_metrics
 
     def _parse_request_parameters(self) -> tuple[list[str], bool]:
         """リクエストパラメータを解析する.
@@ -253,11 +255,11 @@ class MetricsView(BaseView):
             symbols: 銘柄リスト
             clear_metrics: メトリクスクリアフラグ
         """
-        url_clear, only_requested, auto_clear, _ = self._get_clear_flags()
+        url_clear, force_clear_metrics, auto_clear, _ = self._get_clear_flags()
 
         logger.info(
             f"Fetching metrics for symbols: {symbols}, clear_metrics: {clear_metrics} "
-            f"(url: {url_clear}, auto: {auto_clear}, only_requested: {only_requested})"
+            f"(url: {url_clear}, auto: {auto_clear}, force_clear: {force_clear_metrics})"
         )
 
     def _clear_existing_metrics(self) -> None:
