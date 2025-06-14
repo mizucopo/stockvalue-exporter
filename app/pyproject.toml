@@ -1,0 +1,87 @@
+[project]
+name = "stockvalue-exporter"
+version = "2.1.1"
+description = "A Prometheus custom exporter for real-time stock price monitoring and metrics collection"
+readme = "../README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.1",
+    "gunicorn>=23.0.0",
+    "prometheus-flask-exporter>=0.23.2",
+    "yfinance>=0.2.62",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ruff>=0.11.13",
+    "mypy>=1.15.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+]
+
+[tool.uv]
+link-mode = "copy"
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py313"
+fix = true
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",    # 基本
+    "C90",            # complexity
+    "N",              # naming
+    "I",              # isort
+    "D",              # docstring
+    "ANN",            # annotations
+    "UP",             # pyupgrade
+    "B",              # bugbear
+]
+ignore = [
+    "D203", "D212",   # docstring style conflicts
+    "E501",           # line length (Black handles)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=80",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+]

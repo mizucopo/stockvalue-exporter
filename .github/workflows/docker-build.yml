@@ -1,36 +1,141 @@
+---
 name: Build and Push Docker image
 
-on:
+"on":
   push:
-    branches: [ "main" ]
-    tags: [ "*"]
+    branches: ["main"]
+  workflow_dispatch:
+
+# セキュリティ強化：必要最小限の権限に制限
+permissions:
+  contents: write  # タグ作成とリリースに必要
+  packages: write  # Docker Hub プッシュに必要
 
 jobs:
-  build-and-push:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Git ユーザー設定
+        run: |
+          git config user.name "mizu"
+          git config user.email "mizu.copo@gmail.com"
 
-    - name: Extract branch name or tag
-      id: ref
-      run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "::set-output name=tag::$(echo $GITHUB_REF | sed 's|refs/tags/||')"
-        elif [[ $GITHUB_REF == refs/heads/* ]]; then
-          echo "::set-output name=tag::$(echo $GITHUB_REF | sed 's|refs/heads/||')"
-        fi
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        tags: |
-          mizucopo/stockvalue-exporter:${{ steps.ref.outputs.tag == 'main' && 'latest' || steps.ref.outputs.tag }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install toml
+
+      - name: Extract version from pyproject.toml
+        id: get_version
+        run: |
+          # 修正：正しいパスでpyproject.tomlを読み取り
+          if [ ! -f "app/pyproject.toml" ]; then
+            echo "Error: app/pyproject.toml not found"
+            exit 1
+          fi
+          VERSION=$(python -c "import toml; print(toml.load('app/pyproject.toml')['project']['version'])")
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: リポジトリ名とイメージ名を設定
+        id: repo
+        run: |
+          repo=$(basename $GITHUB_REPOSITORY)
+          echo "repo=$repo" >> $GITHUB_OUTPUT
+          echo "image=mizucopo/$repo" >> $GITHUB_OUTPUT
+          echo "Repository: $repo"
+          echo "Image: mizucopo/$repo"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          # マルチプラットフォーム対応（AMD64 + ARM64）
+          platforms: linux/amd64,linux/arm64
+          push: true
+          # Dockerレイヤーキャッシュを有効化
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.repo.outputs.image }}:latest
+            ${{ steps.repo.outputs.image }}:${{ steps.get_version.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=${{ steps.repo.outputs.repo }}
+            org.opencontainers.image.description=Stock value exporter for Prometheus
+            org.opencontainers.image.version=${{ steps.get_version.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+
+      - name: タグを作成してプッシュ
+        run: |
+          git fetch --tags
+          # 修正：正しい変数参照
+          if ! git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "Creating tag: v${{ steps.get_version.outputs.version }}"
+            git tag "v${{ steps.get_version.outputs.version }}"
+            git push origin "v${{ steps.get_version.outputs.version }}"
+          else
+            echo "Tag v${{ steps.get_version.outputs.version }} already exists"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # 修正：正しい変数参照とタグ名
+          tag_name: v${{ steps.get_version.outputs.version }}
+          target_commitish: main
+          name: Release v${{ steps.get_version.outputs.version }}
+          body: |
+            ## 🚀 Release v${{ steps.get_version.outputs.version }}
+            
+            ### 📦 Docker Images
+            
+            **Multi-platform support**: `linux/amd64`, `linux/arm64`
+            
+            ```bash
+            # Latest version
+            docker pull ${{ steps.repo.outputs.image }}:latest
+            
+            # Specific version
+            docker pull ${{ steps.repo.outputs.image }}:${{ steps.get_version.outputs.version }}
+            ```
+            
+            ### 🔗 Links
+            
+            - **Docker Hub**: [${{ steps.repo.outputs.image }}:${{ steps.get_version.outputs.version }}](https://hub.docker.com/r/${{ steps.repo.outputs.image }}/tags?name=${{ steps.get_version.outputs.version }})
+            - **GitHub Repository**: [${{ github.repository }}](${{ github.server_url }}/${{ github.repository }})
+            
+            ### 📋 Details
+            
+            - **Version**: ${{ steps.get_version.outputs.version }}
+            - **Commit**: ${{ github.sha }}
+            - **Build Date**: ${{ github.event.head_commit.timestamp }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
