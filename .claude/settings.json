@@ -10,8 +10,6 @@
       "Bash(docker exec:*)",
       "Bash(docker logs:*)"
     ],
-    "deny": [
-      "Bash(git add:*)"
-    ]
+    "deny": []
   }
 }
