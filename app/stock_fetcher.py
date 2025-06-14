@@ -128,7 +128,6 @@ class StockDataFetcher:
         error_asset_type = SymbolClassifier.get_asset_type(symbol)
         is_forex_error = error_asset_type == AssetType.FOREX
         is_index_error = error_asset_type == AssetType.INDEX
-        is_crypto_error = error_asset_type == AssetType.CRYPTO
 
         error_currency = SymbolClassifier.get_currency_for_symbol(symbol)
         error_exchange = SymbolClassifier.get_exchange_for_symbol(symbol)
