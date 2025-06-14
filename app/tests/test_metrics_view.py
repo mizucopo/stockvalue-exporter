@@ -294,8 +294,14 @@ class TestMetricsView:
         """clearパラメータ付きでのメトリクス取得をテストする."""
         with app.test_request_context("/?symbols=AAPL&clear=true"):
             with patch("config.config.AUTO_CLEAR_METRICS", False):
-                # MockアプリケーションにfetcherAttributeを追加
+                # 独立したレジストリでMetricsFactoryを作成
+                from metrics_factory import MetricsFactory
+                
+                metrics_factory = MetricsFactory(registry=isolated_registry)
+                
+                # Mockアプリケーションにfetcherとmetrics_factoryを設定
                 mock_app = Mock()
+                mock_app.metrics_factory = metrics_factory
                 mock_app.fetcher.get_stock_data.return_value = {
                     "AAPL": {
                         "symbol": "AAPL",
@@ -335,8 +341,14 @@ class TestMetricsView:
         """AUTO_CLEAR_METRICS設定でのメトリクス取得をテストする."""
         with app.test_request_context("/?symbols=AAPL"):
             with patch("config.config.AUTO_CLEAR_METRICS", True):  # 自動クリア有効
-                # MockアプリケーションにfetcherAttributeを追加
+                # 独立したレジストリでMetricsFactoryを作成
+                from metrics_factory import MetricsFactory
+                
+                metrics_factory = MetricsFactory(registry=isolated_registry)
+                
+                # Mockアプリケーションにfetcherとmetrics_factoryを設定
                 mock_app = Mock()
+                mock_app.metrics_factory = metrics_factory
                 mock_app.fetcher.get_stock_data.return_value = {
                     "AAPL": {
                         "symbol": "AAPL",
