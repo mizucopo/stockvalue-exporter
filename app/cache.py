@@ -98,7 +98,7 @@ class LRUCache(Generic[T]):
         if key not in self._cache:
             return True
 
-        created_at = self._cache[key]["created_at"]
+        created_at = float(self._cache[key]["created_at"])
         return time.time() - created_at > self.ttl_seconds
 
     def _remove(self, key: str) -> None:
