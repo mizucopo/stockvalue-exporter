@@ -113,17 +113,14 @@ class MetricsFactory:
             # 設定がない場合は全て作成
             return True
 
-        # 52週系メトリクス（Range Metrics）の制御
-        range_metric_patterns = ["52week_high", "52week_low"]
-        if any(pattern in metric_name for pattern in range_metric_patterns):
-            return getattr(self.app_config, "ENABLE_RANGE_METRICS", True)
-
         # デバッグ系メトリクス（Duration, Errors）の制御
+        # 統一メトリクスでは financial_fetch_duration と financial_fetch_errors が対象
         debug_metric_patterns = ["fetch_duration", "fetch_errors"]
         if any(pattern in metric_name for pattern in debug_metric_patterns):
             return getattr(self.app_config, "ENABLE_DEBUG_METRICS", True)
 
         # その他のメトリクスは常に作成
+        # 注意: 統一メトリクス実装により、ENABLE_RANGE_METRICS は現在対象メトリクスなし
         return True
 
     def _create_metrics(self) -> None:

@@ -47,6 +47,7 @@ class Config:
         )  # 1時間
 
         # メトリクス制御設定（本番環境では不要なメトリクスを無効化）
+        # 注意: 統一メトリクス実装により、現在は対象メトリクスなし（将来の拡張用）
         self.ENABLE_RANGE_METRICS = (
             os.getenv(
                 "ENABLE_RANGE_METRICS", "false" if self.is_production else "true"

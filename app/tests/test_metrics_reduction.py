@@ -24,7 +24,7 @@ class TestMetricsReduction:
         assert "financial_fetch_errors" in all_metrics
 
     def test_range_metrics_disabled(self) -> None:
-        """ENABLE_RANGE_METRICS=Falseで52週系メトリクスが無効化されることをテストする."""
+        """ENABLE_RANGE_METRICS=Falseでも統一メトリクス実装により影響なしをテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
 
@@ -38,26 +38,15 @@ class TestMetricsReduction:
         )
         all_metrics = factory.get_all_metrics()
 
-        # 52週系メトリクス（8個）が削除されることを確認
-        range_metrics = [
-            "stock_52week_high",
-            "stock_52week_low",
-            "forex_52week_high",
-            "forex_52week_low",
-            "index_52week_high",
-            "index_52week_low",
-            "crypto_52week_high",
-            "crypto_52week_low",
-        ]
-
-        for metric_key in range_metrics:
-            assert metric_key not in all_metrics
+        # 統一メトリクス実装により、レンジメトリクスは現在存在しない
+        # そのため ENABLE_RANGE_METRICS = False でも全メトリクスが作成される
 
         # 他のメトリクスは残っていることを確認（統一メトリクス）
         assert "financial_price" in all_metrics
         assert "financial_fetch_duration" in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
+        # 注意: レンジメトリクスが存在しないため、ENABLE_RANGE_METRICS設定は現在無効果
         assert (
             len(all_metrics) == 9
         )  # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram
@@ -111,30 +100,18 @@ class TestMetricsReduction:
             len(all_metrics) == 7
         )  # 7 Gauge + 0 Counter + 0 Histogram（デバッグ系削除）
 
-        # 削除対象メトリクスが全て削除されていることを確認
-        deleted_metrics = [
-            # 52週系（8個）
-            "stock_52week_high",
-            "stock_52week_low",
-            "forex_52week_high",
-            "forex_52week_low",
-            "index_52week_high",
-            "index_52week_low",
-            "crypto_52week_high",
-            "crypto_52week_low",
-            # デバッグ系（8個）
-            "stock_fetch_duration",
-            "stock_fetch_errors",
-            "forex_fetch_duration",
-            "forex_fetch_errors",
-            "index_fetch_duration",
-            "index_fetch_errors",
-            "crypto_fetch_duration",
-            "crypto_fetch_errors",
+        # 削除対象メトリクスが削除されていることを確認（統一メトリクス実装）
+        # 統一メトリクスではデバッグ系メトリクスのみが削除対象
+        deleted_debug_metrics = [
+            "financial_fetch_duration",
+            "financial_fetch_errors",
         ]
 
-        for metric_key in deleted_metrics:
+        for metric_key in deleted_debug_metrics:
             assert metric_key not in all_metrics
+
+        # 注意: 統一メトリクス実装により、レンジメトリクスは現在存在しない
+        # そのため ENABLE_RANGE_METRICS = False は現在効果なし
 
         # コアメトリクスは残っていることを確認（統一メトリクス名）
         core_metrics = [
