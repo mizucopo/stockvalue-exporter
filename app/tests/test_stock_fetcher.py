@@ -97,10 +97,6 @@ class TestStockDataFetcher:
             "regularMarketPrice": 150.0,
             "regularMarketVolume": 1000000,
             "marketCap": 2500000000000,
-            "trailingPE": 25.5,
-            "dividendYield": 0.005,
-            "fiftyTwoWeekHigh": 180.0,
-            "fiftyTwoWeekLow": 120.0,
             "regularMarketPreviousClose": 148.0,
         }
         mock_ticker.info = mock_info
@@ -239,8 +235,6 @@ class TestStockDataFetcher:
             "shortName": "USD/JPY",
             "regularMarketPrice": 143.898,
             "regularMarketPreviousClose": 144.484,
-            "fiftyTwoWeekHigh": 161.942,
-            "fiftyTwoWeekLow": 139.578,
             "exchange": "CCY",
         }
         mock_ticker.info = mock_info
@@ -258,8 +252,6 @@ class TestStockDataFetcher:
             assert forex_data["exchange"] == "FX"
             # 為替ペア特有の値（株式では使用されない値）
             assert forex_data["market_cap"] == 0
-            assert forex_data["pe_ratio"] == 0
-            assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
 
     @patch("stock_fetcher.yf")
@@ -283,8 +275,6 @@ class TestStockDataFetcher:
             assert forex_data["asset_type"] == "forex"  # 統一メトリクス: asset_type追加
             assert forex_data["current_price"] == 0
             assert forex_data["market_cap"] == 0
-            assert forex_data["pe_ratio"] == 0
-            assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
 
     @patch("stock_fetcher.yf")
@@ -301,8 +291,6 @@ class TestStockDataFetcher:
                     "regularMarketPrice": 150.0,
                     "regularMarketPreviousClose": 148.0,
                     "marketCap": 2500000000000,
-                    "trailingPE": 25.5,
-                    "dividendYield": 0.005,
                     "volume": 50000000,
                 }
             elif symbol == "USDJPY=X":
@@ -324,16 +312,12 @@ class TestStockDataFetcher:
             assert "AAPL" in result
             stock_data = result["AAPL"]
             assert stock_data["market_cap"] == 2500000000000
-            assert stock_data["pe_ratio"] == 25.5
-            assert stock_data["dividend_yield"] == 0.005
             assert stock_data["volume"] == 50000000
 
             # 為替レートデータの確認
             assert "USDJPY=X" in result
             forex_data = result["USDJPY=X"]
             assert forex_data["market_cap"] == 0
-            assert forex_data["pe_ratio"] == 0
-            assert forex_data["dividend_yield"] == 0
             assert forex_data["volume"] == 0
 
     def test_get_currency_symbol(self) -> None:
@@ -373,8 +357,6 @@ class TestStockDataFetcher:
             "shortName": "S&P 500",
             "regularMarketPrice": 6022.24,
             "regularMarketPreviousClose": 6038.81,
-            "fiftyTwoWeekHigh": 6147.43,
-            "fiftyTwoWeekLow": 4835.04,
             "volume": 2978585000,
         }
         mock_ticker.info = mock_info
@@ -393,5 +375,3 @@ class TestStockDataFetcher:
             assert index_data["volume"] == 2978585000
             # 指数特有の値（株式では使用される値）
             assert index_data["market_cap"] == 0
-            assert index_data["pe_ratio"] == 0
-            assert index_data["dividend_yield"] == 0

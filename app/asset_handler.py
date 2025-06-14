@@ -105,7 +105,7 @@ class StockHandler(AssetHandler):
 
     def get_additional_metrics(self) -> dict[str, Any]:
         """追加のメトリクス情報を返す."""
-        return {"stock_pe_ratio": "pe_ratio", "stock_dividend_yield": "dividend_yield"}
+        return {}
 
 
 class ForexHandler(AssetHandler):

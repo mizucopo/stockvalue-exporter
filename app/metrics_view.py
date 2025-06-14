@@ -114,34 +114,7 @@ class MetricsView(BaseView):
             market_cap_metric = metrics_factory.get_metric("financial_market_cap")
             self._set_gauge_metric(market_cap_metric, labels, data["market_cap"])
 
-        # 株式特有メトリクスの更新
-        if asset_type == "stock":
-            # PER
-            pe_metric = metrics_factory.get_metric("financial_pe_ratio")
-            self._set_gauge_metric(pe_metric, labels, data["pe_ratio"])
 
-            # 配当利回り（%表示のため100倍）
-            dividend_value = data["dividend_yield"] * 100 if data["dividend_yield"] else 0
-            dividend_metric = metrics_factory.get_metric("financial_dividend_yield")
-            self._set_gauge_metric(dividend_metric, labels, dividend_value)
-
-    def _update_range_metrics(
-        self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
-    ) -> None:
-        """52週レンジ関連メトリクスを更新する.
-
-        Args:
-            data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
-            metrics_factory: メトリクスファクトリー
-        """
-        labels = self._create_metric_labels(data)
-
-        # 統一メトリクス: financial_52week_high/low
-        high_metric = metrics_factory.get_metric("financial_52week_high")
-        low_metric = metrics_factory.get_metric("financial_52week_low")
-
-        self._set_gauge_metric(high_metric, labels, data["fifty_two_week_high"])
-        self._set_gauge_metric(low_metric, labels, data["fifty_two_week_low"])
 
     def _update_change_metrics(
         self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
@@ -192,7 +165,6 @@ class MetricsView(BaseView):
                 # 各カテゴリのメトリクスを更新
                 self._update_price_metrics(data, metrics_factory)
                 self._update_volume_and_market_metrics(data, metrics_factory)
-                self._update_range_metrics(data, metrics_factory)
                 self._update_change_metrics(data, metrics_factory)
                 self._update_timestamp_metrics(data, metrics_factory)
 

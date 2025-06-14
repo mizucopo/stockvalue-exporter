@@ -312,13 +312,13 @@ app/tests/
 
 ## 統一メトリクス仕様（2024年12月実装）
 
-🚀 **重要更新**: 統一メトリクス実装により**73%のメトリクス削減**（46個→13個）を達成しました。
+🚀 **重要更新**: 統一メトリクス実装および不要メトリクス削除により**80%のメトリクス削減**（46個→9個）を達成しました。
 
 ### 📊 メトリクス削減効果
 
 - **Before**: 34 Gauge + 8 Counter + 4 Histogram = 46個
-- **After**: 11 Gauge + 1 Counter + 1 Histogram = 13個
-- **削減率**: **73%削減**
+- **After**: 7 Gauge + 1 Counter + 1 Histogram = 9個
+- **削減率**: **80%削減**
 
 ### 統一Gauge メトリクス
 
@@ -327,11 +327,7 @@ app/tests/
 - `financial_previous_close`: 前日終値（全資産タイプ）
 - `financial_price_change`: 価格変動額（全資産タイプ）
 - `financial_price_change_percent`: 価格変動率%（全資産タイプ）
-- `financial_52week_high`: 52週最高値（全資産タイプ）
-- `financial_52week_low`: 52週最安値（全資産タイプ）
 - `financial_market_cap`: 時価総額（株式・暗号通貨のみ）
-- `financial_pe_ratio`: PER（株式のみ）
-- `financial_dividend_yield`: 配当利回り%（株式のみ）
 - `financial_last_updated_timestamp`: 最終更新時刻（全資産タイプ）
 
 ### 統一Counter メトリクス
@@ -511,7 +507,7 @@ docker run --rm -it -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue
 
 ### 統一メトリクス移行による利点
 
-1. **運用効率化**: メトリクス数73%削減によりストレージ・ネットワーク負荷軽減
+1. **運用効率化**: メトリクス数80%削減によりストレージ・ネットワーク負荷軽減
 2. **監視統一**: 全資産タイプを統一クエリで監視可能
 3. **保守性向上**: 重複コード削減により開発・保守コスト低減
 4. **拡張性向上**: 新資産タイプ追加時はラベル値のみの変更で対応

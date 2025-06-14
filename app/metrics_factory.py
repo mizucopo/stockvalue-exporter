@@ -50,18 +50,6 @@ class MetricsFactory:
                 "key": "financial_price_change_percent",
             },
             {
-                "name": "financial_52week_high",
-                "description": "52 week high price/rate/value",
-                "labels": ["symbol", "name", "exchange", "asset_type"],
-                "key": "financial_52week_high",
-            },
-            {
-                "name": "financial_52week_low",
-                "description": "52 week low price/rate/value",
-                "labels": ["symbol", "name", "exchange", "asset_type"],
-                "key": "financial_52week_low",
-            },
-            {
                 "name": "financial_last_updated_timestamp",
                 "description": "Last updated timestamp for financial data",
                 "labels": ["symbol", "asset_type"],
@@ -73,18 +61,6 @@ class MetricsFactory:
                 "description": "Market capitalization (stock/crypto only)",
                 "labels": ["symbol", "name", "exchange", "asset_type"],
                 "key": "financial_market_cap",
-            },
-            {
-                "name": "financial_pe_ratio",
-                "description": "Price to Earnings ratio (stock only)",
-                "labels": ["symbol", "name", "exchange", "asset_type"],
-                "key": "financial_pe_ratio",
-            },
-            {
-                "name": "financial_dividend_yield",
-                "description": "Dividend yield percentage (stock only)",
-                "labels": ["symbol", "name", "exchange", "asset_type"],
-                "key": "financial_dividend_yield",
             },
         ],
         "counters": [

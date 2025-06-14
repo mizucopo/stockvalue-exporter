@@ -15,14 +15,9 @@ class TestMetricsReduction:
         """デフォルト設定で全メトリクスが作成されることをテストする."""
         factory = MetricsFactory.create_default()
 
-        # 全43個のメトリクスが作成されることを確認
+        # 統一メトリクス削減後の期待されるメトリクス数確認（9個）
         all_metrics = factory.get_all_metrics()
-        # 統一メトリクスでの期待されるメトリクス数確認（13個）
-        assert len(all_metrics) == 13
-
-        # 統一メトリクスの存在確認
-        assert "financial_52week_high" in all_metrics
-        assert "financial_52week_low" in all_metrics
+        assert len(all_metrics) == 9
 
         # デバッグ系メトリクスの存在確認
         assert "financial_fetch_duration" in all_metrics
@@ -63,7 +58,7 @@ class TestMetricsReduction:
         assert "financial_fetch_duration" in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 11  # 統一メトリクス後の期待値
+        assert len(all_metrics) == 7  # 統一メトリクス後の期待値
 
     def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
@@ -95,12 +90,8 @@ class TestMetricsReduction:
         for metric_key in debug_metrics:
             assert metric_key not in all_metrics
 
-        # 52週系メトリクスは残っていることを確認（統一メトリクス）
-        assert "financial_52week_high" in all_metrics
-        assert "financial_52week_low" in all_metrics
-
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 11  # 統一メトリクス後の期待値
+        assert len(all_metrics) == 7  # 統一メトリクス後の期待値
 
     def test_both_metrics_disabled(self) -> None:
         """両方無効化で最大削減効果をテストする."""
@@ -117,8 +108,8 @@ class TestMetricsReduction:
         )
         all_metrics = factory.get_all_metrics()
 
-        # 最大削減効果を確認（43 - 16 = 27個）
-        assert len(all_metrics) == 27
+        # 最大削減効果を確認（統一メトリクス後）
+        assert len(all_metrics) == 5
 
         # 削除対象メトリクスが全て削除されていることを確認
         deleted_metrics = [
@@ -218,7 +209,7 @@ class TestMetricsReduction:
         reduction = full_count - reduced_count
         reduction_percent = (reduction / full_count) * 100
 
-        assert full_count == 43
-        assert reduced_count == 27
-        assert reduction == 16
-        assert abs(reduction_percent - 37.2) < 0.1  # 約37%削減
+        assert full_count == 9  # 統一メトリクス削減後
+        assert reduced_count == 5  # 最大削減後
+        assert reduction == 4
+        assert abs(reduction_percent - 44.4) < 0.1  # 約44%削減

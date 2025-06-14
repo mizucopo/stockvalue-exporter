@@ -38,10 +38,7 @@ class TestStockHandler:
         assert handler.should_update_market_metrics() is True
 
         additional = handler.get_additional_metrics()
-        assert additional == {
-            "stock_pe_ratio": "pe_ratio",
-            "stock_dividend_yield": "dividend_yield",
-        }
+        assert additional == {}
 
 
 class TestForexHandler:

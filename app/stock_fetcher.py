@@ -113,16 +113,6 @@ class StockDataFetcher:
                 else info.get("volume", info.get("regularMarketVolume", 0))
             ),
             "market_cap": 0 if (is_forex or is_index) else info.get("marketCap", 0),
-            "pe_ratio": (
-                0 if (is_forex or is_index or is_crypto) else info.get("trailingPE", 0)
-            ),
-            "dividend_yield": (
-                0
-                if (is_forex or is_index or is_crypto)
-                else info.get("dividendYield", 0)
-            ),
-            "fifty_two_week_high": info.get("fiftyTwoWeekHigh", 0),
-            "fifty_two_week_low": info.get("fiftyTwoWeekLow", 0),
             "timestamp": time.time(),
         }
 
@@ -155,14 +145,6 @@ class StockDataFetcher:
             "price_change_percent": 0,
             "volume": 0,
             "market_cap": 0 if (is_forex_error or is_index_error) else 0,
-            "pe_ratio": (
-                0 if (is_forex_error or is_index_error or is_crypto_error) else 0
-            ),
-            "dividend_yield": (
-                0 if (is_forex_error or is_index_error or is_crypto_error) else 0
-            ),
-            "fifty_two_week_high": 0,
-            "fifty_two_week_low": 0,
             "timestamp": time.time(),
         }
 
