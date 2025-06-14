@@ -58,7 +58,7 @@ class TestMetricsReduction:
         assert "financial_fetch_duration" in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 7  # 統一メトリクス後の期待値
+        assert len(all_metrics) == 9  # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram
 
     def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
@@ -75,23 +75,17 @@ class TestMetricsReduction:
         )
         all_metrics = factory.get_all_metrics()
 
-        # デバッグ系メトリクス（8個）が削除されることを確認
+        # 統一メトリクスでデバッグ系メトリクス（Counter/Histogram）が削除されることを確認
         debug_metrics = [
-            "stock_fetch_duration",
-            "stock_fetch_errors",
-            "forex_fetch_duration",
-            "forex_fetch_errors",
-            "index_fetch_duration",
-            "index_fetch_errors",
-            "crypto_fetch_duration",
-            "crypto_fetch_errors",
+            "financial_fetch_duration",
+            "financial_fetch_errors",
         ]
 
         for metric_key in debug_metrics:
             assert metric_key not in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 7  # 統一メトリクス後の期待値
+        assert len(all_metrics) == 7  # 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
 
     def test_both_metrics_disabled(self) -> None:
         """両方無効化で最大削減効果をテストする."""
@@ -109,7 +103,7 @@ class TestMetricsReduction:
         all_metrics = factory.get_all_metrics()
 
         # 最大削減効果を確認（統一メトリクス後）
-        assert len(all_metrics) == 5
+        assert len(all_metrics) == 7  # 7 Gauge + 0 Counter + 0 Histogram（デバッグ系削除）
 
         # 削除対象メトリクスが全て削除されていることを確認
         deleted_metrics = [
@@ -136,14 +130,15 @@ class TestMetricsReduction:
         for metric_key in deleted_metrics:
             assert metric_key not in all_metrics
 
-        # コアメトリクスは残っていることを確認
+        # コアメトリクスは残っていることを確認（統一メトリクス名）
         core_metrics = [
-            "stock_price",
-            "stock_volume",
-            "stock_market_cap",
-            "forex_rate",
-            "index_value",
-            "crypto_price",
+            "financial_price",
+            "financial_volume",
+            "financial_market_cap",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
+            "financial_last_updated",
         ]
 
         for metric_key in core_metrics:
@@ -209,7 +204,7 @@ class TestMetricsReduction:
         reduction = full_count - reduced_count
         reduction_percent = (reduction / full_count) * 100
 
-        assert full_count == 9  # 統一メトリクス削減後
-        assert reduced_count == 5  # 最大削減後
-        assert reduction == 4
-        assert abs(reduction_percent - 44.4) < 0.1  # 約44%削減
+        assert full_count == 9  # 統一メトリクス削減後: 7 Gauge + 1 Counter + 1 Histogram
+        assert reduced_count == 7  # 最大削減後: 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
+        assert reduction == 2
+        assert abs(reduction_percent - 22.2) < 0.1  # 約22%削減

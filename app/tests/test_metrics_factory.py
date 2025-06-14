@@ -327,10 +327,10 @@ class TestMetricsFactory:
         assert initial_metrics_count > 0
 
         # いくつかのメトリクスに値を設定
-        stock_price = factory.get_metric("stock_price")
-        if stock_price and isinstance(stock_price, Gauge):
-            stock_price.labels(
-                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ"
+        financial_price = factory.get_metric("financial_price")
+        if financial_price and isinstance(financial_price, Gauge):
+            financial_price.labels(
+                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ", asset_type="stock"
             ).set(150.0)
 
         # メトリクスを再作成
@@ -341,13 +341,13 @@ class TestMetricsFactory:
         assert len(recreated_metrics) == initial_metrics_count
 
         # 新しいメトリクスインスタンスが作成されていることを確認
-        new_stock_price = factory.get_metric("stock_price")
-        assert new_stock_price is not None
-        assert isinstance(new_stock_price, Gauge)
+        new_financial_price = factory.get_metric("financial_price")
+        assert new_financial_price is not None
+        assert isinstance(new_financial_price, Gauge)
 
         # 新しいメトリクスに値を設定できることを確認
-        new_stock_price.labels(
-            symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ"
+        new_financial_price.labels(
+            symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ", asset_type="stock"
         ).set(200.0)
 
     def test_unregister_already_unregistered_metric(

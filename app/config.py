@@ -38,8 +38,9 @@ class Config:
         self.CACHE_MAX_SIZE = int(os.getenv("CACHE_MAX_SIZE", "100"))
 
         # メトリクス管理設定
+        # デフォルトをtrueに変更：リクエストされたシンボルのみのメトリクスを返すため
         self.AUTO_CLEAR_METRICS = (
-            os.getenv("AUTO_CLEAR_METRICS", "false").lower() == "true"
+            os.getenv("AUTO_CLEAR_METRICS", "true").lower() == "true"
         )
         self.METRICS_TTL_SECONDS = int(
             os.getenv("METRICS_TTL_SECONDS", "3600")
