@@ -4,12 +4,12 @@
 Yahoo Finance API から**株価・指数・暗号通貨・為替データ**を取得し、リアルタイムでPrometheusメトリクスとして公開します。
 
 [![Docker Hub](https://img.shields.io/docker/v/mizucopo/stockvalue-exporter?label=Docker%20Hub)](https://hub.docker.com/r/mizucopo/stockvalue-exporter)
-[![Test Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/mizu-copo/stockvalue-exporter)
+[![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/mizu-copo/stockvalue-exporter)
 [![Python](https://img.shields.io/badge/python-3.13+-blue)](https://www.python.org)
 
 ## ✨ 特徴
 
-- 🎯 **高信頼性**: 98%テストカバレッジ、85+テスト（拡張されたパラメータサポートを含む）、包括的品質管理
+- 🎯 **高信頼性**: 94%テストカバレッジ、114テスト（拡張されたパラメータサポートを含む）、包括的品質管理
 - 🌐 **多資産対応**: **株式**・**指数**・**暗号通貨**・**為替**の包括的サポート
 - 🏗️ **モダンアーキテクチャ**: MVC、Factory、DI パターンによる保守性の高い設計
 - ⚡ **高性能**: 10分間キャッシュによるAPI制限対策
@@ -84,7 +84,7 @@ curl "http://localhost:9100/api/stocks?symbols=^GSPC&symbols=^N225"
 - **フレームワーク**: Flask with MethodView pattern
 - **パッケージ管理**: uv (高速、モダン)
 - **設計パターン**: MVC, Factory, Template Method, Dependency Injection
-- **テスト**: pytest (98%カバレッジ、55テスト)
+- **テスト**: pytest (94%カバレッジ、114テスト)
 - **品質管理**: ruff, black, mypy
 
 ### 主要依存関係
@@ -176,9 +176,9 @@ docker compose up dev
 
 #### 品質メトリクス
 
-- **テストカバレッジ**: 82% ✅ (目標: 80%以上達成)
-- **テスト数**: 113テスト（包括的なユニットテスト、11ファイル）
-- **Ruff エラー**: 87 📈 (改善: 187→87、100個削減)
+- **テストカバレッジ**: 94% ✅ (目標: 80%以上を大幅に上回る)
+- **テスト数**: 114テスト（包括的なユニットテスト、11ファイル）
+- **Ruff エラー**: 6 📈 (大幅改善: 187→6、98%削減)
 - **MyPy**: strict モード準拠 ✅ (型安全性確保)
 - **Black**: 統一フォーマット ✅ (27ファイル、変更なし)
 
@@ -334,7 +334,7 @@ groups:
 
 ### 開発ガイドライン
 
-- 新機能は必ずテストを追加（カバレッジ80%以上維持）
+- 新機能は必ずテストを追加（カバレッジ94%以上維持）
 - コミット前に `ruff`、`black`、`mypy` 実行
 - コミットメッセージは英語で簡潔に
 
