@@ -64,7 +64,7 @@ if __name__ == "__main__":
     print(f"Description: {APP_DESCRIPTION}")
     print(f"Metrics available at: http://{config.HOST}:{config.PORT}/metrics")
     print(
-        f"Example: http://{config.HOST}:{config.PORT}/metrics?symbols=AAPL,GOOGL,MSFT"
+        f"Example: http://{config.HOST}:{config.PORT}/metrics?symbols=AAPL,^GSPC,BTC-USD"
     )
     print(f"Environment: {'Production' if config.is_production else 'Development'}")
     web.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)

@@ -99,7 +99,7 @@ class LRUCache(Generic[T]):
             return True
 
         created_at = self._cache[key]["created_at"]
-        return bool(time.time() - created_at > self.ttl_seconds)
+        return time.time() - created_at > self.ttl_seconds
 
     def _remove(self, key: str) -> None:
         """キーをキャッシュから削除する.
