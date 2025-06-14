@@ -1,8 +1,11 @@
 """メトリクスファクトリーモジュール."""
 
+import logging
 from typing import Any, Protocol
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigProtocol(Protocol):
@@ -188,9 +191,20 @@ class MetricsFactory:
         for metric in self.metrics.values():
             try:
                 metric.clear()
-            except Exception:
-                # クリアに失敗した場合は無視
-                pass
+            except AttributeError as e:
+                # メトリクスタイプがclear()をサポートしていない場合
+                logger.warning(
+                    "Metric %s does not support clear() method: %s",
+                    type(metric).__name__,
+                    e,
+                )
+            except Exception as e:
+                # その他の予期しないエラー
+                logger.error(
+                    "Unexpected error clearing metric %s: %s",
+                    type(metric).__name__,
+                    e,
+                )
 
     def unregister_all_metrics(self) -> None:
         """全てのメトリクスをレジストリから完全に削除する.
@@ -203,10 +217,24 @@ class MetricsFactory:
                 self.registry.unregister(metric)
             except KeyError:
                 # メトリクスが既に削除されている場合は無視
-                pass
-            except Exception:
-                # その他のエラーは無視
-                pass
+                logger.debug(
+                    "Metric %s already unregistered from registry",
+                    type(metric).__name__,
+                )
+            except ValueError as e:
+                # レジストリに登録されていないメトリクスの場合
+                logger.warning(
+                    "Metric %s not found in registry: %s",
+                    type(metric).__name__,
+                    e,
+                )
+            except Exception as e:
+                # その他の予期しないエラー
+                logger.error(
+                    "Unexpected error unregistering metric %s: %s",
+                    type(metric).__name__,
+                    e,
+                )
 
         # メトリクス辞書をクリア
         self.metrics.clear()
