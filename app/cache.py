@@ -138,16 +138,19 @@ class LRUCache(Generic[T]):
         """キャッシュの統計情報を取得する.
 
         Returns:
-            統計情報の辞書
+            統計情報の辞書。memory_usage_ratioは有効（期限切れでない）アイテムの比率を示す
         """
         expired_count = sum(1 for key in self._cache.keys() if self._is_expired(key))
+        active_items = len(self._cache) - expired_count
 
         return {
             "total_items": len(self._cache),
+            "active_items": active_items,
             "max_size": self.max_size,
             "ttl_seconds": self.ttl_seconds,
             "expired_items": expired_count,
-            "memory_usage_ratio": len(self._cache) / self.max_size,
+            "memory_usage_ratio": active_items / self.max_size,
+            "storage_usage_ratio": len(self._cache) / self.max_size,
         }
 
     # Dict-like interface for backward compatibility

@@ -43,7 +43,7 @@ description = "Test"
         with patch("pathlib.Path.exists", return_value=False):
             app = App()
             version = app.get_version()
-            assert version == 1
+            assert version == "unknown"
 
     def test_get_version_exception(self) -> None:
         """バージョン取得時の例外をテストする."""
@@ -51,7 +51,57 @@ description = "Test"
             with patch("pathlib.Path.exists", return_value=True):
                 app = App()
                 version = app.get_version()
-                assert version == 1
+                assert version == "unknown"
+
+    def test_get_version_return_type_consistency(self) -> None:
+        """get_versionメソッドが常に文字列を返すことをテストする."""
+        app = App()
+
+        # 成功時の文字列型確認
+        mock_data = b"""
+[project]
+name = "test-app"
+version = "1.2.3"
+"""
+        with patch("builtins.open", mock_open(read_data=mock_data)):
+            with patch("pathlib.Path.exists", return_value=True):
+                version = app.get_version()
+                assert isinstance(version, str)
+                assert version == "1.2.3"
+
+        # ファイル不存在時の文字列型確認
+        with patch("pathlib.Path.exists", return_value=False):
+            version = app.get_version()
+            assert isinstance(version, str)
+            assert version == "unknown"
+
+        # 例外時の文字列型確認
+        with patch("builtins.open", side_effect=Exception("File error")):
+            with patch("pathlib.Path.exists", return_value=True):
+                version = app.get_version()
+                assert isinstance(version, str)
+                assert version == "unknown"
+
+    def test_version_string_formatting_compatibility(self) -> None:
+        """バージョンが文字列フォーマッティングで問題なく使用できることをテストする."""
+        app = App()
+
+        # ファイル不存在時でも文字列フォーマッティングが可能
+        with patch("pathlib.Path.exists", return_value=False):
+            version = app.get_version()
+            formatted = f"v{version}"
+            assert formatted == "vunknown"
+
+        # 成功時も文字列フォーマッティングが可能
+        mock_data = b"""
+[project]
+version = "1.2.3"
+"""
+        with patch("builtins.open", mock_open(read_data=mock_data)):
+            with patch("pathlib.Path.exists", return_value=True):
+                version = app.get_version()
+                formatted = f"v{version}"
+                assert formatted == "v1.2.3"
 
     def test_get_app_info_success(self) -> None:
         """アプリケーション情報取得成功をテストする."""

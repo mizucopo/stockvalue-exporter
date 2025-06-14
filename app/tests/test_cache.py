@@ -163,9 +163,14 @@ class TestLRUCache:
 
             stats = cache.get_stats()
             assert stats["total_items"] == 2  # 内部ストレージの実際のアイテム数
+            assert stats["active_items"] == 1  # 有効アイテム数
             assert stats["expired_items"] == 1  # 期限切れアイテム数
             assert stats["max_size"] == 10
             assert stats["ttl_seconds"] == 60
+            assert (
+                stats["memory_usage_ratio"] == 0.1
+            )  # 有効アイテム数/最大サイズ (1/10)
+            assert stats["storage_usage_ratio"] == 0.2  # 全アイテム数/最大サイズ (2/10)
 
     def test_update_existing_item(self) -> None:
         """既存アイテムの更新をテストする."""
@@ -228,3 +233,75 @@ class TestLRUCache:
             assert list(cache) == valid_keys
             assert all(key in cache for key in valid_keys)
             assert not any(key in cache for key in ["key1", "key3"])
+
+    def test_memory_usage_ratio_accuracy(self) -> None:
+        """memory_usage_ratioが有効アイテムのみを正しく反映することをテストする."""
+        cache: LRUCache[str] = LRUCache(max_size=5, ttl_seconds=60)
+
+        # アイテムを追加（最大サイズの60%）
+        cache.put("key1", "value1")
+        cache.put("key2", "value2")
+        cache.put("key3", "value3")
+
+        stats = cache.get_stats()
+        expected_memory_ratio = 3 / 5  # 3 active items / 5 max_size = 0.6
+        expected_storage_ratio = 3 / 5  # 3 total items / 5 max_size = 0.6
+
+        assert stats["memory_usage_ratio"] == expected_memory_ratio
+        assert stats["storage_usage_ratio"] == expected_storage_ratio
+        assert stats["active_items"] == 3
+        assert stats["total_items"] == 3
+        assert stats["expired_items"] == 0
+
+    def test_memory_usage_ratio_with_expired_items(self) -> None:
+        """期限切れアイテムがmemory_usage_ratioに正しく反映されないことをテストする."""
+        cache: LRUCache[str] = LRUCache(max_size=4, ttl_seconds=60)
+
+        cache.put("active1", "value1")
+        cache.put("active2", "value2")
+        cache.put("expired1", "value3")
+        cache.put("expired2", "value4")
+
+        with patch.object(cache, "_is_expired") as mock_is_expired:
+            # expired1とexpired2を期限切れにする
+            mock_is_expired.side_effect = lambda k: k.startswith("expired")
+
+            stats = cache.get_stats()
+
+            # memory_usage_ratioは有効アイテムのみ（2/4 = 0.5）
+            assert stats["memory_usage_ratio"] == 0.5
+            # storage_usage_ratioは全アイテム（4/4 = 1.0）
+            assert stats["storage_usage_ratio"] == 1.0
+            assert stats["active_items"] == 2
+            assert stats["total_items"] == 4
+            assert stats["expired_items"] == 2
+
+    def test_memory_usage_ratio_boundary_conditions(self) -> None:
+        """memory_usage_ratioの境界条件をテストする."""
+        cache: LRUCache[str] = LRUCache(max_size=2, ttl_seconds=60)
+
+        # 空のキャッシュ
+        stats = cache.get_stats()
+        assert stats["memory_usage_ratio"] == 0.0
+        assert stats["storage_usage_ratio"] == 0.0
+        assert stats["active_items"] == 0
+        assert stats["total_items"] == 0
+
+        # 最大サイズまで使用
+        cache.put("key1", "value1")
+        cache.put("key2", "value2")
+
+        stats = cache.get_stats()
+        assert stats["memory_usage_ratio"] == 1.0
+        assert stats["storage_usage_ratio"] == 1.0
+        assert stats["active_items"] == 2
+        assert stats["total_items"] == 2
+
+        # 全て期限切れの場合
+        with patch.object(cache, "_is_expired", return_value=True):
+            stats = cache.get_stats()
+            assert stats["memory_usage_ratio"] == 0.0  # 有効アイテムなし
+            assert stats["storage_usage_ratio"] == 1.0  # ストレージは満杯
+            assert stats["active_items"] == 0
+            assert stats["total_items"] == 2
+            assert stats["expired_items"] == 2
