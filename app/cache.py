@@ -136,14 +136,20 @@ class LRUCache(Generic[T]):
         expired_count = sum(1 for key in self._cache.keys() if self._is_expired(key))
         active_items = len(self._cache) - expired_count
 
+        # max_size が 0 の場合の ZeroDivisionError を防ぐ
+        memory_usage_ratio = active_items / self.max_size if self.max_size > 0 else 0.0
+        storage_usage_ratio = (
+            len(self._cache) / self.max_size if self.max_size > 0 else 0.0
+        )
+
         return {
             "total_items": len(self._cache),
             "active_items": active_items,
             "max_size": self.max_size,
             "ttl_seconds": self.ttl_seconds,
             "expired_items": expired_count,
-            "memory_usage_ratio": active_items / self.max_size,
-            "storage_usage_ratio": len(self._cache) / self.max_size,
+            "memory_usage_ratio": memory_usage_ratio,
+            "storage_usage_ratio": storage_usage_ratio,
         }
 
     # Dict-like interface for backward compatibility

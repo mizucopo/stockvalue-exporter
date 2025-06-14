@@ -305,3 +305,49 @@ class TestLRUCache:
             assert stats["active_items"] == 0
             assert stats["total_items"] == 2
             assert stats["expired_items"] == 2
+
+    def test_zero_max_size_prevents_division_error(self) -> None:
+        """max_size が 0 の場合の ZeroDivisionError 防止をテストする."""
+        # 通常のキャッシュを作成してからmax_sizeを0に設定
+        # (max_size=0で初期化するとconfig値で上書きされるため)
+        cache: LRUCache[str] = LRUCache(max_size=5, ttl_seconds=60)
+
+        # 設定エラーをシミュレート：max_sizeを0に設定
+        cache.max_size = 0
+
+        # 空の状態でも stats が取得できる
+        stats = cache.get_stats()
+        assert stats["memory_usage_ratio"] == 0.0
+        assert stats["storage_usage_ratio"] == 0.0
+        assert stats["max_size"] == 0
+        assert stats["active_items"] == 0
+        assert stats["total_items"] == 0
+        assert stats["expired_items"] == 0
+
+        # アイテム追加の場合をテスト
+        cache_with_items: LRUCache[str] = LRUCache(max_size=5, ttl_seconds=60)
+        cache_with_items.put("key1", "value1")
+        cache_with_items.put("key2", "value2")
+
+        # アイテムがある状態でmax_sizeを0に変更
+        cache_with_items.max_size = 0
+
+        # この状態でもstatsが正常に動作することを確認
+        stats = cache_with_items.get_stats()
+        assert stats["memory_usage_ratio"] == 0.0  # ZeroDivisionErrorではなく0.0
+        assert stats["storage_usage_ratio"] == 0.0  # ZeroDivisionErrorではなく0.0
+        assert stats["max_size"] == 0
+        assert stats["total_items"] == 2  # アイテムは残っている
+        assert stats["active_items"] == 2  # 期限切れでなければ2
+
+        # 期限切れアイテムがある場合もテスト
+        with patch.object(cache_with_items, "_is_expired") as mock_is_expired:
+            mock_is_expired.side_effect = lambda k: k == "key1"  # key1のみ期限切れ
+
+            stats = cache_with_items.get_stats()
+            assert stats["memory_usage_ratio"] == 0.0  # ZeroDivisionErrorではなく0.0
+            assert stats["storage_usage_ratio"] == 0.0  # ZeroDivisionErrorではなく0.0
+            assert stats["max_size"] == 0
+            assert stats["total_items"] == 2
+            assert stats["active_items"] == 1  # key2のみ有効
+            assert stats["expired_items"] == 1  # key1が期限切れ
