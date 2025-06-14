@@ -168,8 +168,8 @@ class TestStockDataFetcher:
             ]  # start, end, cache timestamp
             fetcher.get_stock_data(["AAPL"])
 
-            # 実行時間メトリクスが記録されたか確認
-            mock_duration.labels.assert_called_with(symbol="AAPL")
+            # 実行時間メトリクスが記録されたか確認（統一メトリクス対応）
+            mock_duration.labels.assert_called_with(symbol="AAPL", asset_type="stock")
             mock_duration.labels().observe.assert_called_with(2)  # 2秒の実行時間
 
     def test_get_stock_data_multiple_symbols(self) -> None:
