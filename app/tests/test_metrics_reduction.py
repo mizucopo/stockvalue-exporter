@@ -23,14 +23,13 @@ class TestMetricsReduction:
         assert "financial_fetch_duration" in all_metrics
         assert "financial_fetch_errors" in all_metrics
 
-    def test_range_metrics_disabled(self) -> None:
-        """ENABLE_RANGE_METRICS=Falseでも統一メトリクス実装により影響なしをテストする."""
+    def test_unified_metrics_structure(self) -> None:
+        """統一メトリクス構造とレンジメトリクス廃止をテストする。"""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
 
         # モック設定を作成
         mock_config = Mock()
-        mock_config.ENABLE_RANGE_METRICS = False
         mock_config.ENABLE_DEBUG_METRICS = True
 
         factory = MetricsFactory.create_default(
@@ -38,18 +37,24 @@ class TestMetricsReduction:
         )
         all_metrics = factory.get_all_metrics()
 
-        # 統一メトリクス実装により、レンジメトリクスは現在存在しない
-        # そのため ENABLE_RANGE_METRICS = False でも全メトリクスが作成される
+        # 統一メトリクス構造を確認（レンジメトリクスは廃止）
+        expected_unified_metrics = [
+            "financial_price",
+            "financial_volume", 
+            "financial_market_cap",
+            "financial_previous_close",
+            "financial_price_change",
+            "financial_price_change_percent",
+            "financial_last_updated",
+            "financial_fetch_duration",
+            "financial_fetch_errors",
+        ]
+        
+        for metric_key in expected_unified_metrics:
+            assert metric_key in all_metrics
 
-        # 他のメトリクスは残っていることを確認（統一メトリクス）
-        assert "financial_price" in all_metrics
-        assert "financial_fetch_duration" in all_metrics
-
-        # 削減効果を確認（統一メトリクスでの数）
-        # 注意: レンジメトリクスが存在しないため、ENABLE_RANGE_METRICS設定は現在無効果
-        assert (
-            len(all_metrics) == 9
-        )  # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram
+        # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram = 9個
+        assert len(all_metrics) == 9
 
     def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
@@ -58,7 +63,6 @@ class TestMetricsReduction:
 
         # モック設定を作成
         mock_config = Mock()
-        mock_config.ENABLE_RANGE_METRICS = True
         mock_config.ENABLE_DEBUG_METRICS = False
 
         factory = MetricsFactory.create_default(
@@ -80,14 +84,13 @@ class TestMetricsReduction:
             len(all_metrics) == 7
         )  # 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
 
-    def test_both_metrics_disabled(self) -> None:
-        """両方無効化で最大削減効果をテストする."""
+    def test_debug_metrics_disabled_maximum_reduction(self) -> None:
+        """デバッグメトリクス無効化で最大削減効果をテストする。"""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
 
-        # モック設定を作成
+        # モック設定を作成（デバッグメトリクスのみ無効化）
         mock_config = Mock()
-        mock_config.ENABLE_RANGE_METRICS = False
         mock_config.ENABLE_DEBUG_METRICS = False
 
         factory = MetricsFactory.create_default(
@@ -96,24 +99,18 @@ class TestMetricsReduction:
         all_metrics = factory.get_all_metrics()
 
         # 最大削減効果を確認（統一メトリクス後）
-        assert (
-            len(all_metrics) == 7
-        )  # 7 Gauge + 0 Counter + 0 Histogram（デバッグ系削除）
+        assert len(all_metrics) == 7  # 7 Gauge + 0 Counter + 0 Histogram
 
-        # 削除対象メトリクスが削除されていることを確認（統一メトリクス実装）
-        # 統一メトリクスではデバッグ系メトリクスのみが削除対象
-        deleted_debug_metrics = [
+        # デバッグ系メトリクスが削除されていることを確認
+        debug_metrics_to_exclude = [
             "financial_fetch_duration",
             "financial_fetch_errors",
         ]
 
-        for metric_key in deleted_debug_metrics:
+        for metric_key in debug_metrics_to_exclude:
             assert metric_key not in all_metrics
 
-        # 注意: 統一メトリクス実装により、レンジメトリクスは現在存在しない
-        # そのため ENABLE_RANGE_METRICS = False は現在効果なし
-
-        # コアメトリクスは残っていることを確認（統一メトリクス名）
+        # コアメトリクス（Gaugeメトリクス）は残っていることを確認
         core_metrics = [
             "financial_price",
             "financial_volume",
@@ -128,55 +125,49 @@ class TestMetricsReduction:
             assert metric_key in all_metrics
 
     def test_production_config_defaults(self) -> None:
-        """本番環境設定のデフォルト値をテストする."""
+        """本番環境設定のデフォルト値をテストする。"""
         with patch.dict("os.environ", {"ENVIRONMENT": "production"}):
             config = Config()
 
-            # 本番環境では削減系メトリクスがデフォルトで無効
-            assert not config.ENABLE_RANGE_METRICS
+            # 本番環境ではデバッグメトリクスがデフォルトで無効化
             assert not config.ENABLE_DEBUG_METRICS
 
     def test_development_config_defaults(self) -> None:
-        """開発環境設定のデフォルト値をテストする."""
+        """開発環境設定のデフォルト値をテストする。"""
         with patch.dict("os.environ", {"ENVIRONMENT": "development"}, clear=True):
             config = Config()
 
-            # 開発環境では全メトリクスがデフォルトで有効
-            assert config.ENABLE_RANGE_METRICS
+            # 開発環境ではデバッグメトリクスがデフォルトで有効
             assert config.ENABLE_DEBUG_METRICS
 
     def test_config_override_with_env_vars(self) -> None:
-        """環境変数による設定オーバーライドをテストする."""
+        """環境変数による設定オーバーライドをテストする。"""
         with patch.dict(
             "os.environ",
             {
                 "ENVIRONMENT": "production",
-                "ENABLE_RANGE_METRICS": "true",
                 "ENABLE_DEBUG_METRICS": "true",
             },
         ):
             config = Config()
 
             # 環境変数でオーバーライドされることを確認
-            assert config.ENABLE_RANGE_METRICS
             assert config.ENABLE_DEBUG_METRICS
 
-    def test_metrics_reduction_impact(self) -> None:
-        """メトリクス削減の効果を数値で確認する."""
-        # フル設定用レジストリ
+    def test_unified_metrics_reduction_impact(self) -> None:
+        """統一メトリクスでのデバッグメトリクス削減効果を数値で確認する。"""
+        # フル設定用レジストリ（デバッグメトリクス有効）
         full_registry = CollectorRegistry()
         full_config = Mock()
-        full_config.ENABLE_RANGE_METRICS = True
         full_config.ENABLE_DEBUG_METRICS = True
         full_factory = MetricsFactory.create_default(
             registry=full_registry, app_config=full_config
         )
         full_count = len(full_factory.get_all_metrics())
 
-        # 削減設定用レジストリ
+        # 削減設定用レジストリ（デバッグメトリクス無効）
         reduced_registry = CollectorRegistry()
         reduced_config = Mock()
-        reduced_config.ENABLE_RANGE_METRICS = False
         reduced_config.ENABLE_DEBUG_METRICS = False
         reduced_factory = MetricsFactory.create_default(
             registry=reduced_registry, app_config=reduced_config
@@ -187,11 +178,7 @@ class TestMetricsReduction:
         reduction = full_count - reduced_count
         reduction_percent = (reduction / full_count) * 100
 
-        assert (
-            full_count == 9
-        )  # 統一メトリクス削減後: 7 Gauge + 1 Counter + 1 Histogram
-        assert (
-            reduced_count == 7
-        )  # 最大削減後: 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
-        assert reduction == 2
-        assert abs(reduction_percent - 22.2) < 0.1  # 約22%削減
+        assert full_count == 9  # 統一メトリクス全体: 7 Gauge + 1 Counter + 1 Histogram
+        assert reduced_count == 7  # デバッグメトリクス削除後: 7 Gaugeのみ
+        assert reduction == 2  # 2個のデバッグメトリクスが削除
+        assert abs(reduction_percent - 22.2) < 0.1  # 約22%のデバッグメトリクス削減

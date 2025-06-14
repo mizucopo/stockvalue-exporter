@@ -47,13 +47,8 @@ class Config:
         )  # 1時間
 
         # メトリクス制御設定（本番環境では不要なメトリクスを無効化）
-        # 注意: 統一メトリクス実装により、現在は対象メトリクスなし（将来の拡張用）
-        self.ENABLE_RANGE_METRICS = (
-            os.getenv(
-                "ENABLE_RANGE_METRICS", "false" if self.is_production else "true"
-            ).lower()
-            == "true"
-        )
+        # 注意: 統一メトリクス実装により、レンジメトリクスは廃止されました
+        # デバッグ系メトリクス（fetch_duration, fetch_errors）の制御
         self.ENABLE_DEBUG_METRICS = (
             os.getenv(
                 "ENABLE_DEBUG_METRICS", "false" if self.is_production else "true"

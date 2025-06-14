@@ -8,7 +8,6 @@ from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histo
 class ConfigProtocol(Protocol):
     """設定オブジェクトのプロトコル."""
 
-    ENABLE_RANGE_METRICS: bool
     ENABLE_DEBUG_METRICS: bool
 
 
@@ -120,7 +119,7 @@ class MetricsFactory:
             return getattr(self.app_config, "ENABLE_DEBUG_METRICS", True)
 
         # その他のメトリクスは常に作成
-        # 注意: 統一メトリクス実装により、ENABLE_RANGE_METRICS は現在対象メトリクスなし
+        # 注意: 統一メトリクス実装により、レンジメトリクスは廃止されました
         return True
 
     def _create_metrics(self) -> None:
