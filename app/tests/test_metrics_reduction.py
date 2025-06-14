@@ -24,7 +24,7 @@ class TestMetricsReduction:
         assert "financial_fetch_errors" in all_metrics
 
     def test_unified_metrics_structure(self) -> None:
-        """統一メトリクス構造とレンジメトリクス廃止をテストする。"""
+        """統一メトリクス構造とレンジメトリクス廃止をテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
 
@@ -85,7 +85,7 @@ class TestMetricsReduction:
         )  # 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
 
     def test_debug_metrics_disabled_maximum_reduction(self) -> None:
-        """デバッグメトリクス無効化で最大削減効果をテストする。"""
+        """デバッグメトリクス無効化で最大削減効果をテストする."""
         # 独立したレジストリを使用
         registry = CollectorRegistry()
 
@@ -125,7 +125,7 @@ class TestMetricsReduction:
             assert metric_key in all_metrics
 
     def test_production_config_defaults(self) -> None:
-        """本番環境設定のデフォルト値をテストする。"""
+        """本番環境設定のデフォルト値をテストする."""
         with patch.dict("os.environ", {"ENVIRONMENT": "production"}):
             config = Config()
 
@@ -133,7 +133,7 @@ class TestMetricsReduction:
             assert not config.ENABLE_DEBUG_METRICS
 
     def test_development_config_defaults(self) -> None:
-        """開発環境設定のデフォルト値をテストする。"""
+        """開発環境設定のデフォルト値をテストする."""
         with patch.dict("os.environ", {"ENVIRONMENT": "development"}, clear=True):
             config = Config()
 
@@ -141,7 +141,7 @@ class TestMetricsReduction:
             assert config.ENABLE_DEBUG_METRICS
 
     def test_config_override_with_env_vars(self) -> None:
-        """環境変数による設定オーバーライドをテストする。"""
+        """環境変数による設定オーバーライドをテストする."""
         with patch.dict(
             "os.environ",
             {
@@ -155,7 +155,7 @@ class TestMetricsReduction:
             assert config.ENABLE_DEBUG_METRICS
 
     def test_unified_metrics_reduction_impact(self) -> None:
-        """統一メトリクスでのデバッグメトリクス削減効果を数値で確認する。"""
+        """統一メトリクスでのデバッグメトリクス削減効果を数値で確認する."""
         # フル設定用レジストリ（デバッグメトリクス有効）
         full_registry = CollectorRegistry()
         full_config = Mock()
