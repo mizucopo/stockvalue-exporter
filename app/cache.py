@@ -25,7 +25,6 @@ class LRUCache(Generic[T]):
         self.max_size = max_size or config.CACHE_MAX_SIZE
         self.ttl_seconds = ttl_seconds or config.CACHE_TTL_SECONDS
         self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
-        self._access_times: dict[str, float] = {}
 
     def get(self, key: str) -> T | None:
         """キャッシュから値を取得する.
@@ -44,8 +43,7 @@ class LRUCache(Generic[T]):
             self._remove(key)
             return None
 
-        # LRU: アクセス時刻を更新し、最近使用されたものとして移動
-        self._access_times[key] = time.time()
+        # LRU: 最近使用されたものとして移動
         self._cache.move_to_end(key)
 
         value: T = self._cache[key]["value"]
@@ -63,7 +61,6 @@ class LRUCache(Generic[T]):
         if key in self._cache:
             # 既存の項目を更新
             self._cache[key] = {"value": value, "created_at": current_time}
-            self._access_times[key] = current_time
             self._cache.move_to_end(key)
         else:
             # 新しい項目を追加
@@ -71,12 +68,10 @@ class LRUCache(Generic[T]):
                 self._evict_lru()
 
             self._cache[key] = {"value": value, "created_at": current_time}
-            self._access_times[key] = current_time
 
     def clear(self) -> None:
         """キャッシュをクリアする."""
         self._cache.clear()
-        self._access_times.clear()
 
     def size(self) -> int:
         """現在のキャッシュサイズを取得する.
@@ -109,8 +104,6 @@ class LRUCache(Generic[T]):
         """
         if key in self._cache:
             del self._cache[key]
-        if key in self._access_times:
-            del self._access_times[key]
 
     def _evict_lru(self) -> None:
         """LRU（最も使用されていない）アイテムを削除する."""
@@ -138,16 +131,25 @@ class LRUCache(Generic[T]):
         """キャッシュの統計情報を取得する.
 
         Returns:
-            統計情報の辞書
+            統計情報の辞書。memory_usage_ratioは有効（期限切れでない）アイテムの比率を示す
         """
         expired_count = sum(1 for key in self._cache.keys() if self._is_expired(key))
+        active_items = len(self._cache) - expired_count
+
+        # max_size が 0 の場合の ZeroDivisionError を防ぐ
+        memory_usage_ratio = active_items / self.max_size if self.max_size > 0 else 0.0
+        storage_usage_ratio = (
+            len(self._cache) / self.max_size if self.max_size > 0 else 0.0
+        )
 
         return {
             "total_items": len(self._cache),
+            "active_items": active_items,
             "max_size": self.max_size,
             "ttl_seconds": self.ttl_seconds,
             "expired_items": expired_count,
-            "memory_usage_ratio": len(self._cache) / self.max_size,
+            "memory_usage_ratio": memory_usage_ratio,
+            "storage_usage_ratio": storage_usage_ratio,
         }
 
     # Dict-like interface for backward compatibility
@@ -173,23 +175,56 @@ class LRUCache(Generic[T]):
         return key in self._cache and not self._is_expired(key)
 
     def __len__(self) -> int:
-        """Dict-like length."""
-        return len(self._cache)
+        """Dict-like length.
+
+        Returns:
+            Number of non-expired items in cache
+
+        Note:
+            This method returns only non-expired items for consistency
+            with other dict-like operations like __contains__.
+        """
+        return len([key for key in self._cache if not self._is_expired(key)])
 
     def __iter__(self) -> Iterator[str]:
-        """Dict-like iteration over keys."""
-        return iter(self._cache.keys())
+        """Dict-like iteration over keys.
+
+        Returns:
+            Iterator over non-expired keys only
+
+        Note:
+            This method returns only non-expired keys for consistency
+            with other dict-like operations like __contains__ and __len__.
+        """
+        return iter(key for key in self._cache.keys() if not self._is_expired(key))
 
     def keys(self) -> Iterator[str]:
-        """Dict-like keys method."""
-        return iter(self._cache.keys())
+        """Dict-like keys method.
+
+        Returns:
+            Iterator over non-expired keys only
+
+        Note:
+            This method returns only non-expired keys for consistency
+            with other dict-like operations like __contains__ and __len__.
+        """
+        return iter(key for key in self._cache.keys() if not self._is_expired(key))
 
     def __eq__(self, other: object) -> bool:
-        """Dict-like equality comparison."""
+        """Dict-like equality comparison.
+
+        Note:
+            Only compares non-expired items for consistency
+            with other dict-like operations.
+        """
         if isinstance(other, dict):
-            if len(other) == 0 and len(self._cache) == 0:
+            # Get non-expired items only
+            non_expired_keys = [
+                k for k in self._cache.keys() if not self._is_expired(k)
+            ]
+            if len(other) == 0 and len(non_expired_keys) == 0:
                 return True
-            # For non-empty dicts, convert to dict and compare
-            cache_dict = {k: self._cache[k]["value"] for k in self._cache}
+            # For non-empty dicts, convert to dict and compare (non-expired items only)
+            cache_dict = {k: self._cache[k]["value"] for k in non_expired_keys}
             return cache_dict == other
         return False

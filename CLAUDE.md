@@ -179,16 +179,16 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exp
 
 ```bash
 # 全テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/
 
 # カバレッジ付き実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=. --cov-report=html
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app --cov-report=html
 
 # 特定テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/test_app.py -v
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/test_app.py -v
 
 # 短縮テスト実行（エラー時停止）
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --tb=short -x
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --tb=short -x
 ```
 
 #### 統合品質チェック
@@ -214,10 +214,10 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exp
 
 #### 品質基準
 
-- **Ruff**: 軽微なエラーのみ（📈 大幅改善: 187 → 6、98%削減）
+- **Ruff**: strict モードでエラーゼロを維持（✅ 達成済み）
 - **Black**: 全ファイルが統一フォーマットに準拠（✅ 達成済み）
-- **MyPy**: strict モードでエラーゼロを維持（✅ 達成済み: 21 → 0）
-- **Pytest**: テストカバレッジ 94% を達成（✅ 完了: 114/114テスト成功、目標80%を大幅に上回る）
+- **MyPy**: strict モードでエラーゼロを維持（✅ 達成済み）
+- **Pytest**: テストカバレッジ 95.38% を達成（✅ 完了: 141/141テスト成功、目標80%を大幅に上回る）
 
 ### テスト実行（Docker経由）
 
@@ -280,9 +280,9 @@ docker compose up dev
 
 ### テスト構成
 
-- **カバレッジ**: 82.32% (目標: 80%以上達成済み)
-- **テストファイル数**: 10ファイル
-- **テスト数**: 113テスト（拡張されたパラメータサポートを含む）
+- **カバレッジ**: 95.38% (目標: 80%以上達成済み)
+- **テストファイル数**: 12ファイル (conftest.py + 11テストファイル)
+- **テスト数**: 141テスト（拡張されたパラメータサポートを含む）
 - **フレームワーク**: pytest + フィクスチャーベース
 
 ### テストファイル
@@ -293,6 +293,7 @@ app/tests/
 ├── test_app.py                  # Appクラステスト
 ├── test_asset_handler.py        # AssetHandlerテスト
 ├── test_base_view.py            # BaseViewテスト
+├── test_cache.py                # LRUCacheテスト
 ├── test_health_view.py          # HealthViewテスト
 ├── test_metrics_factory.py      # MetricsFactoryテスト
 ├── test_metrics_reduction.py    # メトリクス削減テスト
@@ -403,7 +404,7 @@ strict = true
 
 ### 特徴
 
-- **高いテストカバレッジ**: 98%の包括的テストスイート
+- **高いテストカバレッジ**: 95.38%の包括的テストスイート
 - **関心の分離**: 明確なレイヤー分離
 - **拡張性**: ファクトリーパターンによる容易なメトリクス追加
 - **監視機能**: 組み込みPrometheusメトリクス

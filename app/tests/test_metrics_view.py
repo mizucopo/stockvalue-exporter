@@ -429,3 +429,118 @@ class TestMetricsView:
 
                     assert status_code == 200
                     assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+    def test_get_method_with_force_clear_parameter(
+        self, app: Flask, isolated_registry: CollectorRegistry
+    ) -> None:
+        """force_clearパラメータでのメトリクスクリアをテストする."""
+        with app.test_request_context("/?symbols=AAPL&force_clear=true"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):  # 自動クリア無効
+                # MockアプリケーションにfetcherAttributeを追加
+                mock_app = Mock()
+
+                # 独立したレジストリでMetricsFactoryを作成
+                from metrics_factory import MetricsFactory
+
+                metrics_factory = MetricsFactory(registry=isolated_registry)
+                mock_app.metrics_factory = metrics_factory
+
+                mock_app.fetcher.get_stock_data.return_value = {
+                    "AAPL": {
+                        "symbol": "AAPL",
+                        "name": "Apple Inc.",
+                        "current_price": 150.0,
+                        "currency": "USD",
+                        "exchange": "NASDAQ",
+                        "asset_type": "stock",
+                        "volume": 1000000,
+                        "market_cap": 2500000000000,
+                        "previous_close": 148.0,
+                        "price_change": 2.0,
+                        "price_change_percent": 1.35,
+                        "timestamp": 1638360000,
+                    }
+                }
+
+                view = MetricsView(app_instance=mock_app)
+
+                with patch.object(
+                    view.app.metrics_factory, "clear_all_metrics"
+                ) as mock_clear:
+                    response, status_code, headers = view.get()
+
+                    # force_clearパラメータによりメトリクスクリアが呼ばれることを確認
+                    mock_clear.assert_called_once()
+
+                    assert status_code == 200
+                    assert headers["Content-Type"] == "text/plain; charset=utf-8"
+
+    def test_get_clear_flags_method(self, app: Flask) -> None:
+        """_get_clear_flagsメソッドをテストする."""
+        mock_app = Mock()
+        view = MetricsView(app_instance=mock_app)
+
+        # force_clear=trueの場合
+        with app.test_request_context("/?force_clear=true"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):
+                url_clear, force_clear_metrics, auto_clear, clear_metrics = (
+                    view._get_clear_flags()
+                )
+
+                assert url_clear is False
+                assert force_clear_metrics is True
+                assert auto_clear is False
+                assert clear_metrics is True
+
+        # clear=trueの場合
+        with app.test_request_context("/?clear=true"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):
+                url_clear, force_clear_metrics, auto_clear, clear_metrics = (
+                    view._get_clear_flags()
+                )
+
+                assert url_clear is True
+                assert force_clear_metrics is False
+                assert auto_clear is False
+                assert clear_metrics is True
+
+        # auto_clear=trueの場合
+        with app.test_request_context("/"):
+            with patch("config.config.AUTO_CLEAR_METRICS", True):
+                url_clear, force_clear_metrics, auto_clear, clear_metrics = (
+                    view._get_clear_flags()
+                )
+
+                assert url_clear is False
+                assert force_clear_metrics is False
+                assert auto_clear is True
+                assert clear_metrics is True
+
+        # 全てfalseの場合
+        with app.test_request_context("/"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):
+                url_clear, force_clear_metrics, auto_clear, clear_metrics = (
+                    view._get_clear_flags()
+                )
+
+                assert url_clear is False
+                assert force_clear_metrics is False
+                assert auto_clear is False
+                assert clear_metrics is False
+
+    def test_deprecated_only_requested_parameter_removed(self, app: Flask) -> None:
+        """非推奨のonly_requestedパラメータが削除されたことをテストする."""
+        mock_app = Mock()
+        view = MetricsView(app_instance=mock_app)
+
+        # only_requestedパラメータは無視される（force_clearに置き換えられた）
+        with app.test_request_context("/?only_requested=true"):
+            with patch("config.config.AUTO_CLEAR_METRICS", False):
+                url_clear, force_clear_metrics, auto_clear, clear_metrics = (
+                    view._get_clear_flags()
+                )
+
+                assert url_clear is False
+                assert force_clear_metrics is False  # only_requestedは無視される
+                assert auto_clear is False
+                assert clear_metrics is False  # 結果として全てfalse
