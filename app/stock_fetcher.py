@@ -190,7 +190,9 @@ class StockDataFetcher:
         """
         if success and self.financial_fetch_duration:
             duration = time.time() - start_time
-            self.financial_fetch_duration.labels(symbol=symbol, asset_type=asset_type).observe(duration)
+            self.financial_fetch_duration.labels(
+                symbol=symbol, asset_type=asset_type
+            ).observe(duration)
         elif not success and self.financial_fetch_errors and error:
             self.financial_fetch_errors.labels(
                 symbol=symbol, error_type=type(error).__name__, asset_type=asset_type
@@ -238,7 +240,7 @@ class StockDataFetcher:
                 self._record_metrics(symbol, asset_type.value, start_time, success=True)
 
                 # 適切な通貨記号を取得
-                currency_symbol = self._get_currency_symbol(stock_data['currency'])
+                currency_symbol = self._get_currency_symbol(stock_data["currency"])
                 logger.info(
                     f"Successfully fetched data for {symbol}: {currency_symbol}{stock_data['current_price']} "
                     f"({currency_symbol}{stock_data['price_change']:+.2f}, {stock_data['price_change_percent']:+.2f}%)"
@@ -252,7 +254,9 @@ class StockDataFetcher:
                 results[symbol] = error_data
 
                 # エラーメトリクス記録
-                self._record_metrics(symbol, error_data["asset_type"], start_time, success=False, error=e)
+                self._record_metrics(
+                    symbol, error_data["asset_type"], start_time, success=False, error=e
+                )
 
         return results
 

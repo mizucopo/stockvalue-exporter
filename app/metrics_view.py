@@ -114,8 +114,6 @@ class MetricsView(BaseView):
             market_cap_metric = metrics_factory.get_metric("financial_market_cap")
             self._set_gauge_metric(market_cap_metric, labels, data["market_cap"])
 
-
-
     def _update_change_metrics(
         self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
     ) -> None:
@@ -130,7 +128,9 @@ class MetricsView(BaseView):
         # 統一メトリクス: financial_previous_close, financial_price_change, financial_price_change_percent
         close_metric = metrics_factory.get_metric("financial_previous_close")
         change_metric = metrics_factory.get_metric("financial_price_change")
-        change_percent_metric = metrics_factory.get_metric("financial_price_change_percent")
+        change_percent_metric = metrics_factory.get_metric(
+            "financial_price_change_percent"
+        )
 
         self._set_gauge_metric(close_metric, labels, data["previous_close"])
         self._set_gauge_metric(change_metric, labels, data["price_change"])
@@ -170,11 +170,17 @@ class MetricsView(BaseView):
 
             except Exception as e:
                 logger.error(f"Error updating metrics for {symbol}: {e}")
-                asset_type = data.get("asset_type", SymbolClassifier.get_asset_type(symbol).value)
+                asset_type = data.get(
+                    "asset_type", SymbolClassifier.get_asset_type(symbol).value
+                )
 
                 # 統一メトリクス: financial_fetch_errors
                 error_metric = metrics_factory.get_metric("financial_fetch_errors")
-                error_labels = {"symbol": symbol, "error_type": "metric_update_error", "asset_type": asset_type}
+                error_labels = {
+                    "symbol": symbol,
+                    "error_type": "metric_update_error",
+                    "asset_type": asset_type,
+                }
                 self._increment_counter_metric(error_metric, error_labels)
 
     def get(self) -> tuple[str, int, dict[str, str]]:

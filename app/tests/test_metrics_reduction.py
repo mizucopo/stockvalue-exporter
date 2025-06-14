@@ -58,7 +58,9 @@ class TestMetricsReduction:
         assert "financial_fetch_duration" in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 9  # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram
+        assert (
+            len(all_metrics) == 9
+        )  # 統一メトリクス後の期待値: 7 Gauge + 1 Counter + 1 Histogram
 
     def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
@@ -85,7 +87,9 @@ class TestMetricsReduction:
             assert metric_key not in all_metrics
 
         # 削減効果を確認（統一メトリクスでの数）
-        assert len(all_metrics) == 7  # 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
+        assert (
+            len(all_metrics) == 7
+        )  # 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
 
     def test_both_metrics_disabled(self) -> None:
         """両方無効化で最大削減効果をテストする."""
@@ -103,7 +107,9 @@ class TestMetricsReduction:
         all_metrics = factory.get_all_metrics()
 
         # 最大削減効果を確認（統一メトリクス後）
-        assert len(all_metrics) == 7  # 7 Gauge + 0 Counter + 0 Histogram（デバッグ系削除）
+        assert (
+            len(all_metrics) == 7
+        )  # 7 Gauge + 0 Counter + 0 Histogram（デバッグ系削除）
 
         # 削除対象メトリクスが全て削除されていることを確認
         deleted_metrics = [
@@ -204,7 +210,11 @@ class TestMetricsReduction:
         reduction = full_count - reduced_count
         reduction_percent = (reduction / full_count) * 100
 
-        assert full_count == 9  # 統一メトリクス削減後: 7 Gauge + 1 Counter + 1 Histogram
-        assert reduced_count == 7  # 最大削減後: 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
+        assert (
+            full_count == 9
+        )  # 統一メトリクス削減後: 7 Gauge + 1 Counter + 1 Histogram
+        assert (
+            reduced_count == 7
+        )  # 最大削減後: 7 Gauge のみ（Counter/Histogramがデバッグ系で削除）
         assert reduction == 2
         assert abs(reduction_percent - 22.2) < 0.1  # 約22%削減

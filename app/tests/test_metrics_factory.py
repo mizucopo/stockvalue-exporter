@@ -330,7 +330,11 @@ class TestMetricsFactory:
         financial_price = factory.get_metric("financial_price")
         if financial_price and isinstance(financial_price, Gauge):
             financial_price.labels(
-                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ", asset_type="stock"
+                symbol="AAPL",
+                name="Apple Inc.",
+                currency="USD",
+                exchange="NASDAQ",
+                asset_type="stock",
             ).set(150.0)
 
         # メトリクスを再作成
@@ -347,7 +351,11 @@ class TestMetricsFactory:
 
         # 新しいメトリクスに値を設定できることを確認
         new_financial_price.labels(
-            symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ", asset_type="stock"
+            symbol="GOOGL",
+            name="Google",
+            currency="USD",
+            exchange="NASDAQ",
+            asset_type="stock",
         ).set(200.0)
 
     def test_unregister_already_unregistered_metric(
