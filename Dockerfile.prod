@@ -21,7 +21,7 @@ COPY app/.python-version \
      app/uv.lock \
      /app/
 
-RUN pip install uv==0.7.12 \
+RUN pip install uv \
     && uv sync --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
