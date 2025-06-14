@@ -84,7 +84,7 @@ curl "http://localhost:9100/api/stocks?symbols=^GSPC&symbols=^N225"
 - **フレームワーク**: Flask with MethodView pattern
 - **パッケージ管理**: uv (高速、モダン)
 - **設計パターン**: MVC, Factory, Template Method, Dependency Injection
-- **テスト**: pytest (94%カバレッジ、114テスト)
+- **テスト**: pytest (95.33%カバレッジ、140テスト)
 - **品質管理**: ruff, black, mypy
 
 ### 主要依存関係
@@ -164,7 +164,7 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exp
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run ruff check .
 
 # 5. テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app
 
 # 6. 開発サーバー起動
 docker compose up dev
@@ -208,13 +208,13 @@ docker compose up dev
 
 ```bash
 # 統合品質チェック
-docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh -c "uv run black . && uv run ruff check . --fix && uv run mypy . && cd .. && uv run --dev python -m pytest tests/ --cov=. --cov-fail-under=80"
+docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop sh -c "uv run black . && uv run ruff check . --fix && uv run mypy . && cd .. && uv run python -m pytest app/tests/ --cov=app --cov-fail-under=80"
 
 # 個別実行
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run ruff check .        # リント
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run black .          # フォーマット
 docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exporter:develop uv run mypy .           # 型チェック
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=.  # テスト
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app  # テスト
 ```
 
 ## ⚙️ 設定
