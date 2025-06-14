@@ -41,21 +41,32 @@ class BaseView(MethodView):
         """
         cls._app_instance = app_instance
 
+    @classmethod
+    def is_app_instance_set(cls) -> bool:
+        """アプリケーションインスタンスが設定されているかチェックする.
+
+        Returns:
+            アプリケーションインスタンスが設定されている場合True
+        """
+        return cls._app_instance is not None
+
     def __init__(self, app_instance: AppProtocol | None = None) -> None:
         """ベースビューを初期化する.
 
         Args:
             app_instance: Flaskアプリケーションインスタンス
+
+        Raises:
+            RuntimeError: アプリケーションインスタンスが設定されていない場合
         """
         if app_instance is not None:
             self.app = app_instance
         elif self._app_instance is not None:
             self.app = self._app_instance
         else:
-            # 後方互換性のためのフォールバック（循環インポート）
-            from main import app
-
-            self.app = app
+            raise RuntimeError(
+                "App instance not set. Call BaseView.set_app_instance(app) during application setup."
+            )
 
     def _parse_symbols_parameter(self) -> list[str]:
         """URLパラメータからsymbolsを解析して銘柄リストを返す.
@@ -65,11 +76,21 @@ class BaseView(MethodView):
         - ?symbols=AAPL&symbols=GOOGL (配列形式)
         - ?symbols=AAPL,GOOGL&symbols=MSFT (混合形式)
 
+        フォールバック動作:
+        - パラメータが存在しない場合: デフォルトシンボルを返す
+        - パラメータが存在するが空の場合: デフォルトシンボルを返す
+        - 有効なシンボルが提供された場合: 提供されたシンボルを返す
+
+        Note:
+            空のsymbolsパラメータ（?symbols= や ?symbols=,, など）は
+            デフォルトシンボルにフォールバックします。これにより
+            一貫した動作を保証し、空のリクエストを防ぎます。
+
         Returns:
-            正規化された銘柄リスト
+            正規化された銘柄リスト（常に1つ以上のシンボルを含む）
 
         Raises:
-            ValueError: シンボルが無効な場合
+            ValueError: シンボルが無効な場合（形式、長さ、数量制限違反）
         """
         # URLパラメータから全ての symbols 値を取得
         symbols_list = request.args.getlist("symbols")
@@ -91,7 +112,9 @@ class BaseView(MethodView):
         # 効率的な重複除去（順序保持）
         unique_symbols = list(dict.fromkeys(symbols))
 
-        # フォールバック処理
+        # フォールバック処理：空のリストの場合はデフォルトを使用
+        # これにより ?symbols= や ?symbols=,, などの空パラメータに対して
+        # 一貫した動作を提供する
         final_symbols = (
             unique_symbols if unique_symbols else config.DEFAULT_SYMBOLS.copy()
         )
