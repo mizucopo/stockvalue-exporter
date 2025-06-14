@@ -25,7 +25,6 @@ class LRUCache(Generic[T]):
         self.max_size = max_size or config.CACHE_MAX_SIZE
         self.ttl_seconds = ttl_seconds or config.CACHE_TTL_SECONDS
         self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
-        self._access_times: dict[str, float] = {}
 
     def get(self, key: str) -> T | None:
         """キャッシュから値を取得する.
@@ -44,8 +43,7 @@ class LRUCache(Generic[T]):
             self._remove(key)
             return None
 
-        # LRU: アクセス時刻を更新し、最近使用されたものとして移動
-        self._access_times[key] = time.time()
+        # LRU: 最近使用されたものとして移動
         self._cache.move_to_end(key)
 
         value: T = self._cache[key]["value"]
@@ -63,7 +61,6 @@ class LRUCache(Generic[T]):
         if key in self._cache:
             # 既存の項目を更新
             self._cache[key] = {"value": value, "created_at": current_time}
-            self._access_times[key] = current_time
             self._cache.move_to_end(key)
         else:
             # 新しい項目を追加
@@ -71,12 +68,10 @@ class LRUCache(Generic[T]):
                 self._evict_lru()
 
             self._cache[key] = {"value": value, "created_at": current_time}
-            self._access_times[key] = current_time
 
     def clear(self) -> None:
         """キャッシュをクリアする."""
         self._cache.clear()
-        self._access_times.clear()
 
     def size(self) -> int:
         """現在のキャッシュサイズを取得する.
@@ -109,8 +104,6 @@ class LRUCache(Generic[T]):
         """
         if key in self._cache:
             del self._cache[key]
-        if key in self._access_times:
-            del self._access_times[key]
 
     def _evict_lru(self) -> None:
         """LRU（最も使用されていない）アイテムを削除する."""
