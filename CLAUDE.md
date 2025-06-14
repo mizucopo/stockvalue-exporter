@@ -96,7 +96,7 @@ MethodView (Flask)
 ### 必要な環境
 
 - **Docker**: Docker Engine & Docker Compose（必須）
-- **Python**: 3.13+（Docker内で実行）
+- **Python**: 3.13.5+（Docker内で実行）
 - **パッケージマネージャー**: uv（Docker内で実行）
 
 > **注意**: 開発作業は全てDocker経由で行います。ローカルにPythonやuvのインストールは不要です。
@@ -410,7 +410,7 @@ strict = true
 - **監視機能**: 組み込みPrometheusメトリクス
 - **エラー耐性**: 適切な劣化とエラーハンドリング
 - **設定駆動**: 柔軟なメトリクス設定
-- **モダンPython**: Python 3.13+ 機能と型ヒント活用
+- **モダンPython**: Python 3.13.5+ 機能と型ヒント活用
 
 ### キャッシュ戦略
 

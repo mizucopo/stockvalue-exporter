@@ -3,7 +3,7 @@ name = "stockvalue-exporter"
 version = "2.1.1"
 description = "A Prometheus custom exporter for real-time stock price monitoring and metrics collection"
 readme = "../README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13.5"
 dependencies = [
     "flask>=3.1.1",
     "gunicorn>=23.0.0",
