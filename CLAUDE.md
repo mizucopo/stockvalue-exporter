@@ -179,16 +179,16 @@ docker run --rm -v "$(pwd)":/workspace -w /workspace/app mizucopo/stockvalue-exp
 
 ```bash
 # 全テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/
 
 # カバレッジ付き実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --cov=. --cov-report=html
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --cov=app --cov-report=html
 
 # 特定テスト実行
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/test_app.py -v
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/test_app.py -v
 
 # 短縮テスト実行（エラー時停止）
-docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run --dev python -m pytest tests/ --tb=short -x
+docker run --rm -v "$(pwd)":/workspace -w /workspace mizucopo/stockvalue-exporter:develop uv run python -m pytest app/tests/ --tb=short -x
 ```
 
 #### 統合品質チェック
