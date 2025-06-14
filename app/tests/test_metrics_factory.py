@@ -270,7 +270,11 @@ class TestMetricsFactory:
 
         if financial_price and isinstance(financial_price, Gauge):
             financial_price.labels(
-                symbol="AAPL", name="Apple Inc.", currency="USD", exchange="NASDAQ", asset_type="stock"
+                symbol="AAPL",
+                name="Apple Inc.",
+                currency="USD",
+                exchange="NASDAQ",
+                asset_type="stock",
             ).set(150.0)
         if financial_volume and isinstance(financial_volume, Gauge):
             financial_volume.labels(
@@ -291,7 +295,11 @@ class TestMetricsFactory:
         # 新しい値を設定できることを確認
         if financial_price and isinstance(financial_price, Gauge):
             financial_price.labels(
-                symbol="GOOGL", name="Google", currency="USD", exchange="NASDAQ", asset_type="stock"
+                symbol="GOOGL",
+                name="Google",
+                currency="USD",
+                exchange="NASDAQ",
+                asset_type="stock",
             ).set(100.0)
             # メトリクスが正常に動作することを確認
             assert financial_price is not None
