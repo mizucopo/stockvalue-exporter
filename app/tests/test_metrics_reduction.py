@@ -17,15 +17,16 @@ class TestMetricsReduction:
 
         # 全43個のメトリクスが作成されることを確認
         all_metrics = factory.get_all_metrics()
-        assert len(all_metrics) == 43
+        # 統一メトリクスでの期待されるメトリクス数確認（13個）
+        assert len(all_metrics) == 13
 
-        # 52週系メトリクスの存在確認
-        assert "stock_52week_high" in all_metrics
-        assert "forex_52week_high" in all_metrics
+        # 統一メトリクスの存在確認
+        assert "financial_52week_high" in all_metrics
+        assert "financial_52week_low" in all_metrics
 
         # デバッグ系メトリクスの存在確認
-        assert "stock_fetch_duration" in all_metrics
-        assert "stock_fetch_errors" in all_metrics
+        assert "financial_fetch_duration" in all_metrics
+        assert "financial_fetch_errors" in all_metrics
 
     def test_range_metrics_disabled(self) -> None:
         """ENABLE_RANGE_METRICS=Falseで52週系メトリクスが無効化されることをテストする."""
@@ -57,12 +58,12 @@ class TestMetricsReduction:
         for metric_key in range_metrics:
             assert metric_key not in all_metrics
 
-        # 他のメトリクスは残っていることを確認
-        assert "stock_price" in all_metrics
-        assert "stock_fetch_duration" in all_metrics
+        # 他のメトリクスは残っていることを確認（統一メトリクス）
+        assert "financial_price" in all_metrics
+        assert "financial_fetch_duration" in all_metrics
 
-        # 削減効果を確認（43 - 8 = 35個）
-        assert len(all_metrics) == 35
+        # 削減効果を確認（統一メトリクスでの数）
+        assert len(all_metrics) == 11  # 統一メトリクス後の期待値
 
     def test_debug_metrics_disabled(self) -> None:
         """ENABLE_DEBUG_METRICS=Falseでデバッグ系メトリクスが無効化されることをテストする."""
@@ -94,12 +95,12 @@ class TestMetricsReduction:
         for metric_key in debug_metrics:
             assert metric_key not in all_metrics
 
-        # 52週系メトリクスは残っていることを確認
-        assert "stock_52week_high" in all_metrics
-        assert "forex_52week_high" in all_metrics
+        # 52週系メトリクスは残っていることを確認（統一メトリクス）
+        assert "financial_52week_high" in all_metrics
+        assert "financial_52week_low" in all_metrics
 
-        # 削減効果を確認（43 - 8 = 35個）
-        assert len(all_metrics) == 35
+        # 削減効果を確認（統一メトリクスでの数）
+        assert len(all_metrics) == 11  # 統一メトリクス後の期待値
 
     def test_both_metrics_disabled(self) -> None:
         """両方無効化で最大削減効果をテストする."""

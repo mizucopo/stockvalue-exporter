@@ -5,7 +5,6 @@ from typing import Any, Protocol
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
-from asset_handler import AssetHandlerFactory
 from base_view import BaseView
 from symbol_classifier import SymbolClassifier
 
@@ -58,6 +57,7 @@ class MetricsView(BaseView):
             "symbol": data["symbol"],
             "name": data["name"],
             "exchange": data["exchange"],
+            "asset_type": data["asset_type"],
         }
 
     def _create_price_labels(self, data: dict[str, Any]) -> dict[str, str]:
@@ -74,6 +74,7 @@ class MetricsView(BaseView):
             "name": data["name"],
             "currency": data["currency"],
             "exchange": data["exchange"],
+            "asset_type": data["asset_type"],
         }
 
     def _update_price_metrics(
@@ -86,11 +87,9 @@ class MetricsView(BaseView):
             metrics_factory: メトリクスファクトリー
         """
         price_labels = self._create_price_labels(data)
-        asset_type = SymbolClassifier.get_asset_type(data["symbol"])
-        handler = AssetHandlerFactory.get_handler(asset_type)
 
-        metric_key = handler.get_price_metric_key()
-        metric = metrics_factory.get_metric(metric_key)
+        # 統一メトリクス: financial_price
+        metric = metrics_factory.get_metric("financial_price")
         self._set_gauge_metric(metric, price_labels, data["current_price"])
 
     def _update_volume_and_market_metrics(
@@ -102,38 +101,29 @@ class MetricsView(BaseView):
             data: 株価データ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
-        asset_type = SymbolClassifier.get_asset_type(data["symbol"])
-        handler = AssetHandlerFactory.get_handler(asset_type)
-
-        # 出来高の更新が必要かチェック
-        if not handler.should_update_volume():
-            return
-
+        asset_type = data["asset_type"]
         labels = self._create_metric_labels(data)
 
-        # 出来高メトリクスの更新
-        volume_key = handler.get_volume_metric_key()
-        if volume_key:
-            volume_metric = metrics_factory.get_metric(volume_key)
+        # 出来高メトリクスの更新（為替以外）
+        if asset_type != "forex":
+            volume_metric = metrics_factory.get_metric("financial_volume")
             self._set_gauge_metric(volume_metric, labels, data["volume"])
 
-        # 時価総額メトリクスの更新
-        market_cap_key = handler.get_market_cap_metric_key()
-        if market_cap_key:
-            market_cap_metric = metrics_factory.get_metric(market_cap_key)
+        # 時価総額メトリクスの更新（株式・暗号通貨のみ）
+        if asset_type in ["stock", "crypto"]:
+            market_cap_metric = metrics_factory.get_metric("financial_market_cap")
             self._set_gauge_metric(market_cap_metric, labels, data["market_cap"])
 
-        # 追加メトリクスの更新（株式のPER、配当利回りなど）
-        if handler.should_update_market_metrics():
-            additional_metrics = handler.get_additional_metrics()
-            for metric_key, data_key in additional_metrics.items():
-                value = data[data_key]
-                # 配当利回りは%表示のため100倍
-                if data_key == "dividend_yield":
-                    value = value * 100 if value else 0
+        # 株式特有メトリクスの更新
+        if asset_type == "stock":
+            # PER
+            pe_metric = metrics_factory.get_metric("financial_pe_ratio")
+            self._set_gauge_metric(pe_metric, labels, data["pe_ratio"])
 
-                metric = metrics_factory.get_metric(metric_key)
-                self._set_gauge_metric(metric, labels, value)
+            # 配当利回り（%表示のため100倍）
+            dividend_value = data["dividend_yield"] * 100 if data["dividend_yield"] else 0
+            dividend_metric = metrics_factory.get_metric("financial_dividend_yield")
+            self._set_gauge_metric(dividend_metric, labels, dividend_value)
 
     def _update_range_metrics(
         self, data: dict[str, Any], metrics_factory: MetricsFactoryProtocol
@@ -145,14 +135,10 @@ class MetricsView(BaseView):
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
-        asset_type = SymbolClassifier.get_asset_type(data["symbol"])
-        handler = AssetHandlerFactory.get_handler(asset_type)
 
-        high_key, low_key = handler.get_range_metric_keys()
-
-        # メトリクスが存在する場合のみ更新（ENABLE_RANGE_METRICS設定による制御）
-        high_metric = metrics_factory.get_metric(high_key)
-        low_metric = metrics_factory.get_metric(low_key)
+        # 統一メトリクス: financial_52week_high/low
+        high_metric = metrics_factory.get_metric("financial_52week_high")
+        low_metric = metrics_factory.get_metric("financial_52week_low")
 
         self._set_gauge_metric(high_metric, labels, data["fifty_two_week_high"])
         self._set_gauge_metric(low_metric, labels, data["fifty_two_week_low"])
@@ -167,14 +153,11 @@ class MetricsView(BaseView):
             metrics_factory: メトリクスファクトリー
         """
         labels = self._create_metric_labels(data)
-        asset_type = SymbolClassifier.get_asset_type(data["symbol"])
-        handler = AssetHandlerFactory.get_handler(asset_type)
 
-        close_key, change_key, change_percent_key = handler.get_change_metric_keys()
-
-        close_metric = metrics_factory.get_metric(close_key)
-        change_metric = metrics_factory.get_metric(change_key)
-        change_percent_metric = metrics_factory.get_metric(change_percent_key)
+        # 統一メトリクス: financial_previous_close, financial_price_change, financial_price_change_percent
+        close_metric = metrics_factory.get_metric("financial_previous_close")
+        change_metric = metrics_factory.get_metric("financial_price_change")
+        change_percent_metric = metrics_factory.get_metric("financial_price_change_percent")
 
         self._set_gauge_metric(close_metric, labels, data["previous_close"])
         self._set_gauge_metric(change_metric, labels, data["price_change"])
@@ -191,12 +174,9 @@ class MetricsView(BaseView):
             data: 株価データ、為替レートデータ、指数データ、または暗号通貨データ
             metrics_factory: メトリクスファクトリー
         """
-        asset_type = SymbolClassifier.get_asset_type(data["symbol"])
-        handler = AssetHandlerFactory.get_handler(asset_type)
-
-        timestamp_key = handler.get_timestamp_metric_key()
-        timestamp_metric = metrics_factory.get_metric(timestamp_key)
-        timestamp_labels = {"symbol": data["symbol"]}
+        # 統一メトリクス: financial_last_updated
+        timestamp_metric = metrics_factory.get_metric("financial_last_updated")
+        timestamp_labels = {"symbol": data["symbol"], "asset_type": data["asset_type"]}
         self._set_gauge_metric(timestamp_metric, timestamp_labels, data["timestamp"])
 
     def update_prometheus_metrics(self, stock_data_dict: dict[str, Any]) -> None:
@@ -218,12 +198,11 @@ class MetricsView(BaseView):
 
             except Exception as e:
                 logger.error(f"Error updating metrics for {symbol}: {e}")
-                asset_type = SymbolClassifier.get_asset_type(symbol)
-                handler = AssetHandlerFactory.get_handler(asset_type)
+                asset_type = data.get("asset_type", SymbolClassifier.get_asset_type(symbol).value)
 
-                error_key = handler.get_error_metric_key()
-                error_metric = metrics_factory.get_metric(error_key)
-                error_labels = {"symbol": symbol, "error_type": "metric_update_error"}
+                # 統一メトリクス: financial_fetch_errors
+                error_metric = metrics_factory.get_metric("financial_fetch_errors")
+                error_labels = {"symbol": symbol, "error_type": "metric_update_error", "asset_type": asset_type}
                 self._increment_counter_metric(error_metric, error_labels)
 
     def get(self) -> tuple[str, int, dict[str, str]]:

@@ -13,7 +13,7 @@ Yahoo Finance API から**株価・指数・暗号通貨・為替データ**を�
 - 🌐 **多資産対応**: **株式**・**指数**・**暗号通貨**・**為替**の包括的サポート
 - 🏗️ **モダンアーキテクチャ**: MVC、Factory、DI パターンによる保守性の高い設計
 - ⚡ **高性能**: 10分間キャッシュによるAPI制限対策
-- 📊 **豊富なメトリクス**: 11種類のGaugeメトリクス、エラー追跡、パフォーマンス計測
+- 📊 **統一メトリクス**: 13個の統一メトリクス（73%削減）、全資産タイプ対応、エラー追跡・パフォーマンス計測
 - 🐳 **Docker Ready**: 開発・本番環境でのコンテナ化対応
 - 🔧 **柔軟な設定**: 設定駆動でのメトリクス管理
 
@@ -94,26 +94,41 @@ curl "http://localhost:9100/api/stocks?symbols=^GSPC&symbols=^N225"
 - **prometheus-client**: メトリクス生成
 - **pandas** (2.3.0+): データ処理
 
-## 📊 Prometheusメトリクス
+## 📊 統一Prometheusメトリクス
 
-### 主要メトリクス
+🚀 **新機能**: 2024年12月に**統一メトリクス**を実装し、**73%のメトリクス削減**（46個→13個）を達成しました。
 
-| メトリクス名 | タイプ | 説明 |
-|------------|------|------|
-| `stock_price_current` | Gauge | 現在株価 |
-| `stock_volume_current` | Gauge | 出来高 |
-| `stock_market_cap` | Gauge | 時価総額 |
-| `stock_pe_ratio` | Gauge | PER |
-| `stock_price_change_percent` | Gauge | 価格変動率（%） |
-| `stock_fetch_errors_total` | Counter | 取得エラー総数 |
-| `stock_fetch_duration_seconds` | Histogram | 取得時間 |
+### 統一メトリクス仕様
 
-### ラベル
+| メトリクス名 | タイプ | 説明 | 対応資産タイプ |
+|------------|------|------|--------------|
+| `financial_price_current` | Gauge | 現在価格・レート・値 | 全資産タイプ |
+| `financial_volume_current` | Gauge | 出来高 | 株式・指数・暗号通貨 |
+| `financial_previous_close` | Gauge | 前日終値 | 全資産タイプ |
+| `financial_price_change` | Gauge | 価格変動額 | 全資産タイプ |
+| `financial_price_change_percent` | Gauge | 価格変動率（%） | 全資産タイプ |
+| `financial_52week_high` | Gauge | 52週最高値 | 全資産タイプ |
+| `financial_52week_low` | Gauge | 52週最安値 | 全資産タイプ |
+| `financial_market_cap` | Gauge | 時価総額 | 株式・暗号通貨 |
+| `financial_pe_ratio` | Gauge | PER | 株式のみ |
+| `financial_dividend_yield` | Gauge | 配当利回り（%） | 株式のみ |
+| `financial_last_updated_timestamp` | Gauge | 最終更新時刻 | 全資産タイプ |
+| `financial_fetch_errors_total` | Counter | 取得エラー総数 | 全資産タイプ |
+| `financial_fetch_duration_seconds` | Histogram | 取得時間 | 全資産タイプ |
 
-- `symbol`: 株式銘柄（例: AAPL）
-- `name`: 会社名（例: Apple Inc.）
-- `currency`: 通貨（例: USD）
-- `exchange`: 取引所（例: NASDAQ）
+### 統一ラベル構造
+
+すべてのメトリクスで統一されたラベル構造：
+
+- `symbol`: 銘柄コード（例: AAPL, ^GSPC, BTC-USD, USDJPY=X）
+- `name`: 正式名称（例: Apple Inc., Bitcoin USD）
+- `currency`: 通貨（例: USD, JPY, EUR）
+- `exchange`: 取引所（例: NASDAQ, CCC, FX）
+- **`asset_type`**: 資産タイプ（**新規追加**）
+  - `stock`: 株式
+  - `crypto`: 暗号通貨  
+  - `forex`: 為替
+  - `index`: 指数
 
 ### Prometheus設定例
 
@@ -235,33 +250,81 @@ API制限を回避しつつ、適度に新鮮なデータを提供します。
 
 ## 📈 利用例
 
-### Grafana ダッシュボード
+### 統一メトリクス活用例
 
-Prometheusと組み合わせてGrafanaでビジュアライゼーション：
+#### 1. 資産タイプ別監視
 
 ```promql
-# 株価チャート
-stock_price_current{symbol="AAPL"}
+# 株式のみ
+financial_price_current{asset_type="stock"}
 
-# 価格変動率
-stock_price_change_percent{symbol=~"AAPL|GOOGL|MSFT|TSLA"}
+# 暗号通貨のみ
+financial_price_current{asset_type="crypto"}
 
-# エラー率監視
-rate(stock_fetch_errors_total[5m])
+# 為替のみ
+financial_price_current{asset_type="forex"}
+
+# 指数のみ
+financial_price_current{asset_type="index"}
 ```
 
-### アラート設定
+#### 2. 横断的なクエリ
+
+```promql
+# 全資産タイプの価格変動率
+financial_price_change_percent{symbol=~"AAPL|BTC-USD|^GSPC|USDJPY=X"}
+
+# 資産タイプ別の平均価格変動
+avg by (asset_type) (financial_price_change_percent)
+
+# 資産タイプ別エラー率
+rate(financial_fetch_errors_total[5m]) by (asset_type)
+```
+
+#### 3. Grafana ダッシュボード設定
+
+```promql
+# 価格チャート（全資産対応）
+financial_price_current{symbol="AAPL",asset_type="stock"}
+financial_price_current{symbol="BTC-USD",asset_type="crypto"}
+
+# 価格変動ヒートマップ
+financial_price_change_percent{asset_type=~"stock|crypto"}
+
+# パフォーマンス監視
+histogram_quantile(0.95, financial_fetch_duration_seconds_bucket)
+```
+
+### 統一メトリクス アラート設定
 
 ```yaml
-# alert.yml
+# alert.yml - 統一メトリクス対応
 groups:
-  - name: stock-monitoring
+  - name: financial-monitoring
     rules:
-      - alert: StockFetchErrors
-        expr: rate(stock_fetch_errors_total[5m]) > 0.1
+      # 全資産タイプのエラー監視
+      - alert: FinancialDataFetchErrors
+        expr: rate(financial_fetch_errors_total[5m]) > 0.1
         for: 2m
         annotations:
-          summary: "株価データ取得エラーが多発しています"
+          summary: "金融データ取得エラーが多発しています (資産タイプ: {{ $labels.asset_type }})"
+          description: "{{ $labels.symbol }} ({{ $labels.asset_type }}) のデータ取得でエラーが発生"
+      
+      # 資産タイプ別レスポンス時間監視
+      - alert: SlowFinancialDataFetch
+        expr: histogram_quantile(0.95, financial_fetch_duration_seconds_bucket) > 5
+        for: 3m
+        annotations:
+          summary: "金融データ取得が遅延しています"
+          description: "95パーセンタイルの取得時間が5秒を超過"
+      
+      # 株式の急激な価格変動
+      - alert: StockPriceVolatility  
+        expr: abs(financial_price_change_percent{asset_type="stock"}) > 10
+        for: 1m
+        annotations:
+          summary: "株価の急激な変動を検出 ({{ $labels.symbol }})"
+          description: "{{ $labels.name }} の価格変動率: {{ $value }}%"
 ```
 
 ## 🤝 貢献

@@ -33,18 +33,18 @@ APP_DESCRIPTION = app.description
 # MetricsFactoryをappに設定（循環インポート解決）
 app.set_metrics_factory(metrics_factory)
 
-# StockDataFetcherのappへの初期化
-duration_metric = metrics_factory.get_metric("stock_fetch_duration")
-errors_metric = metrics_factory.get_metric("stock_fetch_errors")
+# StockDataFetcherのappへの初期化（統一メトリクス）
+duration_metric = metrics_factory.get_metric("financial_fetch_duration")
+errors_metric = metrics_factory.get_metric("financial_fetch_errors")
 
 # 型安全性のチェック
 if not isinstance(duration_metric, Histogram):
     raise TypeError(
-        f"Expected Histogram for stock_fetch_duration, got {type(duration_metric)}"
+        f"Expected Histogram for financial_fetch_duration, got {type(duration_metric)}"
     )
 if not isinstance(errors_metric, Counter):
     raise TypeError(
-        f"Expected Counter for stock_fetch_errors, got {type(errors_metric)}"
+        f"Expected Counter for financial_fetch_errors, got {type(errors_metric)}"
     )
 
 app.initialize_fetcher(duration_metric, errors_metric)

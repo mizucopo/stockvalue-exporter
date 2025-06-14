@@ -125,7 +125,7 @@ description = "Stock value exporter"
                 app.initialize_fetcher(mock_duration, mock_errors)
 
                 mock_fetcher.assert_called_once_with(
-                    stock_fetch_duration=mock_duration,
-                    stock_fetch_errors=mock_errors,
+                    financial_fetch_duration=mock_duration,
+                    financial_fetch_errors=mock_errors,
                 )
                 assert app.fetcher == mock_fetcher.return_value

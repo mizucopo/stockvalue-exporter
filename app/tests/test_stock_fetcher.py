@@ -18,10 +18,10 @@ class TestStockDataFetcher:
 
         fetcher = StockDataFetcher(mock_duration, mock_errors)
 
-        assert fetcher.cache == {}
+        assert fetcher.cache._cache == {}
         assert fetcher.cache_ttl == 600
-        assert fetcher.stock_fetch_duration == mock_duration
-        assert fetcher.stock_fetch_errors == mock_errors
+        assert fetcher.financial_fetch_duration == mock_duration
+        assert fetcher.financial_fetch_errors == mock_errors
 
     def test_init_with_none_parameters(
         self, isolated_registry: CollectorRegistry
@@ -29,10 +29,10 @@ class TestStockDataFetcher:
         """Noneパラメータでの初期化をテストする."""
         fetcher = StockDataFetcher()
 
-        assert fetcher.cache == {}
+        assert fetcher.cache._cache == {}
         assert fetcher.cache_ttl == 600
-        assert fetcher.stock_fetch_duration is None
-        assert fetcher.stock_fetch_errors is None
+        assert fetcher.financial_fetch_duration is None
+        assert fetcher.financial_fetch_errors is None
 
     def test_is_cached_not_in_cache(self) -> None:
         """キャッシュにない場合のテストする."""
@@ -113,6 +113,9 @@ class TestStockDataFetcher:
             stock_data = result["AAPL"]
             assert stock_data["symbol"] == "AAPL"
             assert stock_data["name"] == "Apple Inc."
+            assert stock_data["currency"] == "USD"
+            assert stock_data["exchange"] == "NASDAQ"
+            assert stock_data["asset_type"] == "stock"  # 統一メトリクス: asset_type追加
             assert stock_data["current_price"] == 150.0
             assert stock_data["price_change"] == 2.0  # 150 - 148
             assert stock_data["price_change_percent"] == pytest.approx(1.351, rel=1e-2)
@@ -134,6 +137,7 @@ class TestStockDataFetcher:
             assert "AAPL" in result
             stock_data = result["AAPL"]
             assert stock_data["symbol"] == "AAPL"
+            assert stock_data["asset_type"] == "stock"  # 統一メトリクス: asset_type追加
             assert stock_data["current_price"] == 0
             assert stock_data["name"] == "AAPL"
 
@@ -262,7 +266,7 @@ class TestStockDataFetcher:
     def test_get_stock_data_forex_error(self, mock_yf: Mock) -> None:
         """為替ペアのエラー時デフォルト値をテストする."""
         mock_errors = Mock()
-        fetcher = StockDataFetcher(stock_fetch_errors=mock_errors)
+        fetcher = StockDataFetcher(financial_fetch_errors=mock_errors)
 
         # yfinanceで例外を発生させる
         mock_yf.Ticker.side_effect = Exception("Network error")
@@ -276,6 +280,7 @@ class TestStockDataFetcher:
             assert forex_data["symbol"] == "USDJPY=X"
             assert forex_data["currency"] == "JPY"
             assert forex_data["exchange"] == "FX"
+            assert forex_data["asset_type"] == "forex"  # 統一メトリクス: asset_type追加
             assert forex_data["current_price"] == 0
             assert forex_data["market_cap"] == 0
             assert forex_data["pe_ratio"] == 0

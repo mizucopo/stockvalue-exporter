@@ -18,19 +18,19 @@ class StockDataFetcher:
 
     def __init__(
         self,
-        stock_fetch_duration: Histogram | None = None,
-        stock_fetch_errors: Counter | None = None,
+        financial_fetch_duration: Histogram | None = None,
+        financial_fetch_errors: Counter | None = None,
     ) -> None:
         """株価データフェッチャーを初期化する.
 
         Args:
-            stock_fetch_duration: フェッチ時間を計測するHistogramメトリクス
-            stock_fetch_errors: エラー数を計測するCounterメトリクス
+            financial_fetch_duration: フェッチ時間を計測するHistogramメトリクス
+            financial_fetch_errors: エラー数を計測するCounterメトリクス
         """
         self.cache: LRUCache[dict[str, Any]] = LRUCache()
         self.cache_ttl = self.cache.ttl_seconds  # テスト用のプロパティ
-        self.stock_fetch_duration = stock_fetch_duration
-        self.stock_fetch_errors = stock_fetch_errors
+        self.financial_fetch_duration = financial_fetch_duration
+        self.financial_fetch_errors = financial_fetch_errors
 
     def _calculate_price_changes(
         self, current_price: float, previous_close: float
@@ -102,6 +102,7 @@ class StockDataFetcher:
             "name": info.get("longName", info.get("shortName", symbol)),
             "currency": currency,
             "exchange": exchange,
+            "asset_type": asset_type.value,  # 資産タイプを追加
             "current_price": current_price,
             "previous_close": previous_close,
             "price_change": price_change,
@@ -147,6 +148,7 @@ class StockDataFetcher:
             "name": symbol,
             "currency": error_currency,
             "exchange": error_exchange,
+            "asset_type": error_asset_type.value,  # 資産タイプを追加
             "current_price": 0,
             "previous_close": 0,
             "price_change": 0,
@@ -191,6 +193,7 @@ class StockDataFetcher:
     def _record_metrics(
         self,
         symbol: str,
+        asset_type: str,
         start_time: float,
         success: bool = True,
         error: Exception | None = None,
@@ -199,16 +202,17 @@ class StockDataFetcher:
 
         Args:
             symbol: 銘柄シンボル
+            asset_type: 資産タイプ
             start_time: 開始時刻
             success: 成功フラグ
             error: エラー（失敗時）
         """
-        if success and self.stock_fetch_duration:
+        if success and self.financial_fetch_duration:
             duration = time.time() - start_time
-            self.stock_fetch_duration.labels(symbol=symbol).observe(duration)
-        elif not success and self.stock_fetch_errors and error:
-            self.stock_fetch_errors.labels(
-                symbol=symbol, error_type=type(error).__name__
+            self.financial_fetch_duration.labels(symbol=symbol, asset_type=asset_type).observe(duration)
+        elif not success and self.financial_fetch_errors and error:
+            self.financial_fetch_errors.labels(
+                symbol=symbol, error_type=type(error).__name__, asset_type=asset_type
             ).inc()
 
     def get_stock_data(self, symbols: list[str]) -> dict[str, Any]:
@@ -250,7 +254,7 @@ class StockDataFetcher:
                 results[symbol] = stock_data
 
                 # 成功メトリクス記録
-                self._record_metrics(symbol, start_time, success=True)
+                self._record_metrics(symbol, asset_type.value, start_time, success=True)
 
                 # 適切な通貨記号を取得
                 currency_symbol = self._get_currency_symbol(stock_data['currency'])
@@ -262,11 +266,12 @@ class StockDataFetcher:
             except Exception as e:
                 logger.error(f"Error fetching data for {symbol}: {e}")
 
-                # エラーメトリクス記録
-                self._record_metrics(symbol, start_time, success=False, error=e)
-
                 # エラー時のデフォルトデータを作成
-                results[symbol] = self._create_error_data(symbol)
+                error_data = self._create_error_data(symbol)
+                results[symbol] = error_data
+
+                # エラーメトリクス記録
+                self._record_metrics(symbol, error_data["asset_type"], start_time, success=False, error=e)
 
         return results
 

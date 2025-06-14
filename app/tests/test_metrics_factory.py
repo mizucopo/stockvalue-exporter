@@ -150,8 +150,8 @@ class TestMetricsFactory:
         """存在するメトリクスの取得をテストする."""
         factory = MetricsFactory(registry=isolated_registry)
 
-        # 既知のメトリクスキーを使用（DEFAULT_METRICS_CONFIGから）
-        metric = factory.get_metric("stock_price")
+        # 統一メトリクスキーを使用（DEFAULT_METRICS_CONFIGから）
+        metric = factory.get_metric("financial_price")
         assert metric is not None
         assert isinstance(metric, Gauge)
 
@@ -172,9 +172,9 @@ class TestMetricsFactory:
         assert isinstance(all_metrics, dict)
         assert len(all_metrics) > 0
 
-        # DEFAULT_METRICS_CONFIGのメトリクスが含まれているか確認
-        assert "stock_price" in all_metrics
-        assert "stock_fetch_errors" in all_metrics
+        # DEFAULT_METRICS_CONFIGの統一メトリクスが含まれているか確認
+        assert "financial_price" in all_metrics
+        assert "financial_fetch_errors" in all_metrics
 
     def test_create_default_classmethod(
         self, isolated_registry: CollectorRegistry

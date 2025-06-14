@@ -24,13 +24,14 @@ class TestMetricsView:
         mock_app = Mock()
         mock_app.metrics_factory = metrics_factory
 
-        # モック株価データ
+        # モック株価データ（統一メトリクス対応）
         stock_data = {
             "AAPL": {
                 "symbol": "AAPL",
                 "name": "Apple Inc.",
                 "currency": "USD",
                 "exchange": "NASDAQ",
+                "asset_type": "stock",  # 統一メトリクス: asset_type追加
                 "current_price": 150.0,
                 "volume": 1000000,
                 "market_cap": 2500000000000,
@@ -67,7 +68,7 @@ class TestMetricsView:
         mock_error_metric = Mock()
 
         def get_metric_side_effect(metric_name: str) -> Mock | None:
-            if "fetch_errors" in metric_name:
+            if metric_name == "financial_fetch_errors":  # 統一メトリクス名
                 return mock_error_metric
             else:
                 raise Exception("Metric error")
@@ -79,6 +80,7 @@ class TestMetricsView:
                 "symbol": "AAPL",
                 "name": "Apple Inc.",
                 "exchange": "NASDAQ",
+                "asset_type": "stock",  # 統一メトリクス: asset_type追加
             }
         }
 
