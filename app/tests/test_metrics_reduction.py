@@ -40,7 +40,7 @@ class TestMetricsReduction:
         # 統一メトリクス構造を確認（レンジメトリクスは廃止）
         expected_unified_metrics = [
             "financial_price",
-            "financial_volume", 
+            "financial_volume",
             "financial_market_cap",
             "financial_previous_close",
             "financial_price_change",
@@ -49,7 +49,7 @@ class TestMetricsReduction:
             "financial_fetch_duration",
             "financial_fetch_errors",
         ]
-        
+
         for metric_key in expected_unified_metrics:
             assert metric_key in all_metrics
 

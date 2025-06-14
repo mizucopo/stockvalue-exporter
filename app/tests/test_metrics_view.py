@@ -296,9 +296,9 @@ class TestMetricsView:
             with patch("config.config.AUTO_CLEAR_METRICS", False):
                 # 独立したレジストリでMetricsFactoryを作成
                 from metrics_factory import MetricsFactory
-                
+
                 metrics_factory = MetricsFactory(registry=isolated_registry)
-                
+
                 # Mockアプリケーションにfetcherとmetrics_factoryを設定
                 mock_app = Mock()
                 mock_app.metrics_factory = metrics_factory
@@ -343,9 +343,9 @@ class TestMetricsView:
             with patch("config.config.AUTO_CLEAR_METRICS", True):  # 自動クリア有効
                 # 独立したレジストリでMetricsFactoryを作成
                 from metrics_factory import MetricsFactory
-                
+
                 metrics_factory = MetricsFactory(registry=isolated_registry)
-                
+
                 # Mockアプリケーションにfetcherとmetrics_factoryを設定
                 mock_app = Mock()
                 mock_app.metrics_factory = metrics_factory
