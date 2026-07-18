@@ -816,7 +816,7 @@ wheels = [
 
 [[package]]
 name = "stockvalue-exporter"
-version = "2.1.10"
+version = "2.1.11"
 source = { editable = "." }
 dependencies = [
     { name = "flask" },
