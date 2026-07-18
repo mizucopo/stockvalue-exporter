@@ -1,5 +1,10 @@
 FROM mizucopo/stockvalue-exporter:latest
 
+ARG APP_UID=10001
+ARG APP_GID=10001
+
+USER root
+
 COPY .python-version \
      pyproject.toml \
      uv.lock \
@@ -14,4 +19,17 @@ RUN apk add --no-cache --virtual .build-deps \
       musl-dev \
       python3-dev \
     && uv sync --locked \
-    && apk del .build-deps
+    && apk del .build-deps \
+    && (getent group appgroup >/dev/null 2>&1 \
+        || addgroup -S -g "${APP_GID}" appgroup) \
+    && (id -u appuser >/dev/null 2>&1 \
+        || adduser -S -D -u "${APP_UID}" -G appgroup -h /home/appuser appuser) \
+    && test "$(id -u appuser)" -eq "${APP_UID}" \
+    && test "$(id -g appuser)" -eq "${APP_GID}" \
+    && mkdir -p /home/appuser/.cache \
+    && chown -R appuser:appgroup /home/appuser
+
+ENV HOME=/home/appuser \
+    XDG_CACHE_HOME=/home/appuser/.cache
+
+USER appuser:appgroup

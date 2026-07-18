@@ -48,6 +48,40 @@ jobs:
         continue-on-error: true
         run: uv run ruff check .
 
+      - name: Verify container runtime
+        id: container-runtime
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          IMAGE="stockvalue-exporter:pr-quality-check"
+          CONTAINER="stockvalue-exporter-pr-quality-check"
+
+          trap 'docker rm -f "$CONTAINER" >/dev/null 2>&1 || true' EXIT
+
+          docker build --tag "$IMAGE" .
+          docker run --rm --entrypoint sh "$IMAGE" -c '
+            test "$(id -u)" -eq 10001
+            test "$(id -g)" -eq 10001
+            test "$HOME" = /home/appuser
+            test "$XDG_CACHE_HOME" = /home/appuser/.cache
+            test -w "$XDG_CACHE_HOME"
+            test ! -w /app
+            touch "$XDG_CACHE_HOME/.write-test"
+          '
+
+          docker run --detach --name "$CONTAINER" \
+            --publish 127.0.0.1:19100:9100 "$IMAGE"
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:19100/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs "$CONTAINER"
+          exit 1
+
       - name: Build quality check summary
         id: quality-report
         if: ${{ !cancelled() }}
@@ -56,6 +90,7 @@ jobs:
           MYPY_OUTCOME: ${{ steps.mypy.outcome }}
           RUFF_FORMAT_OUTCOME: ${{ steps.ruff-format.outcome }}
           RUFF_CHECK_OUTCOME: ${{ steps.ruff-check.outcome }}
+          CONTAINER_RUNTIME_OUTCOME: ${{ steps.container-runtime.outcome }}
         run: |
           format_result() {
             case "$1" in
@@ -75,6 +110,7 @@ jobs:
           | mypy | $(format_result "$MYPY_OUTCOME") |
           | ruff format | $(format_result "$RUFF_FORMAT_OUTCOME") |
           | ruff check | $(format_result "$RUFF_CHECK_OUTCOME") |
+          | container runtime | $(format_result "$CONTAINER_RUNTIME_OUTCOME") |
           EOF
 
           cat quality_report.md >> "$GITHUB_STEP_SUMMARY"
@@ -84,7 +120,8 @@ jobs:
             "$PYTEST_OUTCOME" \
             "$MYPY_OUTCOME" \
             "$RUFF_FORMAT_OUTCOME" \
-            "$RUFF_CHECK_OUTCOME"; do
+            "$RUFF_CHECK_OUTCOME" \
+            "$CONTAINER_RUNTIME_OUTCOME"; do
             if [ "$outcome" != "success" ]; then
               HAS_FAILURE=true
             fi
