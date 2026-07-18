@@ -11,7 +11,7 @@ dependencies = [
     "flask>=3.1.1",
     "gunicorn>=23.0.0",
     "prometheus-flask-exporter>=0.23.2",
-    "yfinance>=0.2.62",
+    "yfinance>=1.5.1",
 ]
 
 [dependency-groups]
