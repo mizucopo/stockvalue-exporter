@@ -18,6 +18,10 @@ Docker イメージを起動します。
 docker run --rm -p 9100:9100 mizucopo/stockvalue-exporter:latest
 ```
 
+コンテナは専用の `appuser`（UID/GID `10001:10001`）で実行されます。
+アプリケーションの配置先 `/app` は実行時に書き込み不可で、必要なキャッシュは
+`/home/appuser/.cache` に保存されます。
+
 起動後、メトリクスを取得できます。
 
 ```bash

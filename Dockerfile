@@ -10,8 +10,16 @@ RUN apk add --no-cache \
 # 実行ステージ
 FROM python:3.14.6-alpine
 
+ARG APP_UID=10001
+ARG APP_GID=10001
+
 COPY --from=builder /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 COPY --from=builder /etc/timezone /etc/timezone
+
+RUN addgroup -S -g "${APP_GID}" appgroup \
+    && adduser -S -D -u "${APP_UID}" -G appgroup -h /home/appuser appuser \
+    && mkdir -p /home/appuser/.cache \
+    && chown -R appuser:appgroup /home/appuser
 
 ENV PIP_ROOT_USER_ACTION=ignore
 
@@ -37,6 +45,11 @@ RUN uv sync --locked --no-dev
 
 RUN rm /app/.python-version \
     && rm /app/uv.lock
+
+ENV HOME=/home/appuser \
+    XDG_CACHE_HOME=/home/appuser/.cache
+
+USER appuser:appgroup
 
 EXPOSE 9100
 
