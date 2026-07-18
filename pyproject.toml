@@ -1,6 +1,6 @@
 [project]
 name = "stockvalue-exporter"
-version = "2.1.15"
+version = "2.1.16"
 description = "A Prometheus custom exporter for real-time stock price monitoring and metrics collection"
 authors = [
     {name = "mizu", email = "mizu.copo@gmail.com"}
@@ -11,7 +11,7 @@ dependencies = [
     "flask>=3.1.3",
     "gunicorn>=26.0.0",
     "prometheus-flask-exporter>=0.23.2",
-    "yfinance>=0.2.62",
+    "yfinance>=1.5.1",
 ]
 
 [dependency-groups]
