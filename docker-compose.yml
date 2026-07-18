@@ -1,7 +1,7 @@
 services:
   prod:
     build:
-      dockerfile: ./Dockerfile.prod
+      dockerfile: ./Dockerfile
     image: mizucopo/stockvalue-exporter:latest
     platform: linux/amd64
   dev:
