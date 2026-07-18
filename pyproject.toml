@@ -1,0 +1,80 @@
+[project]
+name = "stockvalue-exporter"
+version = "2.1.5"
+description = "A Prometheus custom exporter for real-time stock price monitoring and metrics collection"
+authors = [
+    {name = "mizu", email = "mizu.copo@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.1",
+    "gunicorn>=23.0.0",
+    "prometheus-flask-exporter>=0.23.2",
+    "yfinance>=0.2.62",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.15.1",
+    "python-decouple-stubs>=0.1",
+    "ruff>=0.14.10",
+    "taskipy>=1.14.1",
+    "types-requests>=2.32.4.20250913",
+    "vulture>=2.14",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=80",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",   # 基本
+    "I",             # import
+    "B",             # bugbear
+    "SIM",           # simplify
+    "C4",            # comprehension
+    "ARG",           # unused args
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "ARG", "SIM117"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+files = ["src", "tests"]
+mypy_path = "src:stubs"
+
+[tool.taskipy.tasks]
+test = "ruff check --fix src tests stubs && ruff format src tests stubs && mypy && pytest"
+
+[tool.uv]
+package = true

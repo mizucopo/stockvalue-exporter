@@ -1,7 +1,17 @@
 FROM mizucopo/stockvalue-exporter:latest
 
-COPY app/.python-version \
-     app/uv.lock \
+COPY .python-version \
+     pyproject.toml \
+     uv.lock \
+     README.md \
      /app/
 
-RUN uv sync --dev
+COPY src/ /app/src/
+
+RUN apk add --no-cache --virtual .build-deps \
+      gcc \
+      linux-headers \
+      musl-dev \
+      python3-dev \
+    && uv sync --locked \
+    && apk del .build-deps
