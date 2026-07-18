@@ -22,8 +22,12 @@ COPY .python-version \
      README.md \
      /app/
 
-RUN pip install uv==0.11.28 \
-    && uv sync --locked --no-dev --no-install-project
+RUN apk add --no-cache --virtual .build-deps \
+        build-base \
+        libffi-dev \
+    && pip install uv==0.11.28 \
+    && uv sync --locked --no-dev --no-install-project \
+    && apk del .build-deps
 
 ENV PATH="/app/.venv/bin:$PATH"
 
