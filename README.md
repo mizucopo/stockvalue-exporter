@@ -113,14 +113,13 @@ docker run --rm -p 9100:9100 \
 依存関係をインストールします。
 
 ```bash
-cd app
-uv sync --dev
+uv sync --locked
 ```
 
 開発サーバーを起動します。
 
 ```bash
-uv run python main.py
+uv run python -m src.main
 ```
 
 テストと静的解析を実行します。
@@ -128,7 +127,7 @@ uv run python main.py
 ```bash
 uv run pytest
 uv run ruff check .
-uv run black --check .
+uv run ruff format --check .
 uv run mypy .
 ```
 
@@ -138,6 +137,19 @@ uv run mypy .
 docker compose build prod
 docker compose build dev
 ```
+
+## リリース
+
+`main` への push で `.github/workflows/docker-release.yml` が起動します。通常は Pull Request を `main` へ merge してリリースします。
+
+リリースでは、`pyproject.toml` のバージョンを使用して次を実行します。
+
+- `linux/amd64` と `linux/arm64` のDockerイメージをDocker Hubへ公開
+- `latest` とバージョン番号のDocker image tagを作成
+- `v<version>` 形式のGit tagを作成
+- GitHub Releaseを作成
+
+Docker Hubへのログインには、GitHub Actions secret `DOCKER_TOKEN` を使用します。
 
 ## ライセンス
 
