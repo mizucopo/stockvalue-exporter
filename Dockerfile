@@ -1,5 +1,5 @@
 # ビルドステージ
-FROM python:3.13.5-alpine AS builder
+FROM python:3.14.6-alpine AS builder
 
 RUN apk add --no-cache \
     tzdata \
@@ -8,7 +8,7 @@ RUN apk add --no-cache \
 
 
 # 実行ステージ
-FROM python:3.13.5-alpine
+FROM python:3.14.6-alpine
 
 COPY --from=builder /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 COPY --from=builder /etc/timezone /etc/timezone
@@ -22,8 +22,12 @@ COPY .python-version \
      README.md \
      /app/
 
-RUN pip install uv==0.11.28 \
-    && uv sync --locked --no-dev --no-install-project
+RUN apk add --no-cache --virtual .build-deps \
+        build-base \
+        libffi-dev \
+    && pip install uv==0.11.28 \
+    && uv sync --locked --no-dev --no-install-project \
+    && apk del .build-deps
 
 ENV PATH="/app/.venv/bin:$PATH"
 
