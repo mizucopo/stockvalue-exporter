@@ -1,5 +1,5 @@
 # ビルドステージ
-FROM python:3.14.6-alpine AS builder
+FROM python:3.15.0rc1-alpine AS builder
 
 RUN apk add --no-cache \
     tzdata \
@@ -8,7 +8,7 @@ RUN apk add --no-cache \
 
 
 # 実行ステージ
-FROM python:3.14.6-alpine
+FROM python:3.15.0rc1-alpine
 
 ARG APP_UID=10001
 ARG APP_GID=10001
