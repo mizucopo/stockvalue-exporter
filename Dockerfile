@@ -1,5 +1,5 @@
 # ビルドステージ
-FROM python:3.14.6-alpine AS builder
+FROM python:3.15.0rc1-alpine AS builder
 
 RUN apk add --no-cache \
     tzdata \
@@ -8,7 +8,7 @@ RUN apk add --no-cache \
 
 
 # 実行ステージ
-FROM python:3.14.6-alpine
+FROM python:3.15.0rc1-alpine
 
 ARG APP_UID=10001
 ARG APP_GID=10001
@@ -22,6 +22,7 @@ RUN addgroup -S -g "${APP_GID}" appgroup \
     && chown -R appuser:appgroup /home/appuser
 
 ENV PIP_ROOT_USER_ACTION=ignore
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
 
 WORKDIR /app
 COPY .python-version \
@@ -42,6 +43,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY src/ /app/src/
 
 RUN uv sync --locked --no-dev
+
+RUN test ! -d /opt/uv-python || chmod -R a+rX /opt/uv-python
 
 RUN rm /app/.python-version \
     && rm /app/uv.lock
