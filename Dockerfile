@@ -35,13 +35,14 @@ RUN apk add --no-cache --virtual .build-deps \
         libffi-dev \
     && pip install uv==0.11.28 \
     && uv sync --locked --no-dev --no-install-project \
+        --python /usr/local/bin/python3 \
     && apk del .build-deps
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY src/ /app/src/
 
-RUN uv sync --locked --no-dev
+RUN uv sync --locked --no-dev --python /usr/local/bin/python3
 
 RUN rm /app/.python-version \
     && rm /app/uv.lock
