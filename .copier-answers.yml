@@ -1,11 +1,12 @@
-_commit: ff0efb1
+_commit: b89394b
 _src_path: git@github.com:mizucopo/repo-template.git
 author_email: mizu.copo@gmail.com
 author_name: みず
 docker_image_name: stockvalue-exporter
 docker_login_username: mizucopo
 docker_registry: mizucopo
-project_description: A Prometheus custom exporter for real-time stock price monitoring and metrics collection
+project_description: A Prometheus custom exporter for real-time stock price monitoring
+    and metrics collection
 project_name: stockvalue-exporter
 project_version: 2.1.24
 python_project_kind: application
