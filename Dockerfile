@@ -22,6 +22,7 @@ RUN addgroup -S -g "${APP_GID}" appgroup \
     && chown -R appuser:appgroup /home/appuser
 
 ENV PIP_ROOT_USER_ACTION=ignore
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
 
 WORKDIR /app
 COPY .python-version \
@@ -35,14 +36,15 @@ RUN apk add --no-cache --virtual .build-deps \
         libffi-dev \
     && pip install uv==0.11.28 \
     && uv sync --locked --no-dev --no-install-project \
-        --python /usr/local/bin/python3 \
     && apk del .build-deps
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY src/ /app/src/
 
-RUN uv sync --locked --no-dev --python /usr/local/bin/python3
+RUN uv sync --locked --no-dev
+
+RUN test ! -d /opt/uv-python || chmod -R a+rX /opt/uv-python
 
 RUN rm /app/.python-version \
     && rm /app/uv.lock
