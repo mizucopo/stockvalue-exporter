@@ -57,11 +57,12 @@ jobs:
           fi
 
 
-          if ! git check-ref-format "refs/tags/$VERSION"; then
+          if ! git check-ref-format "refs/tags/v$VERSION"; then
             fail_version "version is not a valid git tag."
           fi
 
           printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
+          printf 'tag=v%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
 
 
 
@@ -70,7 +71,7 @@ jobs:
         if: steps.version.outcome == 'success'
         continue-on-error: true
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
 
@@ -87,7 +88,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
 
@@ -169,7 +170,8 @@ jobs:
         id: tag-report
         if: always()
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.tag }}
+          IMAGE_VERSION: ${{ steps.version.outputs.version }}
           VERSION_OUTCOME: ${{ steps.version.outcome }}
           TAG_OUTCOME: ${{ steps.tag.outcome }}
           TAG_EXISTS: ${{ steps.tag.outputs.exists }}
@@ -191,7 +193,7 @@ jobs:
           DETAILS="$(mktemp)"
           trap 'rm -f "$DETAILS"' EXIT
 
-          IMAGE_REFERENCE="$IMAGE_REPOSITORY:$VERSION"
+          IMAGE_REFERENCE="$IMAGE_REPOSITORY:$IMAGE_VERSION"
 
 
           if [ "$VERSION_OUTCOME" != "success" ]; then

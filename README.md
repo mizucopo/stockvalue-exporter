@@ -110,7 +110,7 @@ docker run --rm -p 9100:9100 \
 
 ### 必要なもの
 
-- Python 3.13.5 以降
+- Python 3.14 以降
 - [uv](https://docs.astral.sh/uv/)
 - Docker および Docker Compose（イメージをビルドする場合）
 
@@ -153,7 +153,7 @@ docker compose build dev
 - `v<version>` 形式のGit tagを作成
 - GitHub Releaseを作成
 
-Docker Hubへのログインには、GitHub Actions secret `DOCKER_TOKEN` を使用します。
+Docker HubへのログインにはGitHub Actions secret `DOCKERHUB_TOKEN` を使用します。移行前の `DOCKER_TOKEN` も互換入力として利用できます。
 
 ## ライセンス
 
