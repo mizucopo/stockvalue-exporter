@@ -1,15 +1,68 @@
 """VersionViewクラスのテストモジュール."""
 
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, mock_open, patch
 
+import pytest
 from flask import Flask
 
+from src.app import App
 from src.version_view import VersionView
 
 
 class TestVersionView:
     """VersionViewクラスのテストケース."""
+
+    @pytest.mark.parametrize(
+        ("file_exists", "metadata", "version", "description"),
+        [
+            pytest.param(
+                True,
+                b'[project]\nname = "stockvalue-exporter"\nversion = "1.2.3"\n'
+                b'description = "Test exporter"\n',
+                "1.2.3",
+                "Test exporter",
+                id="valid-metadata",
+            ),
+            pytest.param(False, b"", "unknown", "Unknown", id="missing-file"),
+            pytest.param(True, b"[project", "unknown", "Unknown", id="invalid-toml"),
+        ],
+    )
+    def test_version_and_root_metadata(
+        self,
+        app: Flask,
+        file_exists: bool,
+        metadata: bytes,
+        version: str,
+        description: str,
+    ) -> None:
+        """実メタデータ取得と失敗時の両HTTP表示を検証する."""
+        with (
+            patch("src.app.Path.exists", return_value=file_exists),
+            patch("builtins.open", mock_open(read_data=metadata)),
+        ):
+            app_instance = App()
+            app.add_url_rule("/", view_func=App.as_view("main"))
+            app.add_url_rule(
+                "/version",
+                view_func=VersionView.as_view("version", app_instance=app_instance),
+            )
+            client = app.test_client()
+
+            version_response = client.get("/version")
+            assert version_response.status_code == 200
+            assert version_response.content_type == "application/json"
+            assert version_response.get_json() == {
+                "name": "stockvalue-exporter",
+                "version": version,
+                "description": description,
+            }
+
+            root_response = client.get("/")
+            assert root_response.status_code == 200
+            assert root_response.get_data(as_text=True) == (
+                f"stockvalue-exporter v{version} is running!"
+            )
 
     def test_get_method(self, app_context: Flask) -> None:
         """getメソッドをテストする."""
