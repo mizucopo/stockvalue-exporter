@@ -1,12 +1,10 @@
-tests/
-test_*.py
-*_test.py
-stubs/
-
-.pytest_cache/
-.ruff_cache/
-.venv/
-__pycache__/
-htmlcov/
-
-.coverage
+# Exclude every build input unless the project explicitly allows it.
+**
+!Dockerfile
+!Dockerfile.dev
+!.python-version
+!pyproject.toml
+!uv.lock
+!README.md
+!src/
+!src/*.py
