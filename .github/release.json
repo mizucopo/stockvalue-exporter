@@ -5,10 +5,7 @@
       {
         "path": "pyproject.toml",
         "format": "toml",
-        "key": [
-          "project",
-          "version"
-        ]
+        "key": ["project", "version"]
       }
     ],
     "locks": [
@@ -23,20 +20,14 @@
   "publication": {
     "release_tag": "v{version}",
     "github_release": true,
-    "release_paths": [
-      "version",
-      "revision",
-      "Dockerfile"
-    ],
+    "release_paths": ["pyproject.toml", "Dockerfile"],
     "latest_image": "extended",
     "images": [
       {
         "name": "extended",
         "repository": "mizucopo/stockvalue-exporter",
         "tag": "{version}",
-        "aliases": [
-          "latest"
-        ],
+        "aliases": ["latest"],
         "registry": "dockerhub"
       }
     ]

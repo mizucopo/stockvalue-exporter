@@ -73,8 +73,6 @@ jobs:
           export RELEASE_PLAN_OUTPUT="$RUNNER_TEMP/release-plan.json"
           printf 'RELEASE_PLAN_OUTPUT=%s\n' "$RELEASE_PLAN_OUTPUT" >> "$GITHUB_ENV"
           python3 -I .github/scripts/release.py plan
-
-
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -84,8 +82,6 @@ jobs:
         run: |
           uv sync --locked
           uv run task check
-
-
 
       - name: Inspect versioned image
         id: image-state
@@ -247,7 +243,6 @@ jobs:
         run: |
           docker build --check .
           docker build -t release-check .
-
 
       - name: Set up QEMU
         if: steps.image-state.outputs.version_exists != 'true'
