@@ -129,10 +129,7 @@ uv run python -m src.main
 テストと静的解析を実行します。
 
 ```bash
-uv run pytest
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy .
+uv run task check
 ```
 
 本番用および開発用の Docker イメージは、リポジトリのルートでビルドできます。
@@ -144,9 +141,9 @@ docker compose build dev
 
 ## リリース
 
-`main` への push で `.github/workflows/docker-release.yml` が起動します。通常は Pull Request を `main` へ merge してリリースします。
+Pull Request は squash merge します。`main` への push で `.github/workflows/docker-release.yml` が起動し、最新のマージ済み PR の `release:patch`・`release:minor`・`release:major` ラベルに応じて自動採番します。分類ラベルがない PR では公開をスキップします。
 
-リリースでは、`pyproject.toml` のバージョンを使用して次を実行します。
+リリースでは、`pyproject.toml` を更新した採番コミットと同じソースから次を実行します。
 
 - `linux/amd64` と `linux/arm64` のDockerイメージをDocker Hubへ公開
 - `latest` とバージョン番号のDocker image tagを作成
@@ -154,6 +151,8 @@ docker compose build dev
 - GitHub Releaseを作成
 
 Docker HubへのログインにはGitHub Actions secret `DOCKERHUB_TOKEN` を使用します。移行前の `DOCKER_TOKEN` も互換入力として利用できます。
+
+分類基準は [CONTRIBUTING.md](CONTRIBUTING.md#リリース分類)、設定と復旧手順は [docs/release.md](docs/release.md) を参照してください。
 
 ## ライセンス
 
