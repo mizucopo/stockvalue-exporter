@@ -73,10 +73,11 @@ def test_metrics_http_contract_for_all_asset_types(
     assert response.content_type == "text/plain; charset=utf-8"
     families = list(text_string_to_metric_families(response.get_data(as_text=True)))
     samples = [sample for family in families for sample in family.samples]
+    # Client-generated creation timestamps can be disabled independently of the app.
     actual = {
         (sample.name, tuple(sorted(sample.labels.items()))): sample.value
         for family in families
-        if family.type == "gauge"
+        if family.type == "gauge" and not family.name.endswith("_created")
         for sample in family.samples
     }
     expected = {}
@@ -108,12 +109,6 @@ def test_metrics_http_contract_for_all_asset_types(
         expected[
             (
                 "financial_last_updated_timestamp",
-                tuple(sorted(timestamp_labels.items())),
-            )
-        ] = FETCH_TIMESTAMP
-        expected[
-            (
-                "financial_fetch_duration_seconds_created",
                 tuple(sorted(timestamp_labels.items())),
             )
         ] = FETCH_TIMESTAMP
