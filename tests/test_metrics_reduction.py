@@ -16,7 +16,10 @@ class TestMetricsReduction:
         self, isolated_registry: CollectorRegistry
     ) -> None:
         """デフォルト設定で全メトリクスが作成されることをテストする."""
-        factory = MetricsFactory.create_default(registry=isolated_registry)
+        with patch("src.metrics_factory.REGISTRY", isolated_registry):
+            factory = MetricsFactory.create_default()
+
+        assert factory.registry is isolated_registry
 
         # 統一メトリクス削減後の期待されるメトリクス数確認（9個）
         all_metrics = factory.get_all_metrics()
