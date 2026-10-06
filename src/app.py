@@ -53,26 +53,6 @@ class App(MethodView):
             financial_fetch_errors=financial_fetch_errors,
         )
 
-    def get_version(self) -> str:
-        """pyproject.tomlからバージョンを取得する.
-
-        Returns:
-            バージョン文字列。取得できない場合は "unknown"
-        """
-        try:
-            pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
-
-            if not pyproject_path.exists():
-                return "unknown"
-
-            with open(pyproject_path, "rb") as f:
-                data = tomllib.load(f)
-                version: str = str(data.get("project", {}).get("version", "unknown"))
-                return version
-        except Exception as e:
-            logger.error(f"Error reading version from pyproject.toml: {e}")
-            return "unknown"
-
     def get_app_info(self) -> dict[str, str]:
         """アプリケーション情報を取得する."""
         try:
