@@ -56,4 +56,4 @@ USER appuser:appgroup
 
 EXPOSE 9100
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9100", "--chdir", "/app", "src.main:web"]
+CMD ["gunicorn", "--workers", "1", "--worker-class", "gthread", "--threads", "4", "--timeout", "30", "--bind", "0.0.0.0:9100", "--chdir", "/app", "src.main:web"]

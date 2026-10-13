@@ -22,6 +22,44 @@ docker run --rm -p 9100:9100 mizucopo/stockvalue-exporter:latest
 アプリケーションの配置先 `/app` は実行時に書き込み不可で、必要なキャッシュは
 `/home/appuser/.cache` に保存されます。
 
+### Gunicorn とキャッシュ
+
+Docker の既定は **1 worker、`gthread`、4 threads、worker timeout 30秒** です。
+1プロセス内で `/metrics` と `/api/stocks` のキャッシュを共有し、複数workerで
+同じ銘柄を再取得することと、Python・yfinanceの常駐メモリ重複を抑えます。
+キャッシュのTTLと最大件数は従来どおりです。workerの再起動でキャッシュは失われ、
+複数コンテナ間では共有されません。
+
+cache miss時のyfinance取得はプロセス内で直列化し、待機後にキャッシュを再確認
+します。同じ銘柄の同時取得は成功した結果を共有します。取得失敗はキャッシュに
+保存せず、次の要求で再試行します。取得中でもcached APIや `/health` は別threadで
+処理できます。異なる未取得銘柄の要求は待機し、全4threadsが処理・待機中なら
+healthもqueueで待ちます。複数workerへの変更は、この待ち時間とメモリ・重複取得の
+トレードオフを実際の負荷で確認してから行ってください。
+
+`LRUCache` は操作をロックで保護し、キーの反復はsnapshotを返します。
+同時scrapeはメトリクスの消去から出力まで直列化し、既定の自動消去が有効な場合は
+価格系列を要求銘柄ごとに分離します。debugの取得時間・エラー系列はプロセス共有で、
+同時API取得を含む場合があります。従来どおりmetricsの消去時にresetされるため、
+プロセス起動以来の累計や要求単位の厳密なsnapshotではありません。
+
+`--timeout 30` はworkerのheartbeatが途絶えた場合の再起動設定です。`gthread` では
+通信待ちでもheartbeatを送るため、30秒でHTTP要求を打ち切る設定にはなりません。
+yfinanceの個々の通信timeoutと、複数通信・銘柄取得を含む要求全体の所要時間は別です。
+Prometheusの `scrape_timeout` は実際のcold scrape時間に合わせ、必要なら銘柄数を
+減らしてください。クライアントのtimeout後もサーバー側の取得処理は続くことが
+あります。Yahooの取得手順・timeout・retryの設定はこの変更では変えていません。
+
+1 sync workerで実行する場合は、Dockerのコマンドを置き換えます。
+
+```bash
+docker run --rm -p 9100:9100 mizucopo/stockvalue-exporter:latest \
+  gunicorn --workers 1 --worker-class sync --threads 1 --timeout 30 \
+  --bind 0.0.0.0:9100 --chdir /app src.main:web
+```
+
+構成の比較結果と再現手順は [Gunicorn測定](docs/gunicorn-benchmark.md) を参照してください。
+
 起動後、メトリクスを取得できます。
 
 ```bash
@@ -77,7 +115,7 @@ scrape_configs:
 | `financial_price_change_percent` | 前日終値からの変動率 |
 | `financial_market_cap` | 時価総額 |
 | `financial_last_updated_timestamp` | データの最終更新時刻 |
-| `financial_fetch_errors_total` | データ取得エラーの累計 |
+| `financial_fetch_errors_total` | メトリクス消去後のデータ取得エラー数 |
 | `financial_fetch_duration_seconds` | データ取得時間 |
 
 メトリクスには、対象に応じて `symbol`、`name`、`currency`、`exchange`、`asset_type` などのラベルが付与されます。

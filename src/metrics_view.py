@@ -1,6 +1,7 @@
 """メトリクスビューモジュール."""
 
 import logging
+from threading import Lock
 from typing import Any, Protocol
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 class MetricsView(BaseView):
     """メトリクス収集用ビュークラス."""
+
+    # 全ビューが共有するregistryのclear/update/outputを一つの操作として扱う。
+    _request_lock = Lock()
 
     def _set_gauge_metric(
         self,
@@ -190,6 +194,11 @@ class MetricsView(BaseView):
         Returns:
             Prometheusメトリクスデータ、ステータスコード、ヘッダーのタプル
         """
+        with self._request_lock:
+            return self._get_locked()
+
+    def _get_locked(self) -> tuple[str, int, dict[str, str]]:
+        """成功・エラー応答の出力まで、他のscrapeの消去・更新から保護する."""
         try:
             # リクエストパラメータの解析
             symbols, clear_metrics = self._parse_request_parameters()

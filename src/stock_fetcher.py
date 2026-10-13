@@ -2,6 +2,7 @@
 
 import logging
 import time
+from threading import Lock
 from typing import Any
 
 import yfinance as yf  # type: ignore[import-untyped]
@@ -15,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 class StockDataFetcher:
     """株価データを取得するクラス."""
+
+    # yfinanceはプロセス内のsession/cookieを共有するため、cache missの取得を直列化。
+    _fetch_lock = Lock()
 
     def __init__(
         self,
@@ -219,25 +223,34 @@ class StockDataFetcher:
                     results[symbol] = cached_data
                     continue
 
-                # Yahoo Finance APIから株価データ取得
-                ticker = yf.Ticker(symbol)
-                info = ticker.info
+                with self._fetch_lock:
+                    # 待機中に別リクエストが取得していれば、その結果を共有する。
+                    cached_data = self.cache.get(symbol)
+                    if cached_data is not None:
+                        results[symbol] = cached_data
+                        continue
 
-                if not info:
-                    raise ValueError(f"No data found for symbol: {symbol}")
+                    # Yahoo Finance APIから株価データ取得
+                    ticker = yf.Ticker(symbol)
+                    info = ticker.info
 
-                # 資産タイプの判定
-                asset_type = SymbolClassifier.get_asset_type(symbol)
+                    if not info:
+                        raise ValueError(f"No data found for symbol: {symbol}")
 
-                # 株価データ構造を作成
-                stock_data = self._create_stock_data(symbol, info, asset_type)
+                    # 資産タイプの判定
+                    asset_type = SymbolClassifier.get_asset_type(symbol)
 
-                # キャッシュに保存
-                self.cache.put(symbol, stock_data)
-                results[symbol] = stock_data
+                    # 株価データ構造を作成
+                    stock_data = self._create_stock_data(symbol, info, asset_type)
 
-                # 成功メトリクス記録
-                self._record_metrics(symbol, asset_type.value, start_time, success=True)
+                    # キャッシュに保存
+                    self.cache.put(symbol, stock_data)
+                    results[symbol] = stock_data
+
+                    # 成功メトリクス記録
+                    self._record_metrics(
+                        symbol, asset_type.value, start_time, success=True
+                    )
 
                 # 適切な通貨記号を取得
                 currency_symbol = self._get_currency_symbol(stock_data["currency"])
