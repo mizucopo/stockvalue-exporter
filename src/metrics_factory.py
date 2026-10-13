@@ -206,50 +206,6 @@ class MetricsFactory:
                     e,
                 )
 
-    def unregister_all_metrics(self) -> None:
-        """全てのメトリクスをレジストリから完全に削除する.
-
-        注意: この操作により、メトリクスがレジストリから完全に削除されます。
-        再利用するには新しいMetricsFactoryインスタンスを作成する必要があります。
-        """
-        for metric in self.metrics.values():
-            try:
-                self.registry.unregister(metric)
-            except KeyError:
-                # メトリクスが既に削除されている場合は無視
-                logger.debug(
-                    "Metric %s already unregistered from registry",
-                    type(metric).__name__,
-                )
-            except ValueError as e:
-                # レジストリに登録されていないメトリクスの場合
-                logger.warning(
-                    "Metric %s not found in registry: %s",
-                    type(metric).__name__,
-                    e,
-                )
-            except Exception as e:
-                # その他の予期しないエラー
-                logger.error(
-                    "Unexpected error unregistering metric %s: %s",
-                    type(metric).__name__,
-                    e,
-                )
-
-        # メトリクス辞書をクリア
-        self.metrics.clear()
-
-    def recreate_metrics(self) -> None:
-        """全てのメトリクスを再作成する.
-
-        既存のメトリクスをレジストリから削除してから、新しいメトリクスを作成します。
-        """
-        # 既存のメトリクスを削除
-        self.unregister_all_metrics()
-
-        # 新しいメトリクスを作成
-        self._create_metrics()
-
     @classmethod
     def create_default(
         cls,
