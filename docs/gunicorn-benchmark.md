@@ -90,7 +90,9 @@ scrapeのHTTP送信直前からbody読取完了までの専用samplerでも補�
 1プロセス化後は1回の取得結果を全4要求が共有した。
 修正後のlookup missには取得ロック内の再確認も含まれる。lookup回数とfetch回数を
 混同しない。同時coldでは最初の4 miss＋取得者の再確認miss1、待機者のhit3になる。
-全runのdefault9 / 最大12銘柄scrapeはfetch9 / 12回、返却価格と要求銘柄集合も検査した。
+全runのdefault9 / 最大12銘柄scrapeはfetch9 / 12回と要求銘柄集合を検査した。
+benchmarkの価格数値の検査はAPI応答に対して行う。scrapeの価格数値は既存の
+HTTP契約テストと追加の競合テストで検査し、9 / 12銘柄benchmarkでは検査していない。
 
 安全策はLRU public操作のロックとsnapshot反復、プロセス共通のcold取得ロック・
 取得前のcache再確認、scrape全体のロック。価格・JSON形式・TTL・LRUの上限は維持する。
