@@ -45,7 +45,9 @@ class App(MethodView):
         self._metrics_factory = metrics_factory
 
     def initialize_fetcher(
-        self, financial_fetch_duration: Histogram, financial_fetch_errors: Counter
+        self,
+        financial_fetch_duration: Histogram | None,
+        financial_fetch_errors: Counter | None,
     ) -> None:
         """StockDataFetcherインスタンスを初期化する."""
         self.fetcher = StockDataFetcher(
