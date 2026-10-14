@@ -7,4 +7,11 @@
 !uv.lock
 !README.md
 !src/
+src/**
 !src/*.py
+**/.git
+**/.env
+**/.env.*
+**/__pycache__
+**/*.py[cod]
+**/.venv
