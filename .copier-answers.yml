@@ -1,4 +1,4 @@
-_commit: 2a67f04
+_commit: 38dffc8116255f0ec76158345658ebf0e8c8c8ff
 _src_path: git@github.com:mizucopo/repo-template.git
 author_email: mizu.copo@gmail.com
 author_name: みず
@@ -19,6 +19,7 @@ use_chrome_extension: false
 use_dependabot_docker: true
 use_dependabot_github_actions: true
 use_docker: true
+use_gh_actions_codeql: false
 use_gh_actions_docker_project_pipeline: false
 use_gh_actions_docker_quality: false
 use_gh_actions_docker_release: true
