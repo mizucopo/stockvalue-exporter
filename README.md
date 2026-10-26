@@ -135,6 +135,11 @@ scrape_configs:
 | `ENVIRONMENT` | `development` | 実行環境。`production` ではデバッグ用メトリクスが既定で無効になります。 |
 | `ENABLE_DEBUG_METRICS` | 実行環境による | 取得時間と取得エラーのメトリクスを有効にするかどうか |
 
+未使用だった `REQUEST_TIMEOUT_SECONDS` と `MAX_RETRIES` は削除しました。
+旧環境変数が残っていても無視されるため、設定から削除できます。
+外部のPythonコードで同名の `Config` 属性を直接参照している場合は、その参照も削除してください。
+取得のtimeout・retryを制御する代替設定はなく、yfinanceによる取得動作は従来どおりです。
+
 環境変数は `docker run` の `-e` オプションで指定できます。
 
 ```bash
