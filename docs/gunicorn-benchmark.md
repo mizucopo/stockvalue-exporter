@@ -111,8 +111,8 @@ Gunicorn 26.2.0の `config.py` にあるtimeout定義と `workers/gthread.py` �
 HTTP要求の期限とは扱わない。syncの要求打切りとgthreadのheartbeat監視は異なる。
 requestsの中断や銘柄全体のdeadlineは追加していない。yfinanceのHTTP timeoutは
 個々の通信に適用され、複数通信・複数銘柄の合計時間はこれより長くなり得る。
-既存の `REQUEST_TIMEOUT_SECONDS` / `MAX_RETRIES` はfetcherへ渡されていないため、
-それらを変えることで要求を制限できるとは案内しない。
+測定当時の `REQUEST_TIMEOUT_SECONDS` / `MAX_RETRIES` はfetcherへ渡されておらず、
+取得動作に影響しなかった。これらの未使用設定はIssue #102で削除した。
 
 ## 再現手順
 

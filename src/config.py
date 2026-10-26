@@ -30,10 +30,6 @@ class Config:
         self.CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "600"))
         self.MAX_SYMBOLS_PER_REQUEST = int(os.getenv("MAX_SYMBOLS_PER_REQUEST", "12"))
 
-        # API設定
-        self.REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
-        self.MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
-
         # キャッシュ設定
         self.CACHE_MAX_SIZE = int(os.getenv("CACHE_MAX_SIZE", "100"))
 
