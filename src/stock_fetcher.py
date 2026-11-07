@@ -32,7 +32,6 @@ class StockDataFetcher:
             financial_fetch_errors: エラー数を計測するCounterメトリクス
         """
         self.cache: LRUCache[dict[str, Any]] = LRUCache()
-        self.cache_ttl = self.cache.ttl_seconds  # テスト用のプロパティ
         self.financial_fetch_duration = financial_fetch_duration
         self.financial_fetch_errors = financial_fetch_errors
 
@@ -274,30 +273,3 @@ class StockDataFetcher:
                 )
 
         return results
-
-    def _is_cached(self, symbol: str) -> bool:
-        """キャッシュが有効かチェックする.
-
-        Args:
-            symbol: チェックする銘柄シンボル
-
-        Returns:
-            キャッシュが有効ならTrue、そうでなければFalse
-        """
-        return self.cache.get(symbol) is not None
-
-    def get_cache_stats(self) -> dict[str, Any]:
-        """キャッシュの統計情報を取得する.
-
-        Returns:
-            キャッシュ統計情報
-        """
-        return self.cache.get_stats()
-
-    def cleanup_cache(self) -> int:
-        """期限切れのキャッシュをクリーンアップする.
-
-        Returns:
-            削除されたアイテム数
-        """
-        return self.cache.cleanup_expired()

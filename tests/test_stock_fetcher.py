@@ -19,7 +19,6 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher(mock_duration, mock_errors)
 
         assert len(fetcher.cache) == 0
-        assert fetcher.cache_ttl == 600
         assert fetcher.financial_fetch_duration == mock_duration
         assert fetcher.financial_fetch_errors == mock_errors
 
@@ -30,42 +29,12 @@ class TestStockDataFetcher:
         fetcher = StockDataFetcher()
 
         assert len(fetcher.cache) == 0
-        assert fetcher.cache_ttl == 600
         assert fetcher.financial_fetch_duration is None
         assert fetcher.financial_fetch_errors is None
 
-    def test_is_cached_not_in_cache(self) -> None:
-        """キャッシュにない場合のテストする."""
-        fetcher = StockDataFetcher()
-
-        result = fetcher._is_cached("AAPL")
-        assert result is False
-
-    def test_is_cached_expired(self, isolated_registry: CollectorRegistry) -> None:
-        """期限切れキャッシュのテストする."""
-        fetcher = StockDataFetcher()
-
-        # 期限切れのキャッシュは自動的にNoneが返される
-        # キャッシュに手動で古いデータを設定することはできないため、
-        # 代わりにキャッシュが空の場合をテスト
-        result = fetcher._is_cached("AAPL")
-        assert result is False
-
-    def test_is_cached_valid(self, isolated_registry: CollectorRegistry) -> None:
-        """有効なキャッシュのテストする."""
-        fetcher = StockDataFetcher()
-
-        # 有効なキャッシュを設定
-        test_data = {"symbol": "AAPL", "current_price": 150.0}
-        fetcher.cache.put("AAPL", test_data)
-
-        result = fetcher._is_cached("AAPL")
-        assert result is True
-
-    def test_get_stock_data_from_cache(
-        self, isolated_registry: CollectorRegistry
-    ) -> None:
-        """キャッシュからのデータ取得をテストする."""
+    @patch("src.stock_fetcher.yf.Ticker")
+    def test_get_stock_data_from_cache(self, mock_ticker: Mock) -> None:
+        """キャッシュヒット時はYahoo Financeへ再取得しない."""
         fetcher = StockDataFetcher()
 
         # キャッシュデータを設定（実際の形式に合わせる）
@@ -76,11 +45,44 @@ class TestStockDataFetcher:
         }
         fetcher.cache.put("AAPL", stock_data)
 
-        with patch.object(fetcher, "_is_cached", return_value=True):
-            result = fetcher.get_stock_data(["AAPL"])
+        result = fetcher.get_stock_data(["AAPL"])
 
-            assert "AAPL" in result
-            assert result["AAPL"] == stock_data
+        assert result == {"AAPL": stock_data}
+        mock_ticker.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("age", "expected_price", "expected_fetches"),
+        [(60, 150.0, 0), (61, 175.0, 1)],
+        ids=["ttl-boundary-is-valid", "expired-is-refetched"],
+    )
+    @patch("src.stock_fetcher.yf.Ticker")
+    def test_get_stock_data_cache_ttl(
+        self,
+        mock_ticker: Mock,
+        monkeypatch: pytest.MonkeyPatch,
+        age: int,
+        expected_price: float,
+        expected_fetches: int,
+    ) -> None:
+        """設定したTTLを超えた場合だけ再取得し、新しい結果を再利用する."""
+        monkeypatch.setattr("src.config.config.CACHE_TTL_SECONDS", 60)
+        fetcher = StockDataFetcher()
+        mock_ticker.return_value.info = {
+            "regularMarketPrice": 175.0,
+            "regularMarketPreviousClose": 150.0,
+        }
+        with patch("time.time", return_value=1000):
+            fetcher.cache.put("AAPL", {"symbol": "AAPL", "current_price": 150.0})
+
+        with patch("time.time", return_value=1000 + age):
+            result = fetcher.get_stock_data(["AAPL"])
+            repeated = fetcher.get_stock_data(["AAPL"])
+
+        assert result["AAPL"]["current_price"] == expected_price
+        assert repeated == result
+        assert mock_ticker.call_count == expected_fetches
+        if expected_fetches:
+            mock_ticker.assert_called_once_with("AAPL")
 
     @patch("src.stock_fetcher.yf")
     def test_get_stock_data_success(self, mock_yf: Mock) -> None:
@@ -141,6 +143,27 @@ class TestStockDataFetcher:
             mock_errors.labels.assert_called()
             mock_errors.labels().inc.assert_called()
 
+    @patch("src.stock_fetcher.yf.Ticker")
+    def test_get_stock_data_retries_after_error(self, mock_ticker: Mock) -> None:
+        """失敗はキャッシュせず、再試行で成功した結果だけを再利用する."""
+        fetcher = StockDataFetcher()
+        mock_ticker.side_effect = [
+            ValueError("Network error"),
+            Mock(info={"regularMarketPrice": 150.0}),
+        ]
+
+        with patch("time.time", return_value=1000):
+            failed = fetcher.get_stock_data(["AAPL"])
+            assert failed["AAPL"]["current_price"] == 0
+            assert fetcher.cache.get("AAPL") is None
+
+            recovered = fetcher.get_stock_data(["AAPL"])
+            repeated = fetcher.get_stock_data(["AAPL"])
+
+        assert recovered["AAPL"]["current_price"] == 150.0
+        assert repeated == recovered
+        assert mock_ticker.call_count == 2
+
     @patch("src.stock_fetcher.yf")
     def test_get_stock_data_with_metrics(self, mock_yf: Mock) -> None:
         """メトリクス記録付きの株価データ取得をテストする."""
@@ -176,52 +199,52 @@ class TestStockDataFetcher:
         """複数シンボルの株価データ取得をテストする."""
         fetcher = StockDataFetcher()
 
-        with patch.object(fetcher, "_is_cached", return_value=False):
-            with patch("src.stock_fetcher.yf") as mock_yf:
-                # 複数のティッカーモックを設定
-                def mock_ticker_factory(symbol: str) -> Mock:
-                    mock_ticker = Mock()
-                    mock_ticker.info = {
-                        "symbol": symbol,
-                        "shortName": f"{symbol} Inc.",
-                        "regularMarketPrice": 100.0,
-                        "regularMarketPreviousClose": 95.0,
-                    }
-                    return mock_ticker
-
-                mock_yf.Ticker.side_effect = mock_ticker_factory
-
-                with patch("time.time", return_value=1638360000):
-                    result = fetcher.get_stock_data(["AAPL", "GOOGL"])
-
-                    assert len(result) == 2
-                    assert "AAPL" in result
-                    assert "GOOGL" in result
-                    assert result["AAPL"]["symbol"] == "AAPL"
-                    assert result["GOOGL"]["symbol"] == "GOOGL"
-
-    def test_cache_storage(self) -> None:
-        """キャッシュ保存をテストする."""
-        fetcher = StockDataFetcher()
-
-        with patch.object(fetcher, "_is_cached", return_value=False):
-            with patch("src.stock_fetcher.yf") as mock_yf:
+        with patch("src.stock_fetcher.yf") as mock_yf:
+            # 複数のティッカーモックを設定
+            def mock_ticker_factory(symbol: str) -> Mock:
                 mock_ticker = Mock()
                 mock_ticker.info = {
-                    "symbol": "AAPL",
-                    "shortName": "Apple Inc.",
-                    "regularMarketPrice": 150.0,
-                    "regularMarketPreviousClose": 148.0,
+                    "symbol": symbol,
+                    "shortName": f"{symbol} Inc.",
+                    "regularMarketPrice": 100.0,
+                    "regularMarketPreviousClose": 95.0,
                 }
-                mock_yf.Ticker.return_value = mock_ticker
+                return mock_ticker
 
-                with patch("time.time", return_value=1638360000):
-                    fetcher.get_stock_data(["AAPL"])
+            mock_yf.Ticker.side_effect = mock_ticker_factory
 
-                    # キャッシュに保存されたか確認
-                    cached_data = fetcher.cache.get("AAPL")
-                    assert cached_data is not None
-                    assert cached_data["symbol"] == "AAPL"
+            with patch("time.time", return_value=1638360000):
+                result = fetcher.get_stock_data(["AAPL", "GOOGL"])
+
+                assert len(result) == 2
+                assert "AAPL" in result
+                assert "GOOGL" in result
+                assert result["AAPL"]["symbol"] == "AAPL"
+                assert result["GOOGL"]["symbol"] == "GOOGL"
+
+    def test_cache_storage(self) -> None:
+        """取得したデータを保存し、次の要求で再取得せず返す."""
+        fetcher = StockDataFetcher()
+
+        with patch("src.stock_fetcher.yf") as mock_yf:
+            mock_ticker = Mock()
+            mock_ticker.info = {
+                "symbol": "AAPL",
+                "shortName": "Apple Inc.",
+                "regularMarketPrice": 150.0,
+                "regularMarketPreviousClose": 148.0,
+            }
+            mock_yf.Ticker.return_value = mock_ticker
+
+            with patch("time.time", return_value=1638360000):
+                result = fetcher.get_stock_data(["AAPL"])
+                repeated = fetcher.get_stock_data(["AAPL"])
+
+                cached_data = fetcher.cache.get("AAPL")
+                assert cached_data == result["AAPL"]
+                assert result["AAPL"]["current_price"] == 150.0
+                assert repeated == result
+                mock_yf.Ticker.assert_called_once_with("AAPL")
 
     @patch("src.stock_fetcher.yf")
     def test_get_stock_data_forex_pair(self, mock_yf: Mock) -> None:
