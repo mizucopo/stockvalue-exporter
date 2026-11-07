@@ -159,6 +159,27 @@ def test_startup_and_http_contract(
     )
 
 
+@pytest.mark.parametrize(
+    ("request_timeout", "max_retries"),
+    [("30", "3"), ("1", "0"), ("unused", "unused")],
+    ids=["old-defaults", "custom-values", "non-numeric-values"],
+)
+@pytest.mark.parametrize(
+    ("environment", "debug_enabled"),
+    [("production", False), ("development", True)],
+)
+def test_startup_ignores_unused_timeout_retry_environment(
+    monkeypatch: pytest.MonkeyPatch,
+    request_timeout: str,
+    max_retries: str,
+    environment: str,
+    debug_enabled: bool,
+) -> None:
+    monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", request_timeout)
+    monkeypatch.setenv("MAX_RETRIES", max_retries)
+    _run_in_fresh_process(f"_check_startup({debug_enabled!r})", environment, None)
+
+
 @pytest.mark.parametrize("debug_metrics", ["false", "true"])
 @pytest.mark.parametrize(
     ("metric_key", "expected_type"),
