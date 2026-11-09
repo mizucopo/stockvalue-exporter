@@ -13,7 +13,8 @@ class Config:
     def _load_config(self) -> None:
         """環境変数から設定を読み込む."""
         # サーバー設定
-        self.HOST = os.getenv("HOST", "0.0.0.0")
+        # Container exporter must accept scrapes through the published port.
+        self.HOST = os.getenv("HOST", "0.0.0.0")  # nosec B104
         self.PORT = int(os.getenv("PORT", "9100"))
         self.DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
