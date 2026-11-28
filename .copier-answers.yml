@@ -1,17 +1,27 @@
-_commit: 4208ae0
+_commit: 0356ad6
 _src_path: git@github.com:mizucopo/repo-template.git
 author_email: mizu.copo@gmail.com
 author_name: みず
+docker_build_context: .
 docker_image_name: stockvalue-exporter
 docker_login_username: mizucopo
+docker_quality_platforms: []
+docker_quality_smoke_offline: false
+docker_quality_test_target: ''
 docker_registry: mizucopo
 docker_release_platforms:
 - linux/amd64
 - linux/arm64
+docker_release_smoke_offline: false
+docker_release_tag_prefix: v
+docker_smoke_command: ''
+dockerfile_path: Dockerfile
 project_description: A Prometheus custom exporter for real-time stock price monitoring
     and metrics collection
 project_name: stockvalue-exporter
 project_version: 2.1.24
+python_include_legacy_stub_dependencies: true
+python_mypy_import_root: src
 python_project_kind: application
 python_version: '3.14'
 use_aws_ecr: false
@@ -19,14 +29,17 @@ use_chrome_extension: false
 use_dependabot_docker: true
 use_dependabot_github_actions: true
 use_docker: true
+use_docker_quality_hook: true
+use_dockerhub_legacy_token: true
 use_gh_actions_bandit: true
 use_gh_actions_cargo_audit: false
 use_gh_actions_codeql: false
 use_gh_actions_docker_project_pipeline: false
-use_gh_actions_docker_quality: false
+use_gh_actions_docker_quality: true
 use_gh_actions_docker_release: true
 use_mit_license: true
 use_python: true
+use_repo_template_policy: true
 use_rust: false
 use_tauri: false
 use_version_management: true

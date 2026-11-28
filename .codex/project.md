@@ -9,6 +9,7 @@
 - `src` は相対 import を使う既存のアプリケーション package。空の `src/__init__.py`、`python -m src.main` と Gunicorn の `src.main:web` を維持する。mypy の `explicit_package_bases` は指定せず、既存 package として検査する。
 - `pyproject.toml` の製品依存、pytest-cov と 80% の coverage gate、テストマーカーを維持する。バージョンは公開 workflow が採番し、更新 PR では変更しない。
 - Dockerfile の非 root ユーザー、キャッシュの書き込み先、9100 番ポートを維持する。`.dockerignore` では Dockerfile が COPY する manifest・README・Python source と開発用 Dockerfile だけを許可する。
-- PR の標準品質 gate に加えて、container runtime の UID/GID・書き込み権限・`/health` を確認する。
+- Python の PR 品質 gate は生成された `PR Quality Checks / quality-checks` を維持する。コンテナは生成された `Docker Quality Checks / docker-quality-checks` で検証し、プロジェクト固有の UID/GID・書き込み権限・`/health` は `.github/scripts/docker-quality-hook.sh` に残す。生成されたワークフローに独自ステップを追加しない。
 - Docker 公開対象は `linux/amd64` と `linux/arm64`。既存の Dependabot による Actions pin を保持し、Git tag は `.github/release.json` の `v{version}` を使う。
 - Docker Hub secret は `DOCKERHUB_TOKEN` を優先し、旧 `DOCKER_TOKEN` の互換入力を維持する。
+- Compose の Dependabot 設定と、既存 package の mypy オプション・pytest coverage／marker をプロジェクトに残す。その他の共通品質キーは `repo-template` と揃え、Repository Template Policy の除外は追加しない。
