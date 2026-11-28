@@ -28,6 +28,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
+# Keep the template's paths; coverage and markers below are exporter-specific.
 pythonpath = [".", "src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -71,7 +72,8 @@ convention = "google"
 strict = true
 python_version = "3.14"
 
-# Discover both roots together so an empty src/ is allowed.
+# Use normal package discovery for src.* and its relative imports. Do not set
+# explicit_package_bases for this existing package layout.
 files = ["."]
 exclude = ["^(?!(src|tests)/)"]
 

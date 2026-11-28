@@ -1,0 +1,53 @@
+name: Docker Quality Checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-quality-checks:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKERFILE_PATH: "Dockerfile"
+      DOCKER_BUILD_CONTEXT: "."
+      LOCAL_IMAGE: repo-template-smoke:${{ github.sha }}
+      DOCKER_SMOKE_COMMAND: ""
+
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run repository pre-build checks
+        timeout-minutes: 10
+        run: bash -- .github/scripts/docker-quality-hook.sh before
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Run Docker build checks
+        run: docker buildx build --check --file "$DOCKERFILE_PATH" "$DOCKER_BUILD_CONTEXT"
+
+      - name: Build Docker image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: "."
+          file: "Dockerfile"
+          load: true
+          push: false
+          tags: ${{ env.LOCAL_IMAGE }}
+      - name: Run Docker smoke test
+        if: ${{ env.DOCKER_SMOKE_COMMAND != '' }}
+        run: docker run --rm --entrypoint sh "$LOCAL_IMAGE" -eu -c "$DOCKER_SMOKE_COMMAND"
+
+      - name: Run repository post-build checks
+        timeout-minutes: 10
+        run: bash -- .github/scripts/docker-quality-hook.sh after
+      - name: Clean up repository test resources
+        if: always() && steps.checkout.outcome == 'success'
+        timeout-minutes: 5
+        run: bash -- .github/scripts/docker-quality-hook.sh cleanup
