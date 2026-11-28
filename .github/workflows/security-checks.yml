@@ -17,6 +17,7 @@ permissions:
 jobs:
   bandit:
     name: Python source security
+
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
